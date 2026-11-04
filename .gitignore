@@ -1,0 +1,6 @@
+node_modules/
+.DS_Store
+lab/tune_out/
+lab/validate_out/
+lab/deck_out/
+*.csv

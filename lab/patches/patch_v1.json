@@ -1,0 +1,15 @@
+{
+  "_note": "Balance patch v1 (from the sim_out/v2 field data). Use (from lab/): node tools/sim.js --mode both --bot smart --live patches/patch_v1.json --out sim_out/v3, then node tools/compare_reports.js sim_out/v2 sim_out/v3 --metric delta_seen",
+  "cards": {
+    "87": { "Attack": 3 },
+    "41": { "Attack": 2 },
+    "30": { "Description": "Before Combat here: 4 Dmg to Enemy Hero.",
+            "Effects": [ { "Trigger": "OnPreCombatLine", "Actions": [ { "Type": "DealDamage", "Target": "EnemyHero", "Amount": 4 } ] } ] },
+    "34": { "Attack": 2 },
+    "21": { "KeywordParams": { "Armored": 1 } },
+    "69": { "Health": 4 },
+    "64": { "Attack": 1 },
+    "96": { "Cost": 3 },
+    "9":  { "Cost": 3 }
+  }
+}

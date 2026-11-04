@@ -1,0 +1,36 @@
+RE:Joltance held-out deck validation (fresh seeds, never used by the search)
+bot=smart  games per matchup ~100  seed 9001  fresh random decks 40
+
+NEW decks - overall results
+
+  cand0              vs old premade 69.0% (CI 64.8%-72.9%, 500 games) | vs the other new decks 44.5% | vs random decks 84.5% (CI 78.8%-88.9%)
+  cand4              vs old premade 67.2% (CI 63.0%-71.2%, 500 games) | vs the other new decks 51.0% | vs random decks 87.0% (CI 81.6%-91.0%)
+  cand10             vs old premade 74.4% (CI 70.4%-78.0%, 500 games) | vs the other new decks 45.5% | vs random decks 86.0% (CI 80.5%-90.1%)
+  cand15             vs old premade 51.2% (CI 46.8%-55.6%, 500 games) | vs the other new decks 38.8% | vs random decks 75.5% (CI 69.1%-80.9%)
+  cand7              vs old premade 71.6% (CI 67.5%-75.4%, 500 games) | vs the other new decks 54.3% | vs random decks 85.0% (CI 79.4%-89.3%)
+
+OLD premade decks for reference (vs the same fresh random decks)
+
+  CollectorSpam      vs random decks 76.5% (CI 70.2%-81.8%)
+  TeaMaidCombo       vs random decks 75.5% (CI 69.1%-80.9%)
+  MachineAggro       vs random decks 41.0% (CI 34.4%-47.9%)
+  TheRitual          vs random decks 51.0% (CI 44.1%-57.8%)
+  RaceAggro          vs random decks 77.5% (CI 71.2%-82.7%)
+
+MATCHUPS among the new decks (row deck wins this share):
+                              cand0        cand4       cand10       cand15        cand7
+  cand0                           -        38.0%        41.0%        58.0%        41.0%
+  cand4                       56.0%            -        56.0%        50.0%        42.0%
+  cand10                      42.0%        43.0%            -        48.0%        49.0%
+  cand15                      52.0%        38.0%        31.0%            -        34.0%
+  cand7                       54.0%        55.0%        46.0%        62.0%            -
+
+NEW (row) vs OLD premade (col): row win rate
+                       CollectorSpa TeaMaidCombo MachineAggro    TheRitual    RaceAggro
+  cand0                       71.0%        51.0%        78.0%        81.0%        64.0%
+  cand4                       53.0%        58.0%        75.0%        90.0%        60.0%
+  cand10                      77.0%        60.0%        91.0%        84.0%        60.0%
+  cand15                      23.0%        38.0%        73.0%        68.0%        54.0%
+  cand7                       67.0%        65.0%        85.0%        86.0%        55.0%
+
+Each pair uses both seats and the same bot on both sides. Matchup cells are ~100 games (+-10 points at 95%), so read single cells loosely and the averages firmly.

@@ -1,0 +1,10 @@
+# Proposed premade decks as deck codes: paste a line (just the code) into Import in the deck builder, or pass this file to --decks of validate_decks.js / bot_ab.js / sim.js.
+SharkCannonRush: 8F8YB-S24Z6-YYJCC-0ZBRD-CBW1F-PS5NP-P5DYZ-X9QZE-9T5
+TheCurtainCallSlow: WP0EP-5ZGQ6-XP7Q9-DNRF3-502N3-WNNYE-AKHTN-T265N-SV9P0-0VWJN-MVWSS-VXSZV
+TheCurtainCallMidrange: 52SSG-E5WRB-0AH85-5H1R5-DKZNT-C0555-ATA37-SE3ZV-ZSS0J-57X8K-QA
+SharkCannonRush2: 7VTMK-9DD3E-NP135-M85C1-EEZDT-ZTT3C-C8CZT-0R83Z-N8M92-MGQHP-XY
+SharkCannonMidrange: 9YQP6-0Q06Q-JY7HM-NGBJA-2AG1K-MYKTM-9SHD5-SYJZX-WZ7A8-C
+
+# Other strong candidates (not chosen), best first
+Candidate1_slowunitsMachine: PEDPW-27A63-W1HKJ-FV0NQ-SVWXQ-JSHTR-J2A1S-9XDSS-A85RT-D3F5N-JB26
+Candidate2_midunitsHuman: Y8YB9-KZCDQ-K8CW9-4F37R-009T4-F3F9P-MME93-NZVKH-E4D58-4C006-DV5EF-36XFD-4NVZJ-CXWS9-A7XWT-ZN4JA

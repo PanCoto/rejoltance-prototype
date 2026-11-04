@@ -1,0 +1,147 @@
+RE:Joltance balance report   2026-11-03T12:38:47.567Z
+bot=basic  seed=1  decks in pool=65  mode=both
+run time 214s
+
+=== FIELD GAMES ===
+games played: 30000 (0 abandoned)   first player wins: 48.1% (95% CI 47.5% - 48.6%)
+median game length: 7 rounds   rounds histogram: 3:11 4:880 5:4576 6:7592 7:6491 8:5142 9:2939 10:1277 11:601 12:251 13:119 14:56 15:26 16:19 17:9 18:4 19:3 20:3 21:1
+average hero HP left at the end (both heroes summed): 8.6
+
+Cards with at least 300 deck-games (100 of 100).  WR = win rate of decks containing it. dSeen = win rate when the card was drawn/played
+minus win rate when it never showed up (same decks) in percentage points - the fairer power signal, because WR alone depends on which decks the card ended up in.
+
+Strongest by dSeen:
+  id   name                       cost games    WR       dSeen pp dead     rnd
+    69 Evo Neighbour                 5    13957    52.3%    +14.1    12.5%    5.9
+    41 Pegasus                       3    18316    54.2%    +12.7    12.4%    4.5
+    30 SharkCannon                   5    10060    56.1%    +11.1    16.4%    5.7
+    21 Juggernaut                    4    16731    53.7%     +9.1    13.0%    5.3
+    20 Genie                         4    12895    52.1%     +8.8    11.0%    5.6
+    87 Attentive Parent              3    15769    50.4%     +8.7    13.4%    4.6
+    36 Death                         5    16844    49.8%     +8.4    10.6%    5.9
+    34 Maid Mask                     2    18327    54.5%     +8.1    16.4%    4.3
+    17 Magician                      4    21316    51.5%     +7.0    10.7%    5.5
+    53 The Curtain Call              7    17683    55.6%     +7.0    56.5%    7.5
+     6 The Jersey Demon              5    14773    50.8%     +6.9    14.2%    5.8
+    59 Gargoyle                      1    21348    50.8%     +6.4    17.1%    3.6
+    56 Collector                     7     6437    53.4%     +6.0    40.8%    7.9
+     1 Black Rabbitlings             1    10164    54.1%     +5.8    15.8%    4.2
+    92 Unitslinger                   3    13011    48.9%     +5.7     9.9%    4.6
+
+Weakest by dSeen:
+  id   name                       cost games    WR       dSeen pp dead     rnd
+    54 Thor                          4    16541    48.3%    -10.8    10.7%    5.4
+    57 The Pale                      3    13886    46.0%    -10.4    24.0%    5.2
+    16 HellFire                      4    17573    49.2%     -9.1    19.3%    5.8
+    93 Dual Wield                    2    16673    47.1%     -8.7    19.0%    4.9
+    78 Acolyte                       1    13014    45.6%     -8.6    17.1%    3.6
+    39 Regifter                      2    12011    45.2%     -6.6    15.7%    4.4
+     3 Bone Baronet                  1    16635    50.2%     -6.5    17.3%    3.7
+    19 Lunch                         2    15819    48.8%     -6.1    21.0%    5.3
+    86 Disintergrade                 2    12072    46.7%     -6.0    62.0%    6.4
+    96 Broken Record                 4    13899    45.2%     -6.0    12.5%    5.2
+    18 Final Mission                 1    18534    49.3%     -5.8    21.7%    5.1
+    99 Exhume                        3    12875    48.7%     -5.7    30.8%    5.8
+    31 Silence                       1    18170    49.1%     -5.6     9.3%    4.6
+    11 The Creature                  8    17667    48.6%     -5.4    54.0%    8.1
+    95 One-Punch Man                 4    14788    51.2%     -5.1    12.4%    5.2
+
+Highest dead-card rate (drawn but never played):
+  id   name                       cost games    WR       dSeen pp dead     rnd
+    47 Rustler                      10    16554    49.8%     -0.4    64.9%    7.8
+    60 Wyvern                        8    13734    49.4%     -1.0    64.8%    8.3
+    86 Disintergrade                 2    12072    46.7%     -6.0    62.0%    6.4
+    53 The Curtain Call              7    17683    55.6%     +7.0    56.5%    7.5
+    11 The Creature                  8    17667    48.6%     -5.4    54.0%    8.1
+     9 Corpse Eater                  4    15539    51.6%     -2.7    45.7%    5.4
+    56 Collector                     7     6437    53.4%     +6.0    40.8%    7.9
+    99 Exhume                        3    12875    48.7%     -5.7    30.8%    5.8
+    57 The Pale                      3    13886    46.0%    -10.4    24.0%    5.2
+    55 ZaUm                          6     9267    55.8%     -1.3    22.1%    6.4
+
+Highest mulligan rate:
+  id   name                       cost games    WR       dSeen pp dead     rnd
+     6 The Jersey Demon              5    14773    50.8%     +6.9   100.0%    5.8
+     9 Corpse Eater                  4    15539    51.6%     -2.7   100.0%    5.4
+    11 The Creature                  8    17667    48.6%     -5.4   100.0%    8.1
+    14 Survivalist                   4    18471    51.9%     +1.1   100.0%    5.1
+    16 HellFire                      4    17573    49.2%     -9.1   100.0%    5.8
+    17 Magician                      4    21316    51.5%     +7.0   100.0%    5.5
+    20 Genie                         4    12895    52.1%     +8.8   100.0%    5.6
+    21 Juggernaut                    4    16731    53.7%     +9.1   100.0%    5.3
+    23 FireAxe Man                   4    15588    50.6%     +5.5   100.0%    5.3
+    24 Gerard from Rivia             5    13660    48.9%     +1.7   100.0%    5.8
+
+Never played although drawn (>=50 draws):
+  none
+
+Per-cost average of dSeen (pp):  1: -0.2 (26 cards)   2: -0.7 (30 cards)   3: 1.0 (17 cards)   4: 0.1 (14 cards)   5: 7.5 (6 cards)   6: -1.7 (2 cards)   7+: 1.2 (5 cards)
+
+Premade decks:
+  RaceAggro          WR 80.0% over 857 games
+  TeaMaidCombo       WR 57.5% over 894 games
+  CollectorSpam      WR 53.1% over 893 games
+  MachineAggro       WR 38.5% over 892 games
+  TheRitual          WR 35.8% over 932 games
+Best / worst deck in the pool: RaceAggro 80.0% / rnd055 33.1%
+
+Top synergies (pairs with >=150 shared deck-games, see synergy.csv):
+  QuickDraw Gun Man + Trapper: lift 29.9pp (z 17.5, 857 games)
+  Lunch + Shapeshifter: lift 17.7pp (z 15.5, 1927 games)
+  QuickDraw Gun Man + Maid Mask: lift 25.7pp (z 15.0, 857 games)
+  SharkCannon + Trapper: lift 23.7pp (z 13.8, 857 games)
+  Survivalist + Trapper: lift 15.9pp (z 13.4, 1784 games)
+  Cardweaver + Double Tap: lift 12.4pp (z 13.1, 2801 games)
+  Death + Alpha Wolf: lift 12.3pp (z 13.1, 2831 games)
+  Bone Baronet + Magician: lift 12.5pp (z 13.0, 2720 games)
+Worst pairings:
+  Death + ZaUm: lift -11.6pp (z -12.3, 2788 games)
+  Cardweaver + Investor: lift -11.1pp (z -11.7, 2800 games)
+  Blighteinstein + Black Hound: lift -8.4pp (z -11.5, 4683 games)
+  Maid Mask + The Pale: lift -8.4pp (z -11.4, 4638 games)
+  Magic Touch + The Curtain Call: lift -18.7pp (z -11.4, 923 games)
+
+Files: cards.csv (one row per card), decks.csv, synergy.csv
+
+NOTE: decks in the pool are random/premade and the pilot is a bot - treat every number as a signal to look at, not a verdict.
+
+=== SWAP EXPERIMENT ===
+Each game: a random pool deck had ONE random card replaced by the card below, then played a random opponent. effect = win rate minus what that deck normally wins,
+compared with the average replacement card (so 0 = an average card, +5pp = adds five points of win rate when swapped in).  3000 games per card requested, 300000 played.
+
+Strongest:
+  2    BoomBot                    cost 1  +4.0pp  (95% CI 2.2 .. 5.7)  3000 games STRONG
+  20   Genie                      cost 4  +3.1pp  (95% CI 1.3 .. 4.8)  3000 games STRONG
+  41   Pegasus                    cost 3  +3.0pp  (95% CI 1.3 .. 4.8)  3000 games STRONG
+  30   SharkCannon                cost 5  +3.0pp  (95% CI 1.3 .. 4.8)  3000 games STRONG
+  87   Attentive Parent           cost 3  +3.0pp  (95% CI 1.3 .. 4.8)  3000 games STRONG
+  51   Trapper                    cost 2  +2.9pp  (95% CI 1.1 .. 4.7)  3000 games STRONG
+  92   Unitslinger                cost 3  +2.7pp  (95% CI 0.9 .. 4.5)  3000 games STRONG
+  69   Evo Neighbour              cost 5  +2.7pp  (95% CI 0.9 .. 4.4)  3000 games 
+  29   Blighteinstein             cost 5  +2.6pp  (95% CI 0.8 .. 4.3)  3000 games 
+  82   Mindstrucker               cost 2  +2.4pp  (95% CI 0.6 .. 4.1)  3000 games 
+  44   Area Drone                 cost 1  +2.3pp  (95% CI 0.6 .. 4.1)  3000 games 
+  81   Double Tap                 cost 2  +2.1pp  (95% CI 0.3 .. 3.9)  3000 games 
+  34   Maid Mask                  cost 2  +2.0pp  (95% CI 0.3 .. 3.8)  3000 games 
+  36   Death                      cost 5  +2.0pp  (95% CI 0.2 .. 3.8)  3000 games 
+  37   Archer                     cost 2  +2.0pp  (95% CI 0.2 .. 3.7)  3000 games 
+
+Weakest:
+  93   Dual Wield                 cost 2  -4.1pp  (95% CI -5.9 .. -2.4)  3000 games WEAK
+  57   The Pale                   cost 3  -4.0pp  (95% CI -5.8 .. -2.3)  3000 games WEAK
+  78   Acolyte                    cost 1  -3.8pp  (95% CI -5.5 .. -2.0)  3000 games WEAK
+  96   Broken Record              cost 4  -3.4pp  (95% CI -5.2 .. -1.7)  3000 games WEAK
+  31   Silence                    cost 1  -3.4pp  (95% CI -5.2 .. -1.7)  3000 games WEAK
+  42   Mechanic                   cost 2  -3.2pp  (95% CI -5.0 .. -1.5)  3000 games WEAK
+  85   Stunning Blow              cost 2  -2.6pp  (95% CI -4.4 .. -0.9)  3000 games 
+  86   Disintergrade              cost 2  -2.5pp  (95% CI -4.2 .. -0.7)  3000 games 
+  79   Shapeshifter               cost 2  -2.4pp  (95% CI -4.1 .. -0.6)  3000 games 
+  97   Cyborg                     cost 2  -2.3pp  (95% CI -4.1 .. -0.6)  3000 games 
+  46   Tea Maid                   cost 3  -2.3pp  (95% CI -4.1 .. -0.5)  3000 games 
+  4    Scout                      cost 1  -2.2pp  (95% CI -4.0 .. -0.5)  3000 games 
+  54   Thor                       cost 4  -2.1pp  (95% CI -3.9 .. -0.4)  3000 games 
+  90   Evolution                  cost 1  -2.1pp  (95% CI -3.8 .. -0.3)  3000 games 
+  83   Magpie                     cost 2  -2.1pp  (95% CI -3.8 .. -0.3)  3000 games 
+
+Flagged STRONG/WEAK (|z|>=3 and |effect|>=1.5pp): 13 cards. Full list: swap.csv
+

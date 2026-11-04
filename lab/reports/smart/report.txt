@@ -1,0 +1,107 @@
+RE:Joltance balance report   2026-11-03T07:46:54.080Z
+bot=smart  seed=1  decks in pool=65  mode=field
+run time 265s
+
+=== FIELD GAMES ===
+games played: 8000 (0 abandoned)   first player wins: 50.6% (95% CI 49.5% - 51.7%)
+median game length: 8 rounds   rounds histogram: 4:102 5:605 6:1407 7:1705 8:1525 9:1215 10:678 11:361 12:184 13:88 14:61 15:32 16:16 17:9 18:4 19:2 20:4 23:2
+average hero HP left at the end (both heroes summed): 8.2
+
+Cards with at least 150 deck-games (100 of 100).  WR = win rate of decks containing it. dSeen = win rate when the card was drawn/played
+minus win rate when it never showed up (same decks) in percentage points - the fairer power signal, because WR alone depends on which decks the card ended up in.
+
+Strongest by dSeen:
+  id   name                       cost games    WR       dSeen pp dead     rnd
+    56 Collector                     7     1750    58.9%    +11.6    33.8%    8.2
+    53 The Curtain Call              7     4683    54.0%    +11.0    44.8%    7.9
+    87 Attentive Parent              3     4226    49.7%    +10.1    10.4%    4.4
+    45 Dagger Throw                  1     4970    52.4%     +9.6    12.3%    4.7
+    58 Excision Conjucture           2     5641    52.3%     +9.4    15.4%    5.2
+    69 Evo Neighbour                 5     3728    50.8%     +9.1    17.2%    6.1
+    41 Pegasus                       3     4899    52.1%     +9.0    11.1%    4.8
+    34 Maid Mask                     2     4992    54.5%     +8.9    11.8%    4.3
+     6 The Jersey Demon              5     4043    52.6%     +8.5    20.7%    6.1
+    30 SharkCannon                   5     2656    54.2%     +8.2    30.5%    6.6
+     7 Glock-17                      2     4753    54.8%     +7.6    17.5%    5.4
+    20 Genie                         4     3429    51.9%     +6.5     7.3%    5.6
+    21 Juggernaut                    4     4387    51.7%     +6.1    16.0%    5.5
+    81 Double Tap                    2     3199    48.0%     +5.5    12.5%    4.0
+    59 Gargoyle                      1     5688    48.5%     +5.4    12.2%    3.5
+
+Weakest by dSeen:
+  id   name                       cost games    WR       dSeen pp dead     rnd
+    93 Dual Wield                    2     4530    46.9%    -10.4    77.9%    7.0
+    90 Evolution                     1     5129    47.2%     -7.5    25.9%    5.1
+    64 Black Dog                     1     3696    47.8%     -7.5    18.9%    4.3
+    54 Thor                          4     4370    46.8%     -7.3    32.7%    6.4
+    99 Exhume                        3     3461    49.4%     -5.3    35.7%    6.6
+    95 One-Punch Man                 4     4011    48.7%     -5.2    31.9%    6.0
+    79 Shapeshifter                  2     3413    46.6%     -5.0    34.6%    5.5
+    77 Black Widow Spider            1     3203    48.1%     -4.7    19.0%    4.0
+    39 Regifter                      2     3227    46.3%     -4.4     8.3%    4.4
+    65 Ritualist                     2     4225    48.0%     -4.3    20.3%    4.4
+    13 Seek                          1     3697    49.4%     -4.2    20.8%    5.1
+    62 Therapist                     2     3198    45.3%     -4.0    14.4%    4.5
+    12 Black Cat                     1     2959    51.1%     -3.9    16.7%    3.8
+   100 Alpha Wolf                    6     2476    46.7%     -3.7    32.9%    7.0
+    46 Tea Maid                      3     3435    51.5%     -3.6    27.3%    5.6
+
+Highest dead-card rate (drawn but never played):
+  id   name                       cost games    WR       dSeen pp dead     rnd
+     9 Corpse Eater                  4     4176    50.4%     -3.5    87.9%    7.0
+    93 Dual Wield                    2     4530    46.9%    -10.4    77.9%    7.0
+    60 Wyvern                        8     3771    49.0%     +1.2    61.5%    8.5
+    47 Rustler                      10     4468    51.3%     +2.2    55.1%    8.4
+    11 The Creature                  8     4663    48.2%     -3.6    53.6%    8.6
+    57 The Pale                      3     3732    47.8%     -3.6    50.5%    6.6
+    96 Broken Record                 4     3643    45.4%     -1.8    47.1%    6.6
+    53 The Curtain Call              7     4683    54.0%    +11.0    44.8%    7.9
+    16 HellFire                      4     4628    52.1%     +0.9    43.0%    6.9
+    86 Disintergrade                 2     3250    48.6%     -1.8    41.7%    6.3
+
+Highest mulligan rate:
+  id   name                       cost games    WR       dSeen pp dead     rnd
+    11 The Creature                  8     4663    48.2%     -3.6   100.0%    8.6
+    47 Rustler                      10     4468    51.3%     +2.2   100.0%    8.4
+    53 The Curtain Call              7     4683    54.0%    +11.0   100.0%    7.9
+    55 ZaUm                          6     2498    54.5%     +0.7   100.0%    6.7
+    56 Collector                     7     1750    58.9%    +11.6   100.0%    8.2
+    60 Wyvern                        8     3771    49.0%     +1.2   100.0%    8.5
+   100 Alpha Wolf                    6     2476    46.7%     -3.7   100.0%    7.0
+    95 One-Punch Man                 4     4011    48.7%     -5.2    39.6%    6.0
+    21 Juggernaut                    4     4387    51.7%     +6.1    38.0%    5.5
+    68 Angel Bird                    4     2449    48.4%     +0.0    36.6%    6.0
+
+Never played although drawn (>=50 draws):
+  none
+
+Per-cost average of dSeen (pp):  1: 0.1 (26 cards)   2: 0.4 (30 cards)   3: 1.1 (17 cards)   4: 0.5 (14 cards)   5: 4.8 (6 cards)   6: -1.5 (2 cards)   7+: 4.5 (5 cards)
+
+Premade decks:
+  TeaMaidCombo       WR 77.4% over 252 games
+  RaceAggro          WR 76.1% over 238 games
+  CollectorSpam      WR 74.8% over 238 games
+  TheRitual          WR 50.0% over 248 games
+  MachineAggro       WR 35.6% over 222 games
+Best / worst deck in the pool: TeaMaidCombo 77.4% / rnd055 32.6%
+
+Top synergies (pairs with >=100 shared deck-games, see synergy.csv):
+  QuickDraw Gun Man + Trapper: lift 29.6pp (z 9.1, 238 games)
+  Bone Baronet + Magician: lift 16.2pp (z 8.7, 712 games)
+  Dagger Throw + Excision Conjucture: lift 9.9pp (z 7.6, 1467 games)
+  QuickDraw Gun Man + Maid Mask: lift 23.8pp (z 7.3, 238 games)
+  Tea Maid + Magic Touch: lift 16.8pp (z 7.3, 472 games)
+  SharkCannon + Trapper: lift 23.1pp (z 7.1, 238 games)
+  Adaptive Unit + Imperial Dropship: lift 10.0pp (z 6.9, 1205 games)
+  Silence + Tea Maid: lift 15.5pp (z 6.7, 472 games)
+Worst pairings:
+  Bounty Hunter + Maid Mask: lift -11.3pp (z -6.2, 757 games)
+  QuickDraw Gun Man + Tea Maid: lift -8.4pp (z -5.8, 1206 games)
+  Occultist + Excision Conjucture: lift -7.0pp (z -5.8, 1699 games)
+  Marked for Death + Titan Head: lift -12.9pp (z -5.7, 487 games)
+  Maid Mask + Therapist: lift -17.2pp (z -5.7, 270 games)
+
+Files: cards.csv (one row per card), decks.csv, synergy.csv
+
+NOTE: decks in the pool are random/premade and the pilot is a bot - treat every number as a signal to look at, not a verdict.
+

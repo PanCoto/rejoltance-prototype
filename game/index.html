@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#000000"><meta name="apple-mobile-web-app-capable" content="yes">
+<title>RE:Joltance</title>
+<link rel="stylesheet" href="style.css">
+</head><body>
+<div id="stage">
+ <div class="scr" id="menu">
+  <h1>RE<span>:</span>Joltance</h1>
+  <div class="tiles">
+   <button class="tile" id="tfriend"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M2 2h4v4H2zM1 6h6v4H1zM1 10h2v4H1zM5 10h2v4H5zM10 2h4v4h-4zM9 6h6v4H9zM9 10h2v4H9zM13 10h2v4h-2z"/><path fill="#c4161c" d="M7 7h2v2H7z"/></svg><b>Play with a friend</b><small>1 vs 1 online</small></button>
+   <button class="tile" id="tbot"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M7 0h2v2H7zM3 2h10v8H3zM1 4h2v4H1zM13 4h2v4h-2zM4 11h8v4H4z"/><path fill="#050505" d="M5 5h2v2H5zM9 5h2v2H9zM5 8h6v1H5z"/></svg><b>Play with the bot</b><small>Solo practice</small></button>
+  </div>
+  <div class="mprow"><button id="bopen">Card Collection</button><button id="sopen">Settings</button></div>
+  <p>Each round: the starting player plays Units, then the other player plays Units and Actions, then the starter plays Actions. After that all four lanes fight. Click a card in your hand, then a glowing lane, target, or (for spells without a target) anywhere on the board.</p>
+ </div>
+ <div class="scr" id="bld">
+  <div id="bhead">
+   <button id="bback" class="ghost">&lsaquo; Back</button>
+   <h2 id="btitle">Card Collection</h2>
+   <div id="btabs"><button data-tab="cards">Cards</button><button data-tab="decks">Decks</button></div>
+  </div>
+  <div class="bpane" id="pcards"><div class="bfilt" id="fcards"></div><div class="bgrid" id="gcards"></div></div>
+  <div class="bpane" id="pdecks">
+   <div id="dtop"><div id="dsum"></div><button id="dimp" class="ghost">Import code</button><button id="dnew" class="pri">+ New deck</button></div>
+   <div id="dgrid"></div>
+  </div>
+  <div class="bpane" id="pedit">
+   <div id="eside">
+    <div id="eh"><div id="eicon"><img id="eimg" alt="" draggable="false"><i id="eq">?</i></div>
+     <div id="enm"><input id="bn" placeholder="Deck name" maxlength="24" autocomplete="off" spellcheck="false">
+      <div id="est"><b id="bc">0/30</b><span id="bstat"></span></div></div></div>
+    <button id="bdef" type="button" title="The default deck is pre-selected when you start a game"></button>
+    <div id="ecurve"></div>
+    <div id="bd"></div>
+    <div id="bi"></div>
+    <div id="ebtn"><button id="bsave" class="pri">Save deck</button><button id="bexp">Export</button><button id="bimp">Import</button><button id="bclr">Clear</button></div>
+   </div>
+   <div id="emain"><div class="bfilt" id="fedit"></div><div class="bgrid" id="gedit"></div></div>
+  </div>
+  <div id="btoast"></div>
+  <div id="bmodal"><div class="mbox"><h3 id="mtitle"></h3><p id="mtext"></p><textarea id="mta" spellcheck="false" autocomplete="off"></textarea><div id="mbtns"></div></div></div>
+ </div>
+ <div class="scr" id="game">
+  <div id="hdr"><button id="sur">Surrender</button><div id="phase"></div>
+   <button class="mini" id="hs" title="Log (L)">Log</button><button class="mini" id="mu" title="Settings"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M7 0h2v2.2l1.7.7 1.6-1.5 1.4 1.4-1.5 1.6.7 1.7H15v2h-2.2l-.7 1.7 1.5 1.6-1.4 1.4-1.6-1.5-1.7.7V16H7v-2.2l-1.7-.7-1.6 1.5-1.4-1.4 1.5-1.6-.7-1.7H1V7h2.2l.7-1.7-1.5-1.6 1.4-1.4 1.6 1.5 1.7-.7z"/><circle cx="8" cy="8" r="2.4" fill="#000"/></svg></button><div id="round"></div></div>
+  <div id="strip"></div>
+  <i class="vl" style="left:383px"></i><i class="vl" style="left:658px"></i><i class="vl" style="left:676px"></i><i class="vl" style="left:948px"></i><i class="vl" style="left:966px"></i><i class="vl" style="left:1238px"></i><i class="vl" style="left:1260px"></i><i class="vl" style="left:1533px"></i>
+  <div id="pile"></div><div class="cnt" id="pc"></div>
+  <div id="deckb"></div><div class="cnt" id="dc"></div>
+  <div id="board"><div id="castlbl"></div></div><div id="fx"></div>
+  <div class="hero" id="ehero"><canvas class="ring" width="60" height="60"></canvas><div class="hpn" id="ehp"></div></div>
+  <div class="nbar" id="enb"></div><div class="dots" id="edots"></div><div class="cn" id="ecn"></div>
+  <button id="end">End Turn</button>
+  <div class="hero" id="phero"><canvas class="ring" width="60" height="60"></canvas><div class="hpn" id="php"></div></div>
+  <div class="nbar" id="pnb"></div><div class="dots" id="pdots"></div><div class="cn" id="pcn"></div>
+  <div id="arc"></div><div id="hand"></div>
+  <div id="msg"></div>
+ </div>
+ <div id="zoom"></div>
+<div class="ovl bk" id="frmenu"><div class="panel"><h2>Play with a friend</h2><div class="sub">1 vs 1 online - no account needed</div>
+  <div class="btns"><button class="opt" id="mhost"><b>Host Online</b><small>Create a room and share the code</small></button><button class="opt" id="mjoin"><b>Join Online</b><small>Enter your friend's room code</small></button></div>
+  <div class="btns"><button id="frback">Back</button></div></div></div>
+ <div class="ovl bk" id="botmenu"><div class="panel wide"><h2>Play with the bot</h2><div class="sub" id="botdiff"></div>
+  <select id="d0" hidden></select><select id="d1" hidden></select>
+  <div class="pkcols">
+   <section class="pkcol"><div class="pkh"><label>Your deck</label><span class="pkcur" id="pkn0"></span></div><div class="pkgrid" id="pk0"></div></section>
+   <section class="pkcol"><div class="pkh"><label>Bot's deck</label><span class="pkcur" id="pkn1"></span></div><div class="pkgrid" id="pk1"></div></section>
+  </div>
+  <div class="pkhint">Tip: set a default deck in Card Collection &rsaquo; Decks and it is pre-selected here.</div>
+  <div class="btns"><button id="go">Start</button><button id="botback">Back</button></div></div></div>
+ <div class="ovl bk" id="setmenu"><div class="panel"><h2>Settings</h2>
+  <div class="srow" id="prow"><label>Display name</label><input type="text" id="pname" maxlength="16" placeholder="Playerzacy" autocomplete="off" spellcheck="false"></div>
+  <div class="srow"><label>Bot difficulty</label><select id="bot"><option value="smart">Smart (harder)</option><option value="basic">Basic (easier)</option></select></div>
+  <div class="srow"><label>Font</label><select id="fnt"><option value="pix">Pixelify Sans (pixel)</option><option value="dot">DotGothic16 (pixel)</option><option value="jer">Jersey 15 (pixel)</option><option value="sil">Silkscreen (pixel)</option><option value="cin">Cinzel + Alegreya (serif)</option></select></div>
+  <div class="srow"><label>Sound effects</label><input type="range" id="sfxv" min="0" max="100" step="5"><b id="sfxn"></b></div>
+  <div class="srow"><label>Music</label><input type="range" id="musv" min="0" max="100" step="5"><b id="musn"></b></div>
+  <div class="btns"><button id="setclose">Close</button></div></div></div>
+ <div class="ovl bk" id="lobby"><div class="panel"><h2 id="lt"></h2><div id="lcode"></div><input id="lin" maxlength="5" placeholder="ROOM CODE" autocomplete="off" spellcheck="false">
+  <div id="ldrow"><div class="pkh"><label>Your deck</label><span class="pkcur" id="pknl"></span></div><div class="pkgrid row" id="pkl"></div></div><div id="ls"></div>
+  <div style="display:flex;gap:30px"><button id="lgo">Join</button><button id="lcopy">Copy invite link</button><button id="lcancel">Cancel</button></div></div></div>
+ <div class="ovl" id="mul"><h2 id="mt">Mulligan - click cards to replace</h2><div id="mh"></div><button id="mok">Confirm</button><div id="mpr" style="display:none;gap:40px"><button id="mfirst">Go first</button><button id="msecond">Go second</button></div></div>
+ <div class="ovl" id="hist"></div>
+ <div class="ovl" id="modal"><h2>Surrender?</h2><div style="display:flex;gap:30px"><button id="myes">Yes</button><button id="mno">No</button></div></div>
+ <div class="ovl" id="ov"><div id="ovt"></div><div id="ovdk"></div><div style="display:flex;gap:30px"><button id="ovr">Rematch</button><button id="ovd">Change deck</button><button id="ovb">Menu</button></div></div>
+ <div class="ovl bk" id="dkpick"><div class="panel wide"><h2>Choose your deck</h2><div class="sub">Used for the next game</div>
+  <div class="pkgrid big" id="pk2"></div>
+  <div class="btns"><button id="dkok">Use this deck</button><button id="dkcancel">Back</button></div></div></div>
+</div>
+<div id="rot">Please rotate your device to landscape (this game is designed for a wide screen).</div>
+<audio id="au" src="audio/music.mp3" loop></audio>
+<script src="cards.js"></script><script src="live-config.js"></script><script src="cards-live.js"></script><script src="img-index.js"></script><script src="engine.js"></script><script src="bot.js"></script><script src="sfx.js"></script><script src="music.js"></script><script src="ui.js"></script><script src="peerjs.min.js"></script><script src="net.js"></script><script src="menu.js"></script>
+</body></html>
