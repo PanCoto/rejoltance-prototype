@@ -19,7 +19,7 @@ function snap(G){
   deck:own?shuf(p.deck.map(cp)):p.deck.map(hid),
   disc:p.disc.map(cp),ln:p.ln.map(uc)});
  return JSON.parse(JSON.stringify({turn:G.turn,step:G.step,allow:G.allow,act:G.act==null?null:1-G.act,start:1-G.start,
-  over:G.over?{win:1-G.over.win,sur:G.over.sur,left:G.over.left}:null,
+  over:G.over?{win:G.over.draw?-1:1-G.over.win,draw:G.over.draw,sur:G.over.sur,left:G.over.left}:null,
   log:G.log.slice(-60).map(flipLog),hist:G.hist.slice(-80).map(h=>({p:1-h.p,t:h.t,id:h.id,tg:h.tg})),
   p:[side(G.p[1],1),side(G.p[0],0)]}))}
 function unsnap(s,ev){s.p.forEach(p=>p.ln.forEach(u=>{if(u){u.kw=new Set(u.kw);u.d=CD[u.id]}}));s.ev=ev||[];s.q=null;return s}
@@ -110,7 +110,7 @@ async function hostHandle(m){
   const d=CD[c.id],sp=d.Type=='Spell';
   const pk=(m.pk||[]).map(o=>o&&o.h!=null?H(1-o.h):o?resolvePick(G,p,null,o):undefined);
   busy=true;
-  await flyCard(c.id,heroFrom(),sp?centerRect():slotRect(1,ln),{out:sp,dur:sp?480:380,hold:300});
+  await flyCard(c.id,heroFrom(),sp?centerRect():slotRect(1,ln),{out:sp,dur:sp?480:380,hold:300,fc:cost(G,p,c),ba:c.ba});
   if(!G||G.over)break;
   const ok=play(G,p,m.ci,ln==null?null:ln,pk);render();anim();
   netPush(ok?{fly:{id:c.id,sp:sp?1:0,ln,by:1}}:{});break}
@@ -133,7 +133,7 @@ async function guestHandle(m){
   ['lobby','ov','hist','modal'].forEach(k=>$(k).style.display='none');$('ovr').style.display='';$('ovr').textContent='Rematch';
   show('game');say('');render();showMul();startAudio();break;
  case'st':{clearTimeout(NET.syncT);busy=true;
-  if(m.fly&&m.fly.by==0)await flyCard(m.fly.id,heroFrom(),m.fly.sp?centerRect():slotRect(1,m.fly.ln),{out:!!m.fly.sp,dur:m.fly.sp?480:380,hold:300});
+  if(m.fly&&m.fly.by==0)await flyCard(m.fly.id,heroFrom(),m.fly.sp?centerRect():slotRect(1,m.fly.ln),{out:!!m.fly.sp,dur:m.fly.sp?480:380,hold:300,fc:m.fly.fc,ba:m.fly.ba});
   G=unsnap(m.s,m.ev);sel=pend=null;castMode=false;
   if(NET.ao){const f=NET.ao;NET.ao=null;askOrder(f)}
   say(G.over?'':G.turn==0?'Waiting for opponent...':G.step>=3?'Combat!':G.act==1?'Opponent: '+PH[G.allow]+'...':'');

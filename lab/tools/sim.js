@@ -13,6 +13,7 @@ const SZ=1024;
  const rd=f=>fs.readFileSync(path.join(PROJECT,f),'utf8');
  global.window=global;
  vm.runInThisContext(rd('cards.js')+'\n;\n',{filename:'cards.js'});
+ if(fs.existsSync(path.join(PROJECT,'decks.js')))vm.runInThisContext(rd('decks.js')+'\n;\n',{filename:'decks.js'});
  if(A.live){const d=JSON.parse(fs.readFileSync(A.live,'utf8'));
   Object.keys(d.cards||{}).forEach(id=>{const c=CARDS.find(k=>k.Id==id);if(c)Object.assign(c,d.cards[id]);else CARDS.push(Object.assign({Id:+id},d.cards[id]))})}
  if(A.weights){const j=JSON.parse(fs.readFileSync(A.weights,'utf8'));global.BW_OVERRIDE=j.weights||j}

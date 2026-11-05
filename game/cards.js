@@ -98,7 +98,7 @@ const CARDS = [
     Id: 6,
     Name: "The Jersey Demon",
     Type: "Unit",
-    Subtypes: ["Demon", "Aberration"],
+    Subtypes: ["Aberration"],
     Cost: 5,
     Attack: 3,
     Health: 3,
@@ -192,11 +192,14 @@ const CARDS = [
     Attack: 8,
     Health: 8,
     Keywords: ["Unkillable"],
-    Description: "While In Hand: Costs 1 less whenever you sacrifice a unit.",
+    Rule: "persistentGrowth",
+    Description: "While in Deck or Hand: Costs 1 less whenever you sacrifice a unit.",
+    DescriptionClassic: "While In Hand: Costs 1 less whenever you sacrifice a unit.",
     Effects: [
       {
         Trigger: "OnOtherUnitSacrificed",
-        Zone: "Hand",
+        Zone: ["Deck", "Hand"],
+        ZoneClassic: "Hand",
         Actions: [
           { Type: "BuffStats", Target: "Self", Amount: -1 },
         ],
@@ -209,16 +212,16 @@ const CARDS = [
     Name: "Black Cat",
     Type: "Unit",
     Subtypes: ["Animal"],
-    Cost: 1,
-    Attack: 1,
+    Cost: 0,
+    Attack: 0,
     Health: 1,
-    Description: "When Sacrificed: Return it to Your Hand instead. It costs 0 this Turn.",
+    Description: "When Sacrificed: Return it to Your Hand instead.",
     Effects: [
       {
         Trigger: "OnSacrificed",
         Zone: "Board",
         Actions: [
-          { Type: "ReturnToHand", Target: "Self", FreeThisTurn: true },
+          { Type: "ReturnToHand", Target: "Self" },
         ],
       },
     ],
@@ -348,7 +351,7 @@ const CARDS = [
     Id: 20,
     Name: "Genie",
     Type: "Unit",
-    Subtypes: ["Mystical"],
+    Subtypes: ["Human"],
     Cost: 4,
     Attack: 3,
     Health: 4,
@@ -431,8 +434,8 @@ const CARDS = [
     Type: "Unit",
     Subtypes: ["Mercenary", "Human"],
     Cost: 5,
-    Attack: 5,
-    Health: 6,
+    Attack: 6,
+    Health: 4,
     Description: "When an Enemy is Marked: Bonus Attack.",
     Effects: [
       {
@@ -483,8 +486,8 @@ const CARDS = [
     Type: "Unit",
     Subtypes: ["Mercenary", "Human"],
     Cost: 3,
-    Attack: 3,
-    Health: 3,
+    Attack: 1,
+    Health: 4,
     Description: "Before Combat in this lane: Mark an Enemy Unit.",
     Effects: [
       {
@@ -504,7 +507,7 @@ const CARDS = [
     Cost: 3,
     Attack: 2,
     Health: 4,
-    Description: "While in Play: When You draw a Card gain +2 ATK. When is Hurts the Enemy Hero: Draw a Card.",
+    Description: "While in Play: When You draw a Card gain +1 ATK. When is Hurts the Enemy Hero: Draw a Card.",
     Effects: [
       {
         Trigger: "OnDamagedEnemyHero",
@@ -516,7 +519,7 @@ const CARDS = [
       {
         Trigger: "OnFriendlyCardDrawn",
         Actions: [
-          { Type: "BuffStats", Target: "Self", BuffAtk: 2 },
+          { Type: "BuffStats", Target: "Self", BuffAtk: 1 },
         ],
       },
     ],
@@ -566,7 +569,7 @@ const CARDS = [
     Cost: 5,
     Attack: 0,
     Health: 7,
-    Description: "Before Combat here: 5 Dmg to Enemy Hero.",
+    Description: "Before Combat here: 4 Dmg to Enemy Hero.",
     Effects: [
       {
         Trigger: "OnPreCombatLine",
@@ -677,10 +680,20 @@ const CARDS = [
     Attack: 3,
     Health: 3,
     Keywords: ["SoulGuard"],
-    Description: "Whenever a Friendly Unit is Destroyed: Deal 2 damage to the Enemy Hero.",
+    Rule: "hpOneTrigger",
+    Description: "Whenever a Friendly Unit's HP Reaches 1 or is Destroyed: Deal 2 damage to the Enemy Hero.",
+    DescriptionClassic: "Whenever a Friendly Unit is Destroyed: Deal 2 damage to the Enemy Hero.",
     Effects: [
       {
         Trigger: "OnFriendlyUnitDied",
+        Actions: [
+          { Type: "DealDamage", Target: "EnemyHero", Amount: 2 },
+        ],
+      },
+      {
+        // New: also fires when a friendly unit's HP becomes 1 (damage, or a Soul Guard breaking).
+        // Turn off with RULES.hpOneTrigger = false in engine.js.
+        Trigger: "OnFriendlyUnitHpOne",
         Actions: [
           { Type: "DealDamage", Target: "EnemyHero", Amount: 2 },
         ],
@@ -726,7 +739,7 @@ const CARDS = [
     Subtypes: ["Aberration"],
     Cost: 2,
     Attack: 3,
-    Health: 1,
+    Health: 2,
     Description: "When Played: Both Heroes Draw 1. You may Sacrifice a Friendly Unit - if You do, Draw 1 more.",
     Effects: [
       {
@@ -788,15 +801,15 @@ const CARDS = [
     Type: "Unit",
     Subtypes: ["Mercenary", "Human"],
     Cost: 2,
-    Attack: 1,
+    Attack: 2,
     Health: 2,
-    Description: "When Played: If there is a Friendly Machine on the Board gain +2/+2.",
+    Description: "When Played: If there is a Friendly Machine on the Board gain +1/+2.",
     Effects: [
       {
         Trigger: "OnPlayed",
         Condition: { Condition: "HasSubtypeOnBoard", TargetParam: "Machine" },
         Actions: [
-          { Type: "BuffStats", Target: "Self", BuffAtk: 2, BuffHp: 2 },
+          { Type: "BuffStats", Target: "Self", BuffAtk: 1, BuffHp: 2 },
         ],
       },
     ],
@@ -882,7 +895,9 @@ const CARDS = [
     Cost: 10,
     Attack: 6,
     Health: 6,
-    Description: "Costs 1 less for each Spell played. On Played: Bonus Attack.",
+    Rule: "persistentGrowth",
+    Description: "While in Deck or Hand: Costs 1 less for each Spell you play. When Played: Bonus Attack.",
+    DescriptionClassic: "Costs 1 less for each Spell played. On Played: Bonus Attack.",
     Effects: [
       {
         Trigger: "OnPlayed",
@@ -892,7 +907,8 @@ const CARDS = [
       },
       {
         Trigger: "OnFriendlyActionPlayed",
-        Zone: "Hand",
+        Zone: ["Deck", "Hand"],
+        ZoneClassic: "Hand",
         Actions: [
           { Type: "BuffStats", Target: "Self", Amount: -1 },
         ],
@@ -1036,14 +1052,17 @@ const CARDS = [
     Cost: 4,
     Attack: 0,
     Health: 6,
-    Description: "While in Hand: When a Friendly Machine is Destroyed gain +3 ATK.",
+    Rule: "persistentGrowth",
+    Description: "While in Deck or Hand: When a Friendly Machine is Destroyed gain +2 ATK.",
+    DescriptionClassic: "While in Hand: When a Friendly Machine is Destroyed gain +3 ATK.",
     Effects: [
       {
         Trigger: "OnFriendlyUnitDied",
-        Zone: "Hand",
+        Zone: ["Deck", "Hand"],
+        ZoneClassic: "Hand",
         Condition: { Condition: "IsSubtype", TargetParam: "Machine" },
         Actions: [
-          { Type: "BuffStats", Target: "Self", BuffAtk: 3 },
+          { Type: "BuffStats", Target: "Self", BuffAtk: 2 },
         ],
       },
     ],
@@ -1103,7 +1122,7 @@ const CARDS = [
     Id: 58,
     Name: "Excision Conjucture",
     Type: "Spell",
-    Cost: 3,
+    Cost: 4,
     Description: "Give all Enemy Units -2 ATK",
     Effects: [
       {
@@ -1177,7 +1196,7 @@ const CARDS = [
     Subtypes: ["Animal"],
     Cost: 1,
     Attack: 0,
-    Health: 3,
+    Health: 4,
     Description: "When Sacrificed: Gain +2 Blood This Turn.",
     Effects: [
       {
@@ -1501,9 +1520,9 @@ const CARDS = [
     Name: "Undrawn",
     Type: "Unit",
     Subtypes: ["Aberration"],
-    Cost: 1,
+    Cost: 2,
     Attack: 1,
-    Health: 2,
+    Health: 5,
     Description: "While in Play: Each Time an Enemy Hero gains a Card by any means deal 1 Damage to them.",
     Effects: [
       {
@@ -1522,7 +1541,7 @@ const CARDS = [
     Subtypes: ["Animal"],
     Cost: 1,
     Attack: 1,
-    Health: 1,
+    Health: 2,
     Description: "When Played: Give all Other Friendly Animals +1/+1.",
     Effects: [
       {
@@ -1560,7 +1579,7 @@ const CARDS = [
     Type: "Unit",
     Subtypes: ["Animal"],
     Cost: 1,
-    Attack: 1,
+    Attack: 2,
     Health: 1,
     Description: "When Sacrificed: Draw a Card from Your Deck that costs 5 or More.",
     Effects: [
@@ -1658,7 +1677,7 @@ const CARDS = [
     Subtypes: ["Animal"],
     Cost: 2,
     Attack: 2,
-    Health: 3,
+    Health: 2,
     Description: "When Played: Silence an Enemy Unit.",
     Effects: [
       {
@@ -1733,7 +1752,7 @@ const CARDS = [
     Id: 86,
     Name: "Disintergrade",
     Type: "Spell",
-    Cost: 2,
+    Cost: 1,
     Description: "Destroy a Damaged Unit.",
     Effects: [
       {
@@ -1751,14 +1770,14 @@ const CARDS = [
     Type: "Unit",
     Subtypes: ["Aberration"],
     Cost: 3,
-    Attack: 4,
+    Attack: 3,
     Health: 1,
-    Description: "When Played: Summon a Random Aberration that costs 2 or less.",
+    Description: "When Played: Summon a Random Aberration that costs 1 or less.",
     Effects: [
       {
         Trigger: "OnPlayed",
         Actions: [
-          { Type: "MakeAUnit", Filter: { MaxCost: 2, Subtype: "Aberration" } },
+          { Type: "MakeAUnit", Filter: { MaxCost: 1, Subtype: "Aberration" } },
         ],
       },
     ],
@@ -1815,7 +1834,7 @@ const CARDS = [
     Id: 90,
     Name: "Evolution",
     Type: "Spell",
-    Cost: 1,
+    Cost: 0,
     Description: "Give a Friendly Unit Evolving: End of Round: it Transforms into a Random Unit that costs 1 more. Evolving stays on the new Unit.",
     Effects: [
       {
@@ -1908,9 +1927,9 @@ const CARDS = [
     Name: "One-Punch Man",
     Type: "Unit",
     Subtypes: ["Human"],
-    Cost: 3,
-    Attack: 1,
-    Health: 3,
+    Cost: 2,
+    Attack: 2,
+    Health: 2,
     Description: "While in Play: All Friendly Humans have Deadly.",
     Effects: [
       {
@@ -1948,7 +1967,7 @@ const CARDS = [
     Type: "Unit",
     Subtypes: ["Machine"],
     Cost: 2,
-    Attack: 1,
+    Attack: 2,
     Health: 3,
     Description: "While in Play: Adjacent Machines have +1 ATK.",
     Effects: [
@@ -1971,7 +1990,7 @@ const CARDS = [
     Cost: 3,
     Attack: 2,
     Health: 5,
-    Keywords: ["Taunt"],
+    Keywords: ["Taunt", "Armored"],
     Description: "",
   },
 
@@ -2150,181 +2169,4 @@ const CARDS = [
       },
     ],
   },
-];
-const DECKS = [
- {
-  "n": "TheCurtainCallSlow",
-  "c": [
-   2,
-   10,
-   13,
-   15,
-   19,
-   30,
-   30,
-   30,
-   31,
-   41,
-   41,
-   41,
-   42,
-   49,
-   53,
-   58,
-   58,
-   58,
-   59,
-   59,
-   61,
-   61,
-   63,
-   69,
-   72,
-   82,
-   82,
-   85,
-   94,
-   94
-  ]
- },
- {
-  "n": "SharkCannonRush",
-  "c": [
-   2,
-   7,
-   7,
-   9,
-   10,
-   30,
-   30,
-   31,
-   31,
-   34,
-   34,
-   34,
-   41,
-   41,
-   41,
-   42,
-   58,
-   59,
-   59,
-   61,
-   61,
-   61,
-   63,
-   63,
-   63,
-   64,
-   82,
-   82,
-   82,
-   94
-  ]
- },
- {
-  "n": "TheCurtainCallMidrange",
-  "c": [
-   2,
-   9,
-   17,
-   17,
-   19,
-   23,
-   30,
-   34,
-   41,
-   42,
-   44,
-   49,
-   50,
-   53,
-   58,
-   58,
-   58,
-   59,
-   59,
-   61,
-   63,
-   68,
-   78,
-   79,
-   80,
-   82,
-   82,
-   87,
-   87,
-   87
-  ]
- },
- {
-  "n": "EvoNeighbourMidrange",
-  "c": [
-   2,
-   12,
-   14,
-   15,
-   19,
-   30,
-   30,
-   30,
-   31,
-   33,
-   34,
-   41,
-   41,
-   41,
-   43,
-   45,
-   45,
-   50,
-   58,
-   61,
-   61,
-   61,
-   69,
-   80,
-   82,
-   82,
-   85,
-   85,
-   87,
-   94
-  ]
- },
- {
-  "n": "AngelBirdMidrange",
-  "c": [
-   2,
-   2,
-   2,
-   14,
-   15,
-   15,
-   15,
-   18,
-   18,
-   19,
-   19,
-   19,
-   27,
-   43,
-   45,
-   45,
-   50,
-   52,
-   58,
-   59,
-   59,
-   68,
-   68,
-   80,
-   82,
-   87,
-   87,
-   87,
-   94,
-   96
-  ]
- }
 ];

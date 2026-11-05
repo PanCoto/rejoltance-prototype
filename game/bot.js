@@ -32,7 +32,7 @@ function unitVal(u){
 const heroVal=h=>h+Math.max(0,8-h)*BW.low;
 const handVal=c=>{const d=CD[c.id];return(d.Type=='Spell'?BW.hs+BW.hc*d.Cost:BW.hu+BW.hc*d.Cost)+(c.unk?BW.unk:0)};
 function evalG(G,me){
- if(G.over)return G.over.win==me?10000:-10000;
+ if(G.over)return G.over.draw?0:G.over.win==me?10000:-10000;
  const a=G.p[me],b=G.p[1-me];let s=BW.hero*(heroVal(a.hp)-heroVal(b.hp));
  for(let i=0;i<4;i++){const x=a.ln[i],y=b.ln[i];
   if(x){s+=unitVal(x);if(!y)s+=BW.open*x.atk}
@@ -90,7 +90,7 @@ function projectRoll(G,me,reseed){
  const e1=evalG(c,me);
  startRound(c);
  if(!c.over)finishRound(c,true);
- const e2=c.over?(c.over.win==me?3000:-3000):evalG(c,me);
+ const e2=c.over?(c.over.draw?0:c.over.win==me?3000:-3000):evalG(c,me);
  return(e1+BW.lw*e2)/(1+BW.lw)}
 function botSearchLook(G,p,t0,BUDGET,BEAM,DEPTH){
  const me=p.i,orig=Math.random,K=Math.max(1,Math.round(BW.worlds||1)),base=Math.floor(orig()*2147483647);

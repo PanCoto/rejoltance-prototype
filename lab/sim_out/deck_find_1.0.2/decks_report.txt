@@ -1,0 +1,63 @@
+RE:Joltance deck search report
+finished 2026-11-05T02:06:35.452Z  |  12.0 min  |  pilot: Smart (default weights)
+
+Archive: 20 playstyle cells filled. Gauntlet = old premade decks + 12 random decks + the archive's elites. Win rates below are against that gauntlet unless stated.
+
+PROPOSED PREMADE DECKS (5) - chosen from 12 distinct top decks: strong, different playstyles, balanced among themselves
+(each deck has a DECK CODE below: paste it into Import in the deck builder; all codes are also in deck_codes.txt)
+
+EvoNeighbourMidrange3   [mid/units/Human]
+  26 units / 4 spells, avg cost 2.50
+  win rate vs gauntlet 69.8% (95% CI 60.0%-78.1%, 96 games) | vs the 5 old premade decks 47.4% | vs the other proposed decks 47.8%
+  2x Black Rabbitlings (1), 1x BoomBot (1), 2x Scout (1), 1x Silence (1), 1x Area Drone (1), 2x Gargoyle (1), 3x Maid Mask (2), 2x Mechanic (2), 2x Stunning Blow (2), 2x Pegasus (3), 3x Aura (3), 3x Doorman (3), 1x Thor (4), 1x Excision Conjucture (4), 1x The Jersey Demon (5), 1x SharkCannon (5), 2x Evo Neighbour (5)
+  CODE: 2JBRE-4V3BR-PQQGS-9CKQD-CY4GJ-E7D1D-9FA0T-6X9RZ-63XNH-KVXYS-NK
+
+TheCurtainCallSlow   [slow/balanced/Aberration]
+  21 units / 9 spells, avg cost 2.93
+  win rate vs gauntlet 67.0% (95% CI 57.3%-75.4%, 100 games) | vs the 5 old premade decks 54.9% | vs the other proposed decks 53.7%
+  1x Black Rabbitlings (1), 2x Silence (1), 2x Gargoyle (1), 1x Glock-17 (2), 1x Expectancy (2), 3x Maid Mask (2), 1x Shapeshifter (2), 2x Stunning Blow (2), 1x One-Punch Man (2), 2x Pegasus (3), 3x Aura (3), 3x Attentive Parent (3), 1x Doorman (3), 2x Corpse Eater (4), 1x Excision Conjucture (4), 1x The Jersey Demon (5), 1x Evo Neighbour (5), 2x The Curtain Call (8)
+  CODE: TB0VB-12380-HSNM6-JVZTH-SMDSP-0AZAD-46GM9-QNYXG-ABQYT-1T6PR-SBVX
+
+EvoNeighbourMidrange4   [mid/balanced/Mixed]
+  20 units / 10 spells, avg cost 2.20
+  win rate vs gauntlet 65.0% (95% CI 55.3%-73.6%, 100 games) | vs the 5 old premade decks 51.5% | vs the other proposed decks 48.9%
+  1x BoomBot (1), 1x Final Mission (1), 1x Marked for Death (1), 3x Dagger Throw (1), 2x Prototype (1), 1x Black Hound (1), 2x Glock-17 (2), 2x Clockwork Knight (2), 1x Expectancy (2), 1x Lunch (2), 2x Regifter (2), 1x Trapper (2), 3x Mindstrucker (2), 1x Drawing Raptor (3), 1x Pegasus (3), 1x Aura (3), 2x Attentive Parent (3), 1x Genie (4), 1x Excision Conjucture (4), 1x Death (5), 1x Evo Neighbour (5)
+  CODE: B6E38-0Z0AZ-KST6G-TKW9M-TTCAE-40TYX-TNRPD-Y74HR-PQAF5-E1YS1-N7W2D-43H4A-E9K
+
+TheCurtainCallMidrange   [mid/units/Mixed]
+  23 units / 7 spells, avg cost 2.40
+  win rate vs gauntlet 64.9% (95% CI 55.0%-73.7%, 97 games) | vs the 5 old premade decks 59.2% | vs the other proposed decks 52.5%
+  1x BoomBot (1), 2x Silence (1), 1x Inhuman Torch (1), 3x Gargoyle (1), 3x Prototype (1), 1x Black Widow Spider (1), 2x Glock-17 (2), 1x Expectancy (2), 2x Maid Mask (2), 1x Trapper (2), 1x Cardweaver (2), 1x Mindstrucker (2), 3x Pegasus (3), 1x Aura (3), 1x Doorman (3), 2x Corpse Eater (4), 1x Excision Conjucture (4), 2x Evo Neighbour (5), 1x The Curtain Call (8)
+  CODE: XFE9S-3736R-5CFNP-ZG27C-KSVGK-X6ZZJ-TKEQ9-EZWTD-4KK26-NNH22-P6G6A-58
+
+EvoNeighbourMidrange5   [mid/units/Machine]
+  24 units / 6 spells, avg cost 2.27
+  win rate vs gauntlet 64.6% (95% CI 54.8%-73.4%, 99 games) | vs the 5 old premade decks 58.5% | vs the other proposed decks 47.2%
+  3x BoomBot (1), 1x Scout (1), 3x Silence (1), 1x Area Drone (1), 2x Prototype (1), 3x Maid Mask (2), 1x Cathullu Captain (2), 2x Regifter (2), 1x Titan Right Arm (2), 1x Stunning Blow (2), 1x Exhume (2), 3x Pegasus (3), 1x Attentive Parent (3), 3x Doorman (3), 1x HellFire (4), 2x SharkCannon (5), 1x Evo Neighbour (5)
+  CODE: YYRWT-PRZZ8-YPMFS-Z89N3-X19Y2-H26EW-06T53-RJXY5-70RB9-T3SRC-6T
+
+MATCHUPS between the proposed decks (row deck wins this share; 100 games per pair, both seats):
+                             EvoNeighbour TheCurtainCa EvoNeighbour TheCurtainCa EvoNeighbour
+  EvoNeighbourMidrange3                 -        43.4%        47.5%        50.5%        50.0%
+  TheCurtainCallSlow                56.6%            -        55.1%        49.0%        54.2%
+  EvoNeighbourMidrange4             52.5%        44.9%            -        44.9%        53.0%
+  TheCurtainCallMidrange            49.5%        51.0%        55.1%            -        54.2%
+  EvoNeighbourMidrange5             50.0%        45.8%        47.0%        45.8%            -
+
+HOW THE OLD PREMADE DECKS DO against the proposed set (their win rate):
+  SharkCannonMidrange3 44.6%
+  RustlerSlow        45.9%
+  EvoNeighbourMidrange 47.3%
+  RustlerSlow2       40.6%
+  EvoNeighbourMidrange2 50.2%
+
+Other strong candidates that were not chosen (see matrix.csv / archive.csv):
+  [slow/units/Mixed] vs gauntlet 66.3%, vs old premade 53.4%: 1x BoomBot (1), 2x Silence (1), 2x Inhuman Torch (1), 3x Gargoyle (1), 1x Prototype (1), 2x Titan Left Arm (1), 3x Maid Mask (2), 2x Pegasus (3), 1x Attentive Parent (3), 3x Doorman (3), 2x Magician (4), 1x Genie (4), 3x Excision Conjucture (4), 2x The Jersey Demon (5), 1x Gerard from Rivia (5), 1x Rustler (10)
+  [fast/units/Mixed] vs gauntlet 65.3%, vs old premade 51.5%: 1x Black Rabbitlings (1), 1x BoomBot (1), 3x Silence (1), 1x Marked for Death (1), 1x Area Drone (1), 1x Magic Touch (1), 2x Gargoyle (1), 2x Prototype (1), 1x Titan Left Arm (1), 2x Glock-17 (2), 2x Maid Mask (2), 2x Mechanic (2), 1x Mindstrucker (2), 1x Queen of Cards (3), 1x Occultist (3), 3x Pegasus (3), 3x Doorman (3), 2x SharkCannon (5)
+  [slow/units/Human] vs gauntlet 62.2%, vs old premade 43.0%: 2x BoomBot (1), 1x Silence (1), 1x Inhuman Torch (1), 2x Gargoyle (1), 1x Titan Left Arm (1), 1x Butcher of Gluttony (2), 3x Stunning Blow (2), 2x Pegasus (3), 2x Aura (3), 1x Attentive Parent (3), 3x Doorman (3), 1x HellFire (4), 2x Magician (4), 3x Genie (4), 1x Excision Conjucture (4), 1x The Jersey Demon (5), 2x SharkCannon (5), 1x Rustler (10)
+  [fast/units/Animal] vs gauntlet 61.5%, vs old premade 47.4%: 1x BoomBot (1), 1x Silence (1), 2x Inhuman Torch (1), 3x Gargoyle (1), 3x Prototype (1), 3x Morsel (1), 1x Black Widow Spider (1), 1x Glock-17 (2), 1x Clockwork Knight (2), 1x Maid Mask (2), 1x Archer (2), 1x Cardweaver (2), 2x Mindstrucker (2), 1x Magpie (2), 1x Cyborg (2), 2x Pegasus (3), 1x Doorman (3), 1x HellFire (4), 1x Farewell (4), 1x SharkCannon (5), 1x Evo Neighbour (5)
+  [mid/units/Animal] vs gauntlet 61.2%, vs old premade 50.2%: 1x Black Rabbitlings (1), 2x BoomBot (1), 1x Silence (1), 2x Area Drone (1), 2x Gargoyle (1), 1x Prototype (1), 1x Titan Left Arm (1), 3x Glock-17 (2), 3x Maid Mask (2), 2x Mechanic (2), 1x Magpie (2), 3x Stunning Blow (2), 3x Pegasus (3), 2x Aura (3), 2x SharkCannon (5), 1x Evo Neighbour (5)
+  [mid/balanced/Animal] vs gauntlet 56.6%, vs old premade 44.3%: 1x Black Rabbitlings (1), 1x BoomBot (1), 2x Silence (1), 1x Area Drone (1), 1x Magic Touch (1), 3x Gargoyle (1), 1x Black Dog (1), 1x Black Widow Spider (1), 2x Disintergrade (1), 1x Polar Bear (2), 1x Maid Mask (2), 1x Mechanic (2), 1x Ritualist (2), 2x Stunning Blow (2), 3x Pegasus (3), 2x Doorman (3), 1x HellFire (4), 1x Excision Conjucture (4), 1x Titan Head (4), 1x The Jersey Demon (5), 1x SharkCannon (5), 1x Evo Neighbour (5)
+
+CAVEATS: strength is measured by a bot pilot (tuned Smart). Decks relying on combos or setup the bot plays badly are under-rated, human play will differ, and the card pool/costs may change
+after your balance edits - re-run this tool after each change. Treat the output as strong candidates to playtest, not a final answer.

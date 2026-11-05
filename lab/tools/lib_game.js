@@ -5,6 +5,7 @@ exports.loadGame=function(o){
  o=o||{};const project=path.resolve(o.project||path.join(__dirname,'..','..','game')),rd=f=>fs.readFileSync(path.join(project,f),'utf8');
  global.window=global;
  vm.runInThisContext(rd('cards.js')+'\n;\n',{filename:'cards.js'});
+ if(fs.existsSync(path.join(project,'decks.js')))vm.runInThisContext(rd('decks.js')+'\n;\n',{filename:'decks.js'});
  if(o.live){const d=JSON.parse(fs.readFileSync(o.live,'utf8'));
   Object.keys(d.cards||{}).forEach(id=>{const c=CARDS.find(k=>k.Id==id);if(c)Object.assign(c,d.cards[id]);else CARDS.push(Object.assign({Id:+id},d.cards[id]))})}
  let bot=rd('bot.js');

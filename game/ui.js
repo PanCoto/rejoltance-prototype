@@ -43,7 +43,7 @@ const artSrc=id=>MISSING.has(+id)?'img/missing_texture.webp':artFile(id);
 const artErr=(el,id)=>{el.onerror=null;MISSING.add(+id);el.src='img/missing_texture.webp'};
 function cardHTML(x,live,cls,data){
  const d=x.d||CD[x.id],unit=d.Type=='Unit';
- const co=live||!G?d.Cost:cost(G,G.p[0],x),cc=!live&&co<d.Cost?' cd':!live&&co>d.Cost?' cu':'';
+ const co=x.fc!=null?x.fc:live?(x.paid!=null?x.paid:d.Cost):!G?d.Cost:cost(G,G.p[0],x),cc=!live&&co<d.Cost?' cd':!live&&co>d.Cost?' cu':'';
  const atk=live?x.atk:(d.Attack||0)+(x.ba||0),hp=live?x.hp:d.Health;
  const au=atk>(d.Attack||0)?' up':'',hc=live&&hp<x.mx?' dn':(hp>(d.Health||0)?' up':'');
  const ks=live?[...x.kw]:[...(d.Keywords||[]),...(x.unk&&!(d.Keywords||[]).includes('Unkillable')?['Unkillable']:[])];
@@ -81,7 +81,8 @@ const mine=()=>G.act==0&&!busy&&!G.over;
 const ksNow=()=>pend.pre?pend.ks:apicks(G,G.p[0],CD[G.p[0].hand[pend.ci].id],pend.got,pend.ln);
 const kind=()=>pend?ksNow()[pend.got.length]:null;
 function laneEx(){const ex=pend.ln!=null?[pend.ln]:[];ksNow().forEach((k,j)=>{if(k=='L'&&j<pend.got.length&&typeof pend.got[j]=='number')ex.push(pend.got[j])});return ex}
-function validTargets(){const k=kind();return k=='L'?req(G,G.p[0],'L',null,laneEx()):k&&k!='C'&&k!='D'?req(G,G.p[0],k):[]}
+function validTargets(){const k=kind();if(k=='L')return req(G,G.p[0],'L',null,laneEx());if(!k||k=='C'||k=='D')return[];
+ const f=(ksNow().f||[])[pend.got.length]||null;return req(G,G.p[0],k,f)}
 function dots(p){return Array.from({length:10},(_,i)=>`<i class="${i<p.b?'on':i<p.mb?'sp':''}"></i>`).join('')}
 function say(t,cancel){const b=$('msg');if(!t){b.style.display='none';b.innerHTML='';return}b.innerHTML=t+(cancel?' <button data-cancel="1">Cancel</button>':'');b.style.display='block'}
 const cleanName=s=>String(s||'').replace(/[<>&"'`\\]/g,'').replace(/\s+/g,' ').trimStart().slice(0,16);
@@ -186,7 +187,7 @@ function pickCard(title,cards,cb){$('mt').textContent=title;$('mok').style.displ
  $('mh').onclick=e=>{const m=e.target.closest('[data-m]');if(!m)return;$('mul').style.display='none';$('mok').style.display='';cb(cards[+m.dataset.m])};
  $('mul').style.display='flex'}
 const scl=()=>$('stage').getBoundingClientRect().width/1920;
-function flyCard(id,from,to,o){o=o||{};if(o.out)sfx('spellCast');return new Promise(res=>{const f=document.createElement('div');f.className='fly';f.innerHTML=cardHTML({id,uid:0},0);
+function flyCard(id,from,to,o){o=o||{};if(o.out)sfx('spellCast');return new Promise(res=>{const f=document.createElement('div');f.className='fly';f.innerHTML=cardHTML({id,uid:0,fc:o.fc,ba:o.ba||0},0);
  const LW=300,LH=LW*from.height/from.width,s0=from.width/LW,s1=to.width/LW;
  Object.assign(f.style,{left:from.left+'px',top:from.top+'px',width:LW+'px',height:LH+'px'});document.body.appendChild(f);
  const dx=to.left-from.left,dy=to.top-from.top,t0=`translate(0,0) scale(${s0})`,t1=`translate(${dx}px,${dy}px) scale(${s1})`;
@@ -200,7 +201,7 @@ function cancel(){sel=pend=null;castMode=false;say('');render()}
 function mmsg(){const n=pend.multi.length;say(`<b>${CD[G.p[0].hand[pend.ci].id].Name}</b>: click friendly units to sacrifice (+1/+1 each) <button data-mok="1">${n?'Sacrifice '+n:'Sacrifice none'}</button>`,1)}
 function nextPick(){const me=G.p[0],d=CD[me.hand[pend.ci].id],ks=apicks(G,me,d,pend.got,pend.ln);
  if(pend.got.length<ks.length){const k=ks[pend.got.length];
-  if(d.Type=='Unit'&&['e','f','a'].includes(k)){const r=req(G,me,k);if(r.length==1){pend.got.push(r[0]);nextPick();return}}
+  if(d.Type=='Unit'&&['e','f','a'].includes(k)){const r=req(G,me,k,ks.f[pend.got.length]);if(r.length==1){pend.got.push(r[0]);nextPick();return}}
   if(k=='L'){const r=req(G,me,'L',null,laneEx());if(r.length==1){pend.got.push(r[0]);nextPick();return}}
   render();
   if(k=='C'){const e=d.Effects.find(x=>x.ChoiceLabels);say(`<b>${d.Name}</b>: `+e.ChoiceLabels.map((l,i)=>`<button data-ch="${i}" ${choiceOK(G,me,d,i)?'':'disabled'}>${l}</button>`).join(''),1)}
@@ -212,11 +213,11 @@ function nextPick(){const me=G.p[0],d=CD[me.hand[pend.ci].id],ks=apicks(G,me,d,p
 async function doPlay(p){const me=G.p[0],c=me.hand[p.ci],d=CD[c.id];say('');busy=true;
  const el=document.querySelector(`#hand [data-hid="${c.uid}"]`),sp=d.Type=='Spell';
  const from=el?el.getBoundingClientRect():{left:innerWidth/2-60,top:innerHeight-200,width:120,height:170};
- if(el)el.style.visibility='hidden';
- await flyCard(c.id,from,sp?centerRect():slotRect(0,p.ln),{out:sp,dur:sp?480:380,hold:sp?300:0});
+ if(el)el.style.visibility='hidden';const fc=cost(G,me,c);
+ await flyCard(c.id,from,sp?centerRect():slotRect(0,p.ln),{out:sp,dur:sp?480:380,hold:sp?300:0,fc,ba:c.ba});
  if(NET&&!NET.host){netSend({t:'move',ci:p.ci,ln:p.ln,pk:p.got.map(descr)});armSync();return}
  const ok=play(G,me,p.ci,p.ln,p.got);busy=false;render();anim();
- if(NET&&ok)netPush({fly:{id:c.id,sp:sp?1:0,ln:p.ln,by:0}})}
+ if(NET&&ok)netPush({fly:{id:c.id,sp:sp?1:0,ln:p.ln,by:0,fc,ba:c.ba||0}})}
 function begin(ci,ln){pend={ci,ln,got:[]};nextPick()}
 function selectHand(i){const me=G.p[0];pend=null;castMode=false;sel=sel==i?null:i;say('');render();if(sel==null)return;
  const c=me.hand[i],d=CD[c.id];
@@ -257,7 +258,7 @@ function choiceSpot(el,d){const me=G.p[0],ef=(d.Effects||[]).find(x=>x.ChoiceLab
   else if(a.Type=='DrawFromDiscard')node=el.closest('#pile');
   else if(a.Target=='EnemyHero')node=el.closest('#ehero');
   else if(a.Target=='TargetEnemyUnit'){const sl=el.closest('#board .slot');
-   if(sl&&+sl.dataset.r==1){unit=G.p[1].ln[+sl.dataset.i];const k=apicks(G,me,d,[j])[1];if(!unit||!k||!req(G,me,k).includes(unit))unit=null;else node=sl}}
+   if(sl&&+sl.dataset.r==1){unit=G.p[1].ln[+sl.dataset.i];const k=apicks(G,me,d,[j])[1];if(!unit||!k||!req(G,me,k,apicks(G,me,d,[j]).f[1]).includes(unit))unit=null;else node=sl}}
   if(node)return{node,j,unit,ok:choiceOK(G,me,d,j)}}
  return null}
 function dropInfo(el){const me=G.p[0];if(!el||sel==null||!me.hand[sel])return null;
@@ -280,7 +281,7 @@ function dragZones(on){document.querySelectorAll('.dz,.dh').forEach(x=>x.classLi
  ef.Actions.forEach((a,j)=>{if(!choiceOK(G,me,d,j))return;
   if(a.Type=='DrawCard')$('deckb').classList.add('dz');else if(a.Type=='DrawFromDiscard')$('pile').classList.add('dz');
   else if(a.Target=='EnemyHero')ringOf($('ehero')).classList.add('dz');
-  else if(a.Target=='TargetEnemyUnit'){const k=apicks(G,me,d,[j])[1];if(k)req(G,me,k).forEach(u=>{const sl=document.querySelector(`#board .slot[data-r="${u.o}"][data-i="${u.lane}"]`);if(sl)sl.classList.add('dz')})}})}
+  else if(a.Target=='TargetEnemyUnit'){const k=apicks(G,me,d,[j])[1];if(k)req(G,me,k,apicks(G,me,d,[j]).f[1]).forEach(u=>{const sl=document.querySelector(`#board .slot[data-r="${u.o}"][data-i="${u.lane}"]`);if(sl)sl.classList.add('dz')})}})}
 document.addEventListener('pointerdown',e=>{if(e.button!==0||!G||$('game').style.display!='block'||!mine()||(pend&&pend.pre))return;
  const hc=e.target.closest('#hand .hc');if(!hc)return;drag={hc,i:+hc.dataset.h,x:e.clientX,y:e.clientY,on:false}});
 document.addEventListener('pointermove',e=>{if(!drag)return;
@@ -325,7 +326,7 @@ async function flow(){busy=true;const my=gid;
   if(NET){say('Opponent: '+PH[G.allow]+'…');render();netPush();return}
   say('Enemy: '+PH[G.allow]+'…');render();let n=0;
   while(n++<20&&!G.over&&my==gid){await sleep(450);if(my!=gid)return;const m=botPlan(G,G.p[1]);if(!m)break;
-   await flyCard(m.id,heroFrom(),m.sp?centerRect():slotRect(1,m.ln),{out:!!m.sp,dur:m.sp?480:380,hold:300});if(my!=gid)return;
+   const bc=G.p[1].hand[m.ci],fc=bc?cost(G,G.p[1],bc):null;await flyCard(m.id,heroFrom(),m.sp?centerRect():slotRect(1,m.ln),{out:!!m.sp,dur:m.sp?480:380,hold:300,fc,ba:bc&&bc.ba});if(my!=gid)return;
    play(G,G.p[1],m.ci,m.ln,m.pk);render();anim()}
   await sleep(300);if(my!=gid)return;nextStep(G)}
  if(my==gid){render();netPush()}}
@@ -342,7 +343,7 @@ $('pile').onclick=()=>{if(G)viewPile('Your discard pile ('+G.p[0].disc.length+')
 $('deckb').onclick=()=>{if(G)viewPile('Your deck ('+G.p[0].deck.length+') - sorted by cost',G.p[0].deck.slice().sort((a,b)=>cmpC(CD[a.id],CD[b.id])))};
 $('pile').title='Click to view your discard pile';$('deckb').title='Click to view the cards left in your deck';
 function closeMul(){viewing=false;$('mh').style.removeProperty('--cw');$('mul').style.display='none';$('mok').textContent='Confirm';$('mok').onclick=mulOK}
-function finish(){if($('ov').style.display=='flex')return;$('ovd').style.display=$('ovr').style.display=='none'?'none':'';$('ovdk').textContent=ovDeckLabel();$('ovt').textContent=G.over.left?'OPPONENT LEFT':G.over.sur&&G.over.win==1?'SURRENDERED':G.over.win==0?'VICTORY':'DEFEAT';sfx(G.over.left||G.over.win==0?'victory':'defeat',{pitch:0});$('ov').style.display='flex'}
+function finish(){if($('ov').style.display=='flex')return;$('ovd').style.display=$('ovr').style.display=='none'?'none':'';$('ovdk').textContent=ovDeckLabel();$('ovt').textContent=G.over.left?'OPPONENT LEFT':G.over.draw?'DRAW':G.over.sur&&G.over.win==1?'SURRENDERED':G.over.win==0?'VICTORY':'DEFEAT';sfx(G.over.left||(!G.over.draw&&G.over.win==0)?'victory':'defeat',{pitch:0});$('ov').style.display='flex'}
 $('end').onclick=()=>{if(!mine())return;sfx('endTurn');sel=pend=null;castMode=false;say('');
  if(NET&&!NET.host){busy=true;netSend({t:'end'});armSync();return}
  nextStep(G);flow()};

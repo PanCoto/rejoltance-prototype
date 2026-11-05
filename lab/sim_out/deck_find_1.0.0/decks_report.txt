@@ -1,0 +1,60 @@
+RE:Joltance deck search report
+finished 2026-11-05T00:24:32.412Z  |  10.4 min  |  pilot: Smart (default weights)
+
+Archive: 23 playstyle cells filled. Gauntlet = old premade decks + 12 random decks + the archive's elites. Win rates below are against that gauntlet unless stated.
+
+PROPOSED PREMADE DECKS (5) - chosen from 8 distinct top decks: strong, different playstyles, balanced among themselves
+(each deck has a DECK CODE below: paste it into Import in the deck builder; all codes are also in deck_codes.txt)
+
+SharkCannonMidrange   [mid/units/Machine]
+  23 units / 7 spells, avg cost 2.47
+  win rate vs gauntlet 73.0% (95% CI 63.6%-80.7%, 100 games) | vs the 5 old premade decks 56.0% | vs the other proposed decks 53.3%
+  2x BoomBot (1), 2x Silence (1), 2x Gargoyle (1), 1x Prototype (1), 2x Titan Left Arm (1), 1x Glock-17 (2), 1x Lunch (2), 2x Maid Mask (2), 1x Mechanic (2), 1x Cardweaver (2), 1x Mindstrucker (2), 3x Pegasus (3), 3x Excision Conjucture (3), 1x Attentive Parent (3), 1x Unitslinger (3), 1x Doorman (3), 1x Imperial Dropship (4), 1x The Jersey Demon (5), 3x SharkCannon (5)
+  CODE: 4XSEC-4JFZY-8YA68-KTMYQ-WAZDG-FJGY0-XH948-E2NNH-DD05V-3E24X-QBY5T-CN
+
+SharkCannonMidrange2   [mid/balanced/Animal]
+  20 units / 10 spells, avg cost 2.13
+  win rate vs gauntlet 71.0% (95% CI 61.5%-79.0%, 100 games) | vs the 5 old premade decks 57.7% | vs the other proposed decks 47.0%
+  2x Seek (1), 2x Gargoyle (1), 2x Prototype (1), 3x Uncle Menel (1), 1x Acolyte (1), 1x Glock-17 (2), 1x Polar Bear (2), 2x Expectancy (2), 1x Lunch (2), 2x Maid Mask (2), 3x Mindstrucker (2), 1x Stunning Blow (2), 3x Pegasus (3), 3x Excision Conjucture (3), 1x Imperial Dropship (4), 2x SharkCannon (5)
+  CODE: SADQP-F2WEG-Q8HD3-E8K7Z-Y7WY8-K6PKQ-NB4E3-QM7RR-GVKVQ-EV7Y
+
+SharkCannonRush2   [fast/balanced/Animal]
+  18 units / 12 spells, avg cost 2.00
+  win rate vs gauntlet 68.0% (95% CI 58.3%-76.3%, 100 games) | vs the 5 old premade decks 56.3% | vs the other proposed decks 50.7%
+  2x BoomBot (1), 1x Silence (1), 1x Area Drone (1), 2x Dagger Throw (1), 1x Magic Touch (1), 2x Gargoyle (1), 2x Prototype (1), 2x Black Hound (1), 1x Glock-17 (2), 2x Expectancy (2), 1x Lunch (2), 2x Mindstrucker (2), 1x Stunning Blow (2), 3x Pegasus (3), 3x Excision Conjucture (3), 2x Attentive Parent (3), 1x Angel Bird (4), 1x SharkCannon (5)
+  CODE: 0DGNN-FA105-G0TCE-RZ0AH-3EC22-MRZ9M-M1Q9W-S0ZM0-808RY-2XK5C-Q9C9
+
+TheCreatureSlow   [slow/units/Animal]
+  24 units / 6 spells, avg cost 2.90
+  win rate vs gauntlet 67.0% (95% CI 57.3%-75.4%, 100 games) | vs the 5 old premade decks 55.3% | vs the other proposed decks 46.8%
+  1x BoomBot (1), 1x Silence (1), 2x Gargoyle (1), 2x Prototype (1), 1x Uncle Menel (1), 1x Titan Left Arm (1), 1x Polar Bear (2), 1x Expectancy (2), 1x Mindstrucker (2), 1x Magpie (2), 1x Stunning Blow (2), 3x Pegasus (3), 2x Excision Conjucture (3), 1x Unitslinger (3), 1x Doorman (3), 2x Corpse Eater (4), 1x Farewell (4), 2x Imperial Dropship (4), 3x SharkCannon (5), 1x Evo Neighbour (5), 1x The Creature (8)
+  CODE: BTNTG-5W547-VVYDF-ANGFJ-HGG1X-1Z1WA-PCVMP-76M7G-F7HJB-ZR71J-QA11Y-V2RNJ-HFY
+
+WyvernMidrange   [mid/balanced/Aberration]
+  19 units / 11 spells, avg cost 2.30
+  win rate vs gauntlet 66.0% (95% CI 56.3%-74.5%, 100 games) | vs the 5 old premade decks 56.0% | vs the other proposed decks 52.3%
+  3x BoomBot (1), 2x Final Mission (1), 1x Marked for Death (1), 2x Dagger Throw (1), 2x Gargoyle (1), 1x Bloodblob (1), 1x Glock-17 (2), 1x Clockwork Knight (2), 2x Expectancy (2), 1x Lunch (2), 1x Mindstrucker (2), 1x Stunning Blow (2), 2x Drawing Raptor (3), 2x Royal Ghost (3), 1x Excision Conjucture (3), 3x Attentive Parent (3), 1x Corpse Eater (4), 1x Survivalist (4), 1x Angel Bird (4), 1x Wyvern (8)
+  CODE: FC4K6-NG2GJ-C9GE0-3CDYQ-HFHAA-DSQ8N-E3H9Y-ZGNKA-HZ49Y-BDFZA-XB8M4-N1EE0
+
+MATCHUPS between the proposed decks (row deck wins this share; 100 games per pair, both seats):
+                             SharkCannonM SharkCannonM SharkCannonR TheCreatureS WyvernMidran
+  SharkCannonMidrange                   -        51.0%        52.0%        58.0%        52.0%
+  SharkCannonMidrange2              49.0%            -        41.0%        48.0%        50.0%
+  SharkCannonRush2                  48.0%        59.0%            -        49.0%        47.0%
+  TheCreatureSlow                   42.0%        52.0%        51.0%            -        42.0%
+  WyvernMidrange                    48.0%        50.0%        53.0%        58.0%            -
+
+HOW THE OLD PREMADE DECKS DO against the proposed set (their win rate):
+  TheCurtainCallSlow 43.7%
+  SharkCannonRush    47.3%
+  TheCurtainCallMidrange 44.7%
+  EvoNeighbourMidrange 41.0%
+  AngelBirdMidrange  42.0%
+
+Other strong candidates that were not chosen (see matrix.csv / archive.csv):
+  [slow/units/Machine] vs gauntlet 59.0%, vs old premade 45.3%: 2x Area Drone (1), 1x Magic Touch (1), 2x Gargoyle (1), 3x Prototype (1), 1x Uncle Menel (1), 1x Glock-17 (2), 1x Polar Bear (2), 3x Maid Mask (2), 2x Mechanic (2), 2x Mindstrucker (2), 1x Pegasus (3), 1x Tea Maid (3), 2x Excision Conjucture (3), 1x Corpse Eater (4), 1x Magician (4), 1x Imperial Dropship (4), 3x SharkCannon (5), 1x The Curtain Call (8), 1x Wyvern (8)
+  [slow/units/Human] vs gauntlet 59.0%, vs old premade 45.0%: 1x BoomBot (1), 1x Gargoyle (1), 2x Prototype (1), 1x Evolution (1), 1x Bounty Hunter (2), 2x Maid Mask (2), 2x Mechanic (2), 2x Cardweaver (2), 3x Mindstrucker (2), 1x Stunning Blow (2), 3x Occultist (3), 1x Pegasus (3), 1x Excision Conjucture (3), 3x Doorman (3), 1x Imperial Dropship (4), 3x SharkCannon (5), 1x Evo Neighbour (5), 1x The Curtain Call (8)
+  [mid/units/Aberration] vs gauntlet 56.0%, vs old premade 48.0%: 1x BoomBot (1), 1x Area Drone (1), 1x Magic Touch (1), 2x Gargoyle (1), 1x Prototype (1), 1x Uncle Menel (1), 1x Acolyte (1), 1x Lunch (2), 1x Maid Mask (2), 1x Mechanic (2), 1x Shapeshifter (2), 1x Cardweaver (2), 2x Mindstrucker (2), 1x Pegasus (3), 3x Excision Conjucture (3), 3x Attentive Parent (3), 1x Corpse Eater (4), 2x Magician (4), 1x FireAxe Man (4), 1x Farewell (4), 1x Angel Bird (4), 1x SharkCannon (5), 1x The Curtain Call (8)
+
+CAVEATS: strength is measured by a bot pilot (tuned Smart). Decks relying on combos or setup the bot plays badly are under-rated, human play will differ, and the card pool/costs may change
+after your balance edits - re-run this tool after each change. Treat the output as strong candidates to playtest, not a final answer.
