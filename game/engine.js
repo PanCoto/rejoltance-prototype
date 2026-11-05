@@ -24,7 +24,7 @@ const hasSub=(d,s)=>!!d&&(d.Subtypes||[]).some(x=>canon(x)==canon(s));
 const isTok=d=>d.Id>=900||(d.Subtypes||[]).includes('Token');
 function cardOK(d,f){if(!f)return true;
  if(f.Id!=null&&d.Id!=f.Id)return false;if(f.Type&&d.Type!=(f.Type=='Action'?'Spell':f.Type))return false;
- if(f.Subtype&&!hasSub(d,f.Subtype))return false;const cs=d.Cost||0;
+ if(f.Ids&&!f.Ids.includes(d.Id))return false;if(f.Subtype&&!hasSub(d,f.Subtype))return false;const cs=d.Cost||0;
  if(f.Cost!=null&&cs!=f.Cost)return false;if(f.MinCost!=null&&cs<f.MinCost)return false;if(f.MaxCost!=null&&cs>f.MaxCost)return false;
  if(f.Token!=null&&isTok(d)!=!!f.Token)return false;return true}
 const poolOf=f=>Object.values(CD).filter(d=>cardOK(d,f)&&(f&&f.Token!=null?true:!isTok(d)));
@@ -61,7 +61,7 @@ const EV=(G,o)=>G.ev.push(o);
 const kwp=(u,k,df)=>((u.d.KeywordParams||{})[k])||df||1;
 function mk(id,o){const d=CD[id];return{uid:UID++,id,d,o,atk:d.Attack||0,hp:d.Health||0,mx:d.Health||0,kw:new Set(d.Keywords||[]),lane:-1}}
 function newGame(a,b){
- const G={turn:0,over:null,log:[],hist:[],ev:[],step:0,act:0,allow:'U',start:0,fp:R(2),p:[a,b].map((dk,i)=>({i,hp:20,mb:0,b:0,hand:[],disc:[],ln:[null,null,null,null],gb:{a:0,h:0},sp:0,sc:0,
+ const G={turn:0,over:null,log:[],hist:[],ev:[],step:0,act:0,allow:'U',start:0,fp:R(2),p:[a,b].map((dk,i)=>({i,hp:20,mb:0,b:0,hand:[],disc:[],ln:[null,null,null,null],gb:{a:0,h:0},mk:0,sp:0,sc:0,
   deck:shuf(dk.map(id=>({uid:UID++,id})))}))};
  G.p.forEach(p=>{for(let k=0;k<4;k++)draw(G,p,1)});return G}
 function decideStart(G,pa,pb){let f;if(pa!=pb)f=pa=='first'?0:1;else f=R(2);G.fp=f;
@@ -208,10 +208,11 @@ function killAbsorb(G,s,t){if(!s||s.gone||s.hp<=0||!t||G.over)return;
  if(!n||!(t.atk>0))return;s.atk+=t.atk*n;if(!G.sim){EV(G,{k:'fx',t:'buff',a:t.atk*n,hp:0,u:s.uid});EV(G,{k:'snd',n:'buff'})}
  L(G,s.d.Name+' absorbs '+t.atk*n+' ATK from '+t.d.Name)}
 function thru(G,x,n){G.bk=1;try{dmg(G,H(1-x.o),n,x,1)}finally{G.bk=0}}
-function status(G,t,k,s){if(t.h)return;t.kw.add(k);EV(G,{k:'trig',u:t.uid});if(!G.sim)EV(G,{k:'fx',t:'st',s:k,u:t.uid});EV(G,{k:'snd',n:k=='Marked'?'mark':k=='Stunned'?'stun':k=='Burning'?'burn':'buff'});
+function status(G,t,k,s){if(t.h)return;
+ if(k=='Marked'&&t.kw.has('Marked')){if(s&&s.o!=null&&G.p[s.o]&&G.p[s.o].mk&&t.hp>0){L(G,t.d.Name+' was marked twice and is destroyed');t.hp=0}return}t.kw.add(k);EV(G,{k:'trig',u:t.uid});if(!G.sim)EV(G,{k:'fx',t:'st',s:k,u:t.uid});EV(G,{k:'snd',n:k=='Marked'?'mark':k=='Stunned'?'stun':k=='Burning'?'burn':'buff'});
  G.p.forEach(p=>p.ln.slice().forEach(u=>u&&u!==t&&fire(G,'OnStatusApplied',u,{t,u:t,st:k})))}
 function act(G,a,s,c){
- c=c||{};a=ra(G,a,s,c);
+ c=c||{};a=ra(G,a,s,c); if(a.Condition&&!cond(a.Condition,s,{},G))return;
  if((a.OnlyIfSacrificed&&!c.sacd)||(a.OnlyIfNoSacrifice&&c.sacd))return;
  const T=a.Type,me=G.p[s.o],ts=tg(G,a,s,c);
  const unitsOnly=ts.filter(x=>!x.h);
@@ -229,7 +230,7 @@ function act(G,a,s,c){
  case'Heal':if(ts.length)EV(G,{k:'snd',n:'heal'});ts.forEach(t=>{if(t.h)G.p[t.p].hp=Math.min(20,G.p[t.p].hp+a.Amount);else t.hp=Math.min(t.mx,t.hp+a.Amount)});break;
  case'HealToFull':if(unitsOnly.length)EV(G,{k:'snd',n:'heal'});unitsOnly.forEach(t=>t.hp=t.mx);break;
  case'DrawCard':{if((a.OnlyIfNoSacrifice&&c.sacd)||(a.OnlyIfSacrificed&&!c.sacd))break;
-  const one=pl=>{if(!a.Filter){draw(G,pl);return}const ix=pl.deck.findIndex(x=>cardOK(CD[x.id],a.Filter));if(ix>=0)draw(G,pl,0,ix)};
+  const one=pl=>{if(!a.Filter){draw(G,pl);return}const ix=pl.deck.findIndex(x=>cardOK(CD[x.id],a.Filter)&&!(a.Filter.NotOnBoard&&pl.ln.some(u=>u&&u.id==x.id)));if(ix>=0)draw(G,pl,0,ix)};
   ts.forEach(t=>{for(let i=0;i<(a.Amount||1);i++)one(G.p[t.p!=null?t.p:s.o])});if(!ts.length)one(me);break}
  case'BuffStats':if(a.Amount!=null)break;if(unitsOnly.length)EV(G,{k:'snd',n:(a.BuffAtk||0)<0||(a.BuffHp||0)<0?'debuff':'buff'});unitsOnly.forEach(t=>{t.atk+=a.BuffAtk||0;t.hp+=a.BuffHp||0;t.mx+=a.BuffHp||0;if(t.atk<0)t.atk=0});break;
  case'ApplyStatus':unitsOnly.forEach(t=>status(G,t,a.StatusKeyword,s));break;
@@ -271,7 +272,7 @@ case'LoseHealth':ts.forEach(t=>{if(t.h)dmg(G,t,a.Amount||1,null,2);else{t.hp-=a.
    const pk=pool[R(pool.length)];me.disc.splice(me.disc.indexOf(pk),1);const nu=mk(pk.id,s.o);place(G,me,nu,i);L(G,nu.d.Name+' rises from the discard');
    if(!c.sm&&!G.over)fire(G,'OnPlayed',nu,{tf:RULES.summonTriggers?0:1,nosac:1,sm:1});
    if(RULES.summonTriggers&&!G.over)announce(G,nu)});break}
- case'MoveRight':{const i=s.lane+1;if(i<4&&!me.ln[i]&&me.ln[s.lane]==s){me.ln[s.lane]=null;place(G,me,s,i)}break}
+ case'MoveRight':{const i=s.lane+1;if(i<4&&!me.ln[i]&&me.ln[s.lane]==s){me.ln[s.lane]=null;place(G,me,s,i);if(a.ThenAttack){const v=G.p[1-s.o].ln[s.lane];if(v&&!v.gone&&v.hp>0&&!!v.kw.has('Flying')===!!s.kw.has('Flying'))strike(G,s)}}break}
  case'SpendBlood':me.b=a.Amount!=null?Math.max(0,me.b-a.Amount):0;break
  case'AddResource':me.b=Math.min(me.b+(a.Amount||1),10);break
  case'Merge':{
@@ -291,6 +292,7 @@ case'LoseHealth':ts.forEach(t=>{if(t.h)dmg(G,t,a.Amount||1,null,2);else{t.hp-=a.
   ts.forEach(t=>{if(t.h||t.gone||t.hp<=0)return;const o=G.p[t.o],dest=s.lane;
    if(dest>=0&&dest!=t.lane&&!o.ln[dest]&&o.ln[t.lane]===t){o.ln[t.lane]=null;place(G,o,t,dest);L(G,t.d.Name+' is pulled into lane '+(dest+1))}
    else if(a.Else&&a.Else.Amount)dmg(G,t,a.Else.Amount,s,2)});break}
+ case'GrantRule':if(a.Rule){me[a.Rule]=1;L(G,'Marking a Marked unit now destroys it')}break;
  case'PlayNextTwice':me.dw=1;L(G,'Your next action is played twice');break;
   case'ReplayPlayed':{
   if(c.rp)break;const SKIP=['SacrificeUnit','SacrificeUnits','AbsorbStats','Merge','Transform','ReplayPlayed'];

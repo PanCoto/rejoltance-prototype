@@ -267,6 +267,8 @@ body[data-font=cin] .card .nm{letter-spacing:.1cqw}
 body[data-font=cin] .card .st{font-style:italic}
 body[data-font=cin] .card .tx,body[data-font=cin] .card .kwl{line-height:1.1}
 body[data-font=cin] #gl{font-size:21px;line-height:1.25}
+#gl.sm,body[data-font=cin] #gl.sm{font-size:16px;line-height:1.22;padding:6px 10px}
+#gl.sm b{font-size:1em}
 body[data-font=cin] #msg{font-size:31px}
 body[data-font=cin] .hpn{font-size:104px}
 body[data-font=dot]{--fd:Dot,"Courier New",monospace;--fb:Dot,"Courier New",monospace;--fw:.95;--tx:5.6cqw;--kw:6.4cqw}

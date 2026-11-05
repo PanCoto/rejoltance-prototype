@@ -28,7 +28,7 @@ const TERMS=[
  ['After Combat',/\bAfter Combat\b/i,'Triggers once the fight in this lane is over.'],
  ['Silence',/\bSilence\b/i,'Removes keywords, buffs and abilities.'],
  ['Move Right',/\bMove Right\b/i,'Moves one lane right, if free.'],
- ['Exploding Present',/\bExploding Present\b/i,'A copy goes to the opponent\'s hand.'],
+ ['Exploding Damage',/\bExploding (Damage|Present)\b/i,'A copy of this card goes to the opponent\'s hand, costing 1 more.'],
  ['Mark',/\bMark(ed)?\b/i,'Marked'],['Stun',/\bStun(ned)?\b/i,'Stunned'],['Burning',/\bBurning\b/i,'Burning'],
  ['SoulGuard',/Soul ?Guard/i,'SoulGuard'],['Unkillable',/\bUnkillable\b/i,'Unkillable'],['Flying',/\bFlying\b/i,'Flying'],['Armored',/\bArmored\b/i,'Armored'],['Unactionable',/\bUnactionable\b/i,'Unactionable'],['Lifesteal',/\bLifesteal\b/i,'Lifesteal'],['Taunt',/\bTaunt\b/i,'Taunt'],['Deadly',/\bDeadly\b/i,'Deadly'],['Evolving',/\bEvolving\b/i,'Evolving'],
  ['Merge',/\bMerge[sd]?\b/i,'When every piece is on your side they combine into one card, placed in the lane of the piece played last.']];
@@ -53,17 +53,32 @@ function cardHTML(x,live,cls,data){
  return`<div class="card ${cls||''}" ${data||''} data-cid="${x.id}" data-ba="${x.ba||0}" style="--nf:${nf}"><img class="art" src="${artSrc(x.id)}" alt="" draggable="false" onerror="artErr(this,${x.id})"><i class="fr"></i><span class="nm">${d.Name}</span><span class="st">- ${sub} -</span><span class="co${cc}">${ROM(co)}</span>`+
  (unit?`<div class="bx a${au}">${atk}</div><div class="bx h${hc}">${hp}</div>`:'')+
  `<div class="tx">${kl?`<span class="kwl">${kl}</span>`:''}${live&&x.sil?'':`<span>${hl(d.Description)}</span>`}</div></div>`}
-function glossary(x,live,d){const out=[],seen=new Set();
- const addKw=k=>{const key=k=='Armor2'?'Armored':k;if(!KWD[key]||seen.has(key))return;seen.add(key);
-  const n=k=='Armor2'?2:kwNum(d,key)||1;out.push(`<b>${kwLabel(d,k)}</b>: ${KWD[key].replace('{n}',n)}`)};
- (live?[...x.kw]:[...(d.Keywords||[]),...(x.unk?['Unkillable']:[])]).forEach(addKw);
- TERMS.forEach(([n,re,t])=>{if((live&&x.sil)||!re.test(d.Description||''))return;
-  if(KWD[t])addKw(t);else if(!seen.has(n)){seen.add(n);out.push(`<b>${n}</b>: ${t}`)}});
- if(d.Type=='Spell')out.push('<b>Action</b>: cast in the Action phase.');
- return out}
+// Cards a card makes, gives or merges into (Bone Baronet -> The Tempting Goblet, Collector -> The Collection...). Used by the hover glossary.
+function tokenRefs(d){const out=[],seen=new Set();
+ (d.Effects||[]).forEach(e=>(e.Actions||[]).forEach(a=>{const T=TYPEALIAS[a.Type]||a.Type;let id=null,how=null;
+  if((T=='AddCardToHand'||T=='MakeAUnit')&&a.ValueParam!=null){id=a.ValueParam;how=T=='AddCardToHand'?'gain':'summon'}
+  else if(T=='Merge'&&a.Into!=null){id=a.Into;how='merge'}
+  if(id!=null&&id!=d.Id&&CD[id]&&!seen.has(id)){seen.add(id);out.push({id,how,free:!!a.FreeThisTurn})}}));return out}
+function tokBody(r){const t=CD[r.id],unit=t.Type=='Unit',kws=(t.Keywords||[]).map(k=>kwLabel(t,k)).join(', '),st=(t.Attack||0)+'/'+(t.Health||0);
+ let meta=unit?st+(kws?' '+kws:''):'Action';
+ if(r.how=='gain')meta+=', '+(r.free?'free this turn':(t.Cost||0)+' Blood');
+ return`<b>${t.Name}</b> (${meta}): ${t.Description||'No ability.'}`}
+function glossary(x,live,d){const out=[],late=[],seen=new Set();
+ const addKw=(k,dd,to)=>{const key=k=='Armor2'?'Armored':k;if(!KWD[key]||seen.has(key))return;seen.add(key);
+  const n=k=='Armor2'?2:kwNum(dd,key)||1;(to||out).push(`<b>${kwLabel(dd,k)}</b>: ${KWD[key].replace('{n}',n)}`)};
+ const scan=(desc,dd,to)=>TERMS.forEach(([n,re,t])=>{if(!re.test(desc||''))return;
+  if(KWD[t])addKw(t,dd,to);else if(!seen.has(n)){seen.add(n);(to||out).push(`<b>${n}</b>: ${t}`)}});
+ (live?[...x.kw]:[...(d.Keywords||[]),...(x.unk?['Unkillable']:[])]).forEach(k=>addKw(k,d));
+ if(!(live&&x.sil))scan(d.Description,d);
+ // What the card summons / gives: show the abridged text of that card too, so nobody has to guess what "the Tempting Goblet" is.
+ if(!(live&&x.sil)){const refs=tokenRefs(d);
+  if(refs.length>1&&d.TokenGroup)out.push(`<b>${d.TokenGroup}</b>:<br>`+refs.map(r=>'&bull; '+tokBody(r)).join('<br>'));
+  else refs.forEach(r=>out.push(tokBody(r)));
+  refs.forEach(r=>{const t=CD[r.id];(t.Keywords||[]).forEach(k=>addKw(k,t,late));scan(t.Description,t,late)})}
+ return out.concat(late)}
 function showZoom(x,live){const d=x.d||CD[x.id];const gl=glossary(x,live,d).join('<br>');
  const z=$('zoom');z.classList.toggle('zr',$('bld').style.display=='block');
- z.innerHTML=cardHTML(x,live,live&&x.o?'e':'')+(gl?`<div id="gl">${gl}</div>`:'');z.style.display='block'}
+ z.innerHTML=cardHTML(x,live,live&&x.o?'e':'')+(gl?`<div id="gl"${gl.replace(/<[^>]+>/g,'').length>330?' class="sm"':''}>${gl}</div>`:'');z.style.display='block'}
 const hideZoom=()=>{if(!stickyZoom)$('zoom').style.display='none'};
 const findLive=uid=>[...G.p[0].ln,...G.p[1].ln].find(v=>v&&v.uid==uid);
 const CARDSEL='[data-u],[data-c],[data-cid]';
