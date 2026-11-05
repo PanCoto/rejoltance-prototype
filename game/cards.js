@@ -189,11 +189,11 @@ const CARDS = [
     Type: "Unit",
     Subtypes: ["Aberration"],
     Cost: 8,
-    Attack: 8,
-    Health: 8,
+    Attack: 7,
+    Health: 5,
     Keywords: ["Unkillable"],
     Rule: "persistentGrowth",
-    Description: "While in Deck or Hand: Costs 1 less whenever you sacrifice a unit.",
+    Description: "While in Deck or Hand: Costs 2 less whenever you sacrifice a unit.",
     DescriptionClassic: "While In Hand: Costs 1 less whenever you sacrifice a unit.",
     Effects: [
       {
@@ -201,7 +201,7 @@ const CARDS = [
         Zone: ["Deck", "Hand"],
         ZoneClassic: "Hand",
         Actions: [
-          { Type: "BuffStats", Target: "Self", Amount: -1 },
+          { Type: "BuffStats", Target: "Self", Amount: -2 },
         ],
       },
     ],
@@ -414,8 +414,8 @@ const CARDS = [
     Type: "Unit",
     Subtypes: ["Aberration"],
     Cost: 4,
-    Attack: 4,
-    Health: 4,
+    Attack: 3,
+    Health: 5,
     Description: "On Kill: Heal to Full HP and gain +2 HP.",
     Effects: [
       {
@@ -549,7 +549,7 @@ const CARDS = [
     Subtypes: ["Aberration"],
     Cost: 5,
     Attack: 5,
-    Health: 7,
+    Health: 8,
     Description: "On Kill: Move Right.",
     Effects: [
       {
@@ -1049,9 +1049,9 @@ const CARDS = [
     Name: "Thor",
     Type: "Unit",
     Subtypes: ["Machine", "Mercenary"],
-    Cost: 4,
+    Cost: 3,
     Attack: 0,
-    Health: 6,
+    Health: 4,
     Rule: "persistentGrowth",
     Description: "While in Deck or Hand: When a Friendly Machine is Destroyed gain +2 ATK.",
     DescriptionClassic: "While in Hand: When a Friendly Machine is Destroyed gain +3 ATK.",
@@ -1087,7 +1087,7 @@ const CARDS = [
     Type: "Unit",
     Subtypes: ["Funko Pop"],
     Cost: 7,
-    Attack: 2,
+    Attack: 3,
     Health: 7,
     Description: "When Played: Summon The Collection.",
     Effects: [
@@ -1294,7 +1294,7 @@ const CARDS = [
     Subtypes: ["Human"],
     Cost: 5,
     Attack: 3,
-    Health: 5,
+    Health: 4,
     Keywords: ["Breakthrough"],
     Description: "After Combat: This does a Bonus Attack. Whenever this Damages a Unit, Bounce it.",
     Effects: [

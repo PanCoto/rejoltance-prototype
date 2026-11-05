@@ -3,4 +3,5 @@ node_modules/
 lab/tune_out/
 lab/validate_out/
 lab/deck_out/
+lab/sim_out/
 *.csv
