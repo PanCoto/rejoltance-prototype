@@ -188,17 +188,17 @@ const CARDS = [
     Name: "The Creature",
     Type: "Unit",
     Subtypes: ["Animal"],
-    Cost: 8,
+    Cost: 9,
     Attack: 7,
     Health: 7,
     Keywords: ["Unkillable"],
     Rule: "persistentGrowth",
-    Description: "While in Deck or Hand: Costs 1 less whenever you sacrifice a unit.",
+    Description: "While in Deck, Hand or Discard: Costs 1 less whenever you sacrifice a unit.",
     DescriptionClassic: "While In Hand: Costs 1 less whenever you sacrifice a unit.",
     Effects: [
       {
         Trigger: "OnOtherUnitSacrificed",
-        Zone: ["Deck", "Hand"],
+        Zone: ["Deck", "Hand", "Discard"],
         ZoneClassic: "Hand",
         Actions: [
           { Type: "BuffStats", Target: "Self", Amount: -1 },
@@ -618,9 +618,9 @@ const CARDS = [
     Name: "Mouse",
     Type: "Unit",
     Subtypes: ["Machine"],
-    Cost: 4,
-    Attack: 6,
-    Health: 7,
+    Cost: 3,
+    Attack: 5,
+    Health: 6,
     Keywords: ["Stunned"],
     Description: "Whenever this unit damages an enemy: Stun this unit.",
     Effects: [
@@ -896,7 +896,7 @@ const CARDS = [
     Attack: 6,
     Health: 6,
     Rule: "persistentGrowth",
-    Description: "While in Deck or Hand: Costs 1 less for each Spell you play. When Played: Bonus Attack.",
+    Description: "While in Deck, Hand or Discard: Costs 1 less for each Spell you play. When Played: Bonus Attack.",
     DescriptionClassic: "Costs 1 less for each Spell played. On Played: Bonus Attack.",
     Effects: [
       {
@@ -907,7 +907,7 @@ const CARDS = [
       },
       {
         Trigger: "OnFriendlyActionPlayed",
-        Zone: ["Deck", "Hand"],
+        Zone: ["Deck", "Hand", "Discard"],
         ZoneClassic: "Hand",
         Actions: [
           { Type: "BuffStats", Target: "Self", Amount: -1 },
@@ -922,8 +922,8 @@ const CARDS = [
     Type: "Unit",
     Subtypes: ["Animal"],
     Cost: 2,
-    Attack: 1,
-    Health: 3,
+    Attack: 2,
+    Health: 2,
     Description: "Whenever You Sacrifice a Unit: This Unit gains +1/+1. If it was a Human, gain +2/+2 instead.",
     Effects: [
       {
@@ -1054,12 +1054,12 @@ const CARDS = [
     Attack: 0,
     Health: 4,
     Rule: "persistentGrowth",
-    Description: "While in Deck or Hand: When a Friendly Machine is Destroyed gain +1 ATK.",
+    Description: "While in Deck, Hand or Discard: When a Friendly Machine is Destroyed gain +1 ATK.",
     DescriptionClassic: "While in Hand: When a Friendly Machine is Destroyed gain +3 ATK.",
     Effects: [
       {
         Trigger: "OnFriendlyUnitDied",
-        Zone: ["Deck", "Hand"],
+        Zone: ["Deck", "Hand", "Discard"],
         ZoneClassic: "Hand",
         Condition: { Condition: "IsSubtype", TargetParam: "Machine" },
         Actions: [
@@ -1803,7 +1803,7 @@ const CARDS = [
     Cost: 3,
     Attack: 2,
     Health: 3,
-    Description: "When Played: Apply Burning to all Enemy Units. It gains +1 ATK for Each Burning Unit.",
+    Description: "When Played: Apply Burning to all Enemy Units. It gains +1 ATK for each Burning Unit on the board, yours included.",
     Effects: [
       {
         Trigger: "OnPlayed",
@@ -2051,12 +2051,12 @@ const CARDS = [
     Attack: 3,
     Health: 7,
     Keywords: ["Unactionable"],
-    Description: "When Played: If You control all 4 Titan Pieces, Merge them into The Titan here. When Destroyed: Draw a random Titan Piece from Your Deck.",
+    Description: "When Played: If You control all 4 Titan Pieces, Merge them into The Titan in the Titan Torso's lane. When Destroyed: Draw a random Titan Piece from Your Deck.",
     Effects: [
       {
         Trigger: "OnPlayed",
         Actions: [
-          { Type: "Merge", Target: "Self", Pieces: [70, 71, 72, 73], Into: 909, SumStats: true },
+          { Type: "Merge", Target: "Self", Pieces: [70, 71, 72, 73], Into: 909, At: 71, SumStats: true, AddAtk: 1, AddHp: 1 },
         ],
       },
       {
@@ -2077,12 +2077,12 @@ const CARDS = [
     Attack: 2,
     Health: 5,
     Keywords: ["Unactionable"],
-    Description: "When Played: If You control all 4 Titan Pieces, Merge them into The Titan here. When Destroyed: Draw a random Titan Piece from Your Deck.",
+    Description: "When Played: If You control all 4 Titan Pieces, Merge them into The Titan in the Titan Torso's lane. When Destroyed: Draw a random Titan Piece from Your Deck.",
     Effects: [
       {
         Trigger: "OnPlayed",
         Actions: [
-          { Type: "Merge", Target: "Self", Pieces: [70, 71, 72, 73], Into: 909, SumStats: true },
+          { Type: "Merge", Target: "Self", Pieces: [70, 71, 72, 73], Into: 909, At: 71, SumStats: true, AddAtk: 1, AddHp: 1 },
         ],
       },
       {
@@ -2103,12 +2103,12 @@ const CARDS = [
     Attack: 2,
     Health: 1,
     Keywords: ["Unactionable"],
-    Description: "When Played: If You control all 4 Titan Pieces, Merge them into The Titan here. When Destroyed: Draw a random Titan Piece from Your Deck.",
+    Description: "When Played: If You control all 4 Titan Pieces, Merge them into The Titan in the Titan Torso's lane. When Destroyed: Draw a random Titan Piece from Your Deck.",
     Effects: [
       {
         Trigger: "OnPlayed",
         Actions: [
-          { Type: "Merge", Target: "Self", Pieces: [70, 71, 72, 73], Into: 909, SumStats: true },
+          { Type: "Merge", Target: "Self", Pieces: [70, 71, 72, 73], Into: 909, At: 71, SumStats: true, AddAtk: 1, AddHp: 1 },
         ],
       },
       {
@@ -2129,12 +2129,12 @@ const CARDS = [
     Attack: 2,
     Health: 3,
     Keywords: ["Unactionable"],
-    Description: "When Played: If You control all 4 Titan Pieces, Merge them into The Titan here. When Destroyed: Draw a random Titan Piece from Your Deck.",
+    Description: "When Played: If You control all 4 Titan Pieces, Merge them into The Titan in the Titan Torso's lane. When Destroyed: Draw a random Titan Piece from Your Deck.",
     Effects: [
       {
         Trigger: "OnPlayed",
         Actions: [
-          { Type: "Merge", Target: "Self", Pieces: [70, 71, 72, 73], Into: 909, SumStats: true },
+          { Type: "Merge", Target: "Self", Pieces: [70, 71, 72, 73], Into: 909, At: 71, SumStats: true, AddAtk: 1, AddHp: 1 },
         ],
       },
       {
@@ -2152,10 +2152,10 @@ const CARDS = [
     Type: "Unit",
     Subtypes: ["Token", "Machine"],
     Cost: 5,
-    Attack: 9,
-    Health: 16,
-    Keywords: ["Taunt"],
-    Description: "Formed from the 4 Titan Pieces: it has their combined stats, damage included.",
+    Attack: 10,
+    Health: 17,
+    Keywords: ["Taunt", "Unactionable", "SilenceImmune", "BounceImmune"],
+    Description: "Formed from the 4 Titan Pieces in the Torso's lane: their combined stats (damage included) +1/+1. Can't be Silenced or Bounced.",
   },
 
   {

@@ -19,20 +19,20 @@ function refreshDecks(){ALL=DECKS.concat(loadC().map(d=>({...d,custom:1})));
  if(window.renderPickers)renderPickers()}
 refreshDecks();
 const ROM=n=>{if(n<=0)return'0';let s='';for(const[v,r]of[[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']])while(n>=v){s+=r;n-=v}return s};
-const KWD={Flying:'Skips non-flyers and hits the hero. Only flyers can block it.',Armored:'Takes {n} less damage from each hit.',Unkillable:'Can\'t die. When destroyed, its death effects trigger, then it returns to your hand.',SoulGuard:'Survives lethal damage once, at 1 HP.',SplashDamage:'When it attacks, also hits enemy units in the adjacent lanes for {n}.',Burning:'Takes 1 damage each round.',Marked:'Takes double damage.',Stunned:'Skips its next attack.',Breakthrough:'When it attacks a unit, it also hits the enemy hero in that lane.',Unactionable:'Can\'t be targeted by any Action or ability, from either side. Combat still affects it.',Lifesteal:'Damage this unit deals heals your hero for the same amount.',Deadly:'If it would hurt an enemy unit, it destroys that unit instead.',Taunt:'While it is in play, damage that would hurt your hero hits this unit instead.',Evolving:'At the end of every round it transforms into a random Unit that costs 1 more, and keeps Evolving. Silence removes it.'};
+const KWD={Flying:'Skips non-flyers and hits the hero. Only flyers can block it.',Armored:'Takes {n} less damage from each hit.',Unkillable:'Can\'t die. When destroyed, its death effects trigger, then it returns to your hand.',SoulGuard:'Survives lethal damage once, at 1 HP.',SplashDamage:'When it attacks, also hits enemy units in the adjacent lanes for {n}.',Burning:'Takes 1 damage each round.',Marked:'Takes double damage.',Stunned:'Skips its next attack.',Breakthrough:'When it attacks a unit, it also hits the enemy hero in that lane.',Unactionable:'Enemy Actions (spells) can\'t target or affect this unit - single-target or whole-board. Your own Actions, abilities and enemy unit abilities still work on it, and combat still affects it.',SilenceImmune:'Can\'t be Silenced.',BounceImmune:'Can\'t be returned to the hand (Bounced).',Lifesteal:'Damage this unit deals heals your hero for the same amount.',Deadly:'If it would hurt an enemy unit, it destroys that unit instead.',Taunt:'While it is in play, damage that would hurt your hero hits this unit instead.',Evolving:'At the end of every round it transforms into a random Unit that costs 1 more, and keeps Evolving. Silence removes it.'};
 const TERMS=[
  ['Sacrifice',/\bSacrifice[ds]?\b/i,'Remove your own unit from the board. Counts as destroyed.'],
  ['Blood',/\bBlood\b/i,'Resource for playing cards. Refills every round (max 10).'],
  ['Bonus Attack',/\bBonus Attack\b/i,'Attacks once, right now.'],
- ['Bounce',/\bBounce\b/i,'Returns the unit to its owner\'s hand.'],
+ ['Bounce',/\bBounce[ds]?\b/i,'Returns the unit to its owner\'s hand.'],
  ['After Combat',/\bAfter Combat\b/i,'Triggers once the fight in this lane is over.'],
  ['Silence',/\bSilence\b/i,'Removes keywords, buffs and abilities.'],
  ['Move Right',/\bMove Right\b/i,'Moves one lane right, if free.'],
  ['Exploding Damage',/\bExploding (Damage|Present)\b/i,'A copy of this card goes to the opponent\'s hand, costing 1 more.'],
  ['Mark',/\bMark(ed)?\b/i,'Marked'],['Stun',/\bStun(ned)?\b/i,'Stunned'],['Burning',/\bBurning\b/i,'Burning'],
- ['SoulGuard',/Soul ?Guard/i,'SoulGuard'],['Unkillable',/\bUnkillable\b/i,'Unkillable'],['Flying',/\bFlying\b/i,'Flying'],['Armored',/\bArmored\b/i,'Armored'],['Unactionable',/\bUnactionable\b/i,'Unactionable'],['Lifesteal',/\bLifesteal\b/i,'Lifesteal'],['Taunt',/\bTaunt\b/i,'Taunt'],['Deadly',/\bDeadly\b/i,'Deadly'],['Evolving',/\bEvolving\b/i,'Evolving'],
- ['Merge',/\bMerge[sd]?\b/i,'When every piece is on your side they combine into one card, placed in the lane of the piece played last.']];
-const KNAME={SplashDamage:'Splash',BurnSource:'Burn Source'};
+ ['SoulGuard',/Soul ?Guard/i,'SoulGuard'],['Unkillable',/\bUnkillable\b/i,'Unkillable'],['Flying',/\bFlying\b/i,'Flying'],['Armored',/\bArmored\b/i,'Armored'],['Unactionable',/\bUnactionable\b/i,'Unactionable'],['SilenceImmune',/Can't be Silenced/i,'SilenceImmune'],['BounceImmune',/Can't be (Silenced or )?Bounced/i,'BounceImmune'],['Lifesteal',/\bLifesteal\b/i,'Lifesteal'],['Taunt',/\bTaunt\b/i,'Taunt'],['Deadly',/\bDeadly\b/i,'Deadly'],['Evolving',/\bEvolving\b/i,'Evolving'],
+ ['Merge',/\bMerge[sd]?\b/i,'When every piece is on your side they combine into one unit, placed in the lane of the Titan Torso.']];
+const KNAME={SplashDamage:'Splash',BurnSource:'Burn Source',SilenceImmune:'No Silence',BounceImmune:'No Bounce'};
 const kwNum=(d,k)=>(d.KeywordParams||{})[k]||(k=='Armored'||k=='SplashDamage'?1:'');
 const kwLabel=(d,k)=>k=='Armor2'?'Armored 2':(KNAME[k]||k)+(kwNum(d,k)!==''&&(k=='Armored'||k=='SplashDamage')?' '+kwNum(d,k):'');
 const BAD=new Set(['Burning','Marked','Stunned']);
@@ -82,12 +82,27 @@ function showZoom(x,live){const d=x.d||CD[x.id];const gl=glossary(x,live,d).join
 const hideZoom=()=>{if(!stickyZoom)$('zoom').style.display='none'};
 const findLive=uid=>[...G.p[0].ln,...G.p[1].ln].find(v=>v&&v.uid==uid);
 const CARDSEL='[data-u],[data-c],[data-cid]';
-document.addEventListener('mouseover',e=>{const t=e.target.closest&&e.target.closest(CARDSEL);if(!t||t.closest('#zoom')||t.closest('.fly')||t.classList.contains('dying'))return;
- let x=null,live=false;
+// Which card (live unit / hand card / plain card) does this element show?
+function cardOf(t){let x=null,live=false;
  if(t.dataset.u&&G){x=findLive(t.dataset.u);live=!!x}
  if(!x&&t.dataset.c&&G)x=G.p[0].hand.find(v=>v.uid==t.dataset.c);
  if(!x&&t.dataset.cid)x={id:+t.dataset.cid,uid:0,ba:+t.dataset.ba||0};
- if(x)showZoom(x,live)});
+ return x?{x,live}:null}
+const cardKey=t=>t.dataset.u?'u'+t.dataset.u:t.dataset.c?'c'+t.dataset.c:'i'+t.dataset.cid;
+// Click-to-pin: a clicked card stays zoomed until it is clicked again, another card is clicked, or the board is clicked.
+let pinKey=null;
+function unpin(){pinKey=null;stickyZoom=false;$('zoom').style.display='none'}
+function pinCard(t){const k=cardKey(t);
+ if(stickyZoom&&pinKey===k){unpin();const c=cardOf(t);if(c)showZoom(c.x,c.live);return}   // click again: unpin (hover zoom resumes)
+ const c=cardOf(t);if(!c)return;pinKey=k;stickyZoom=true;showZoom(c.x,c.live)}
+// Keep a pinned card up to date after the board changes; drop the pin when that card is gone.
+function refreshPin(){if(!stickyZoom||!pinKey)return;const id=pinKey.slice(1);let c=null;
+ if(pinKey[0]=='u'){const x=G&&findLive(id);if(x)c={x,live:true}}
+ else if(pinKey[0]=='c'){const x=G&&G.p[0].hand.find(v=>v.uid==id);if(x)c={x,live:false}}
+ else{const el=document.querySelector(`[data-cid="${id}"]`);if(el)c=cardOf(el)}
+ if(c)showZoom(c.x,c.live);else unpin()}
+document.addEventListener('mouseover',e=>{if(stickyZoom)return;const t=e.target.closest&&e.target.closest(CARDSEL);if(!t||t.closest('#zoom')||t.closest('.fly')||t.classList.contains('dying'))return;
+ const c=cardOf(t);if(c)showZoom(c.x,c.live)});
 document.addEventListener('mouseout',e=>{if(e.target.closest&&e.target.closest(CARDSEL))hideZoom()});
 const PH={U:'Units',B:'Unit and Actions',A:'Actions'};
 const ASK={L:'Choose a free lane to summon into',M:'Choose units to sacrifice',e:'Choose an enemy unit',f:'Choose a friendly unit',S:'Choose a unit to sacrifice',a:'Choose any unit',D:'Choose a card from your deck',eh:'Choose an enemy unit or the enemy hero'};
@@ -96,8 +111,9 @@ const mine=()=>G.act==0&&!busy&&!G.over;
 const ksNow=()=>pend.pre?pend.ks:apicks(G,G.p[0],CD[G.p[0].hand[pend.ci].id],pend.got,pend.ln);
 const kind=()=>pend?ksNow()[pend.got.length]:null;
 function laneEx(){const ex=pend.ln!=null?[pend.ln]:[];ksNow().forEach((k,j)=>{if(k=='L'&&j<pend.got.length&&typeof pend.got[j]=='number')ex.push(pend.got[j])});return ex}
+const pendSp=()=>{const c=pend&&!pend.pre&&G.p[0].hand[pend.ci];return !!c&&CD[c.id].Type=='Spell'};
 function validTargets(){const k=kind();if(k=='L')return req(G,G.p[0],'L',null,laneEx());if(!k||k=='C'||k=='D')return[];
- const f=(ksNow().f||[])[pend.got.length]||null;return req(G,G.p[0],k,f)}
+ const f=(ksNow().f||[])[pend.got.length]||null;return req(G,G.p[0],k,f,null,pendSp())}
 function dots(p){return Array.from({length:10},(_,i)=>`<i class="${i<p.b?'on':i<p.mb?'sp':''}"></i>`).join('')}
 function say(t,cancel){const b=$('msg');if(!t){b.style.display='none';b.innerHTML='';return}b.innerHTML=t+(cancel?' <button data-cancel="1">Cancel</button>':'');b.style.display='block'}
 const cleanName=s=>String(s||'').replace(/[<>&"'`\\]/g,'').replace(/\s+/g,' ').trimStart().slice(0,16);
@@ -131,7 +147,7 @@ function render(){
  const pl=G.hist.filter(x=>x.t==G.turn).slice(-4);let s='';for(let i=0;i<4;i++){const x=pl[i-(4-pl.length)];s+=x&&i>=4-pl.length?`<div class="s"><img src="${artSrc(x.id)}" alt="" onerror="artErr(this,${x.id})"></div>`:'<div class="s"></div>'}
  $('strip').innerHTML=s+`<div class="w">${(G.log[G.log.length-1]||'').replace(/^— |—$/g,'').slice(0,16)}</div>`;
  const act=mine();$('end').disabled=!act;$('end').textContent=G.step>=3?'Combat…':act?'End Turn':'Enemy…';
- musicUpdate();if(G.over)finish()}
+ refreshPin();musicUpdate();if(G.over)finish()}
 function info(x,live){showZoom(x,live)}
 function anim(){const ev=G.ev;G.ev=[];if(NET&&NET.host)NET.ev.push(...ev);const aoeU=new Set();ev.forEach(e=>e.k=='aoe'&&e.us.forEach(x=>aoeU.add(x.u)));const inU=new Set(ev.filter(x=>x.k=='in').map(x=>x.u));const tfJust=ev.some(x=>x.k=='tf'&&inU.has(x.u));ev.forEach(x=>{if(x.k=='tf')x.just=tfJust});let dl=0;ev.forEach(e=>{
  const q=e.u?document.querySelector(`#board [data-u="${e.u}"]`):null;
@@ -242,12 +258,14 @@ function selectHand(i){const me=G.p[0];pend=null;castMode=false;sel=sel==i?null:
 document.addEventListener('click',e=>{if(!G||G.over||$('game').style.display!='block')return;
  const t=e.target,hd=t.closest('[data-h]'),sl=t.closest('#board .slot'),me=G.p[0];
  if(t.dataset.cancel){if(pend&&pend.pre)return;cancel();return}
- if(!t.closest('[data-u],[data-c]'))stickyZoom=false,hideZoom();
+ const ct=t.closest(CARDSEL);
+ if(!ct){if(stickyZoom)unpin()}
+ else if(!ct.closest('#zoom')&&!ct.closest('#pile')&&!ct.closest('.fly')&&!(pend&&ct.closest('#board')))pinCard(ct);   // (a click that picks a target is not a zoom click)
  if(pend&&pend.pre){if(sl){const u2=G.p[+sl.dataset.r].ln[+sl.dataset.i];if(u2&&validTargets().includes(u2)){const r=pendRes;pend=null;say('');r(u2)}}return}
  if(t.dataset.skip&&pend&&!pend.pre&&mine()){pend.got.push(NOSAC);nextPick();return}
  if(t.dataset.ch!=null&&pend&&!t.disabled){pend.got.push(+t.dataset.ch);nextPick();return}
  if(t.dataset.mok&&pend&&pend.multi){pend.got.push(pend.multi.slice());pend.multi=null;nextPick();return}
- if(!mine()){const u=t.closest('[data-u]');if(u){stickyZoom=true;showZoom(findLive(u.dataset.u),1)}return}
+ if(!mine())return;
  if(hd){selectHand(+hd.dataset.h);return}
  if(pend&&kind()=='eh'&&t.closest('#ehero')){pend.got.push(H(1));nextPick();return}
  if(castMode&&t.closest('#board')){const ci=sel;castMode=false;sel=null;doPlay({ci,ln:null,got:[]});return}
@@ -255,7 +273,7 @@ document.addEventListener('click',e=>{if(!G||G.over||$('game').style.display!='b
   if(pend){if(kind()=='L'){if(!u&&r==0&&validTargets().includes(i)){pend.got.push(i);nextPick()}return}
    if(u&&validTargets().includes(u)){if(kind()=='M'){const a=pend.multi,j=a.indexOf(u);j<0?a.push(u):a.splice(j,1);render();mmsg()}else{pend.got.push(u);nextPick()}}return}
   if(sel!=null&&r==0&&!u&&CD[me.hand[sel].id].Type=='Unit'&&canPlay(G,me,sel,i)){begin(sel,i);return}
-  if(u){stickyZoom=true;showZoom(u,1)}}});
+  }});
 document.addEventListener('contextmenu',e=>{if(G&&$('game').style.display=='block'&&(sel!=null||pend)){e.preventDefault();if(!(pend&&pend.pre))cancel()}});
 document.addEventListener('keydown',e=>{if(!G||$('game').style.display!='block'||e.target.tagName=='INPUT'||$('setmenu').style.display=='flex')return;
  if((e.key=='Enter'||e.key==' ')&&mine()&&pend&&pend.multi){e.preventDefault();pend.got.push(pend.multi.slice());pend.multi=null;nextPick();return}
@@ -273,7 +291,7 @@ function choiceSpot(el,d){const me=G.p[0],ef=(d.Effects||[]).find(x=>x.ChoiceLab
   else if(a.Type=='DrawFromDiscard')node=el.closest('#pile');
   else if(a.Target=='EnemyHero')node=el.closest('#ehero');
   else if(a.Target=='TargetEnemyUnit'){const sl=el.closest('#board .slot');
-   if(sl&&+sl.dataset.r==1){unit=G.p[1].ln[+sl.dataset.i];const k=apicks(G,me,d,[j])[1];if(!unit||!k||!req(G,me,k,apicks(G,me,d,[j]).f[1]).includes(unit))unit=null;else node=sl}}
+   if(sl&&+sl.dataset.r==1){unit=G.p[1].ln[+sl.dataset.i];const k=apicks(G,me,d,[j])[1];if(!unit||!k||!req(G,me,k,apicks(G,me,d,[j]).f[1],null,true).includes(unit))unit=null;else node=sl}}
   if(node)return{node,j,unit,ok:choiceOK(G,me,d,j)}}
  return null}
 function dropInfo(el){const me=G.p[0];if(!el||sel==null||!me.hand[sel])return null;
@@ -296,7 +314,7 @@ function dragZones(on){document.querySelectorAll('.dz,.dh').forEach(x=>x.classLi
  ef.Actions.forEach((a,j)=>{if(!choiceOK(G,me,d,j))return;
   if(a.Type=='DrawCard')$('deckb').classList.add('dz');else if(a.Type=='DrawFromDiscard')$('pile').classList.add('dz');
   else if(a.Target=='EnemyHero')ringOf($('ehero')).classList.add('dz');
-  else if(a.Target=='TargetEnemyUnit'){const k=apicks(G,me,d,[j])[1];if(k)req(G,me,k,apicks(G,me,d,[j]).f[1]).forEach(u=>{const sl=document.querySelector(`#board .slot[data-r="${u.o}"][data-i="${u.lane}"]`);if(sl)sl.classList.add('dz')})}})}
+  else if(a.Target=='TargetEnemyUnit'){const k=apicks(G,me,d,[j])[1];if(k)req(G,me,k,apicks(G,me,d,[j]).f[1],null,true).forEach(u=>{const sl=document.querySelector(`#board .slot[data-r="${u.o}"][data-i="${u.lane}"]`);if(sl)sl.classList.add('dz')})}})}
 document.addEventListener('pointerdown',e=>{if(e.button!==0||!G||$('game').style.display!='block'||!mine()||(pend&&pend.pre))return;
  const hc=e.target.closest('#hand .hc');if(!hc)return;drag={hc,i:+hc.dataset.h,x:e.clientX,y:e.clientY,on:false}});
 document.addEventListener('pointermove',e=>{if(!drag)return;
@@ -389,9 +407,9 @@ const mulOK=()=>{const ids=[...mulSel];
  mulligan(G,G.p[0],ids);botMull(G,G.p[1]);
  askOrder(v=>{decideStart(G,v,'first');startRound(G);flow()})};
 $('mok').onclick=mulOK;
-function start(){if(NET)netLeave();$('ovr').style.display='';$('ovr').textContent='Rematch';gid++;BOTMODE=$('bot').value;G=newGame(ALL[$('d0').value].c,ALL[$('d1').value].c);busy=true;sel=pend=null;castMode=false;stickyZoom=false;
+function start(){unpin();if(NET)netLeave();$('ovr').style.display='';$('ovr').textContent='Rematch';gid++;BOTMODE=$('bot').value;G=newGame(ALL[$('d0').value].c,ALL[$('d1').value].c);busy=true;sel=pend=null;castMode=false;stickyZoom=false;
  show('game');$('ov').style.display='none';say('');render();showMul()}
-function toMenu(){$('dkpick').style.display='none';if(NET)netLeave();$('ovr').style.display='';$('ovr').textContent='Rematch';gid++;$('ov').style.display='none';$('mul').style.display='none';$('hist').style.display='none';show('menu');$('zoom').style.display='none';G=null;musicUpdate()}
+function toMenu(){unpin();$('dkpick').style.display='none';if(NET)netLeave();$('ovr').style.display='';$('ovr').textContent='Rematch';gid++;$('ov').style.display='none';$('mul').style.display='none';$('hist').style.display='none';show('menu');$('zoom').style.display='none';G=null;musicUpdate()}
 $('go').onclick=()=>{$('botmenu').style.display='none';start();musicStart()};
 $('ovb').onclick=toMenu;
 const cmpC=(a,b)=>(a.Cost-b.Cost)||((a.Type==b.Type)?0:a.Type=='Unit'?-1:1)||a.Name.localeCompare(b.Name);

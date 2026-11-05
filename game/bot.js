@@ -44,18 +44,18 @@ function project(G,me){const c=blindClone(G,me);
  if(!c.over)endRound(c);
  return evalG(c,me)}
 
-function pickOptions(G,p,d,k){
+function pickOptions(G,p,d,k,f){const sp=d.Type=='Spell';
  if(k=='M'){const us=req(G,p,'M').sort((a,b)=>unitVal(a)-unitVal(b)),o=[{m:[]}];for(let n=1;n<=us.length;n++)o.push({m:us.slice(0,n).map(u=>u.uid)});return o}
  if(k=='L')return[{u:null}];
  if(k=='C')return[0,1].filter(i=>choiceOK(G,p,d,i)).map(i=>({n:i}));
  if(k=='D'){const lim=Math.min(10,G.turn+2);return[{c:p.deck.slice().sort((x,y)=>{const f=z=>{const c=CD[z.id].Cost;return c>lim?-c:c};return f(y)-f(x)})[0].uid}]}
- if(k=='S'&&optSac(d))return[{n:NOSAC}].concat(req(G,p,k).map(t=>({u:t.uid})));
- return req(G,p,k).map(t=>t.h?{h:t.p}:{u:t.uid})}
+ if(k=='S'&&optSac(d))return[{n:NOSAC}].concat(req(G,p,k,f||null,null,sp).map(t=>({u:t.uid})));
+ return req(G,p,k,f||null,null,sp).map(t=>t.h?{h:t.p}:{u:t.uid})}
 function enumPicks(G,p,d,got,out){
  const ks=apicks(G,p,d,got.map(o=>o.n));
  if(got.length>=ks.length){out.push(got);return}
  if(out.length>=30)return;
- for(const o of pickOptions(G,p,d,ks[got.length]))enumPicks(G,p,d,got.concat([o]),out)}
+ for(const o of pickOptions(G,p,d,ks[got.length],ks.f[got.length]))enumPicks(G,p,d,got.concat([o]),out)}
 function resolvePick(G,p,k,o){
  if(o.m)return o.m.map(id=>units(G.p[p.i]).find(u=>u.uid==id)).filter(Boolean);
  if(o.n!=null)return o.n;
