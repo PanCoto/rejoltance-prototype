@@ -37,6 +37,7 @@ lab/    Development tooling: simulations, balance patches, bot tuning, deck sear
 | `engine.js` | Rules engine: rounds, combat, triggers, keywords, effects |
 | `bot.js` | Basic and Smart bot opponents |
 | `net.js` | Online play (PeerJS / WebRTC) |
+| `net-config.js` | TURN relay / ICE server configuration |
 | `ui.js` | Rendering, input, deck builder |
 | `menu.js` | Main menu and settings |
 | `sfx.js`, `music.js` | Sound effects and dynamic music |
@@ -66,7 +67,9 @@ The site will be available at `https://<user>.github.io/<repo>/`. Any other stat
 
 - Multiplayer works on GitHub Pages as is. It is browser-to-browser, so there is no game server to run, and Pages serves HTTPS, which WebRTC requires.
 - The public PeerJS broker is only used to introduce the two browsers to each other. To use your own, set `window.RJ_PEER = { host, port, path, secure }` before `net.js` loads.
-- Players on different networks usually need a TURN relay. The defaults use free, shared public relays on a best-effort basis. For reliable play, supply your own with `window.RJ_ICE` (an array of `RTCIceServer` objects) before `net.js` loads.
+- Players on mobile data or campus networks (eduroam and similar) can't connect directly: carrier-grade NAT and firewalls block peer-to-peer traffic, so a TURN relay is required. If both players are on such networks, a working relay is the only thing that makes the game connectable.
+- Configure one in [`game/net-config.js`](game/net-config.js): a free [Metered](https://www.metered.ca/) app name + API key (credentials are fetched fresh per room, and TURNS on port 443 gets through restrictive firewalls), any URL returning ICE servers as JSON (see [`tools/turn-worker`](tools/turn-worker/README.md) for a Cloudflare Worker), or a fixed list via `window.RJ_ICE`.
+- With nothing configured the game falls back to a shared public relay that is best-effort and often unavailable. The lobby checks for a working relay and warns if none can be reached.
 - Both players must load the same deployed version. A join is refused if the card data differs.
 
 ## Optional: live balance patches

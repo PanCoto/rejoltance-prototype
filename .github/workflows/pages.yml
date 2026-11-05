@@ -19,6 +19,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
+      # Writes game/turn-secret.js at deploy time from the METERED_PASSWORD repository secret,
+      # so the password is never committed to git. It is still delivered to players' browsers.
+      - name: Generate TURN config from secret
+        env:
+          TURN_USER: 3bcaa095da6b0b6be6a14ecf
+          TURN_PASS: ${{ secrets.METERED_PASSWORD }}
+        run: |
+          if [ -z "$TURN_PASS" ]; then echo "METERED_PASSWORD not set; skipping"; exit 0; fi
+          node -e '
+          const u=process.env.TURN_USER,c=process.env.TURN_PASS,h="global.relay.metered.ca";
+          const t=x=>({urls:x,username:u,credential:c});
+          const ice=[{urls:["stun:stun.relay.metered.ca:80","stun:stun.l.google.com:19302","stun:stun.cloudflare.com:3478"]},
+            t("turn:"+h+":80"),t("turn:"+h+":80?transport=tcp"),t("turn:"+h+":443"),t("turns:"+h+":443?transport=tcp")];
+          require("fs").writeFileSync("game/turn-secret.js","window.RJ_ICE="+JSON.stringify(ice)+";\n")'
       - uses: actions/upload-pages-artifact@v3
         with:
           path: game

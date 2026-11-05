@@ -1,9 +1,34 @@
 const NETPRE='rejoltance-',ALPH='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const NETV=(()=>{let h=5381;const s=JSON.stringify(CARDS);for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return'v1-'+(h>>>0).toString(36)})();
-const ICE=window.RJ_ICE||[
- {urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:stun.cloudflare.com:3478','stun:global.stun.twilio.com:3478']},
- {urls:['stun:openrelay.metered.ca:80','turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443','turn:openrelay.metered.ca:443?transport=tcp','turns:openrelay.metered.ca:443?transport=tcp'],username:'openrelayproject',credential:'openrelayproject'}];
-const PEEROPT=Object.assign({config:{iceServers:ICE,iceCandidatePoolSize:4}},window.RJ_PEER||{});
+const STUN_ICE=[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:stun.cloudflare.com:3478','stun:global.stun.twilio.com:3478']}];
+// Last resort only: a shared public relay that may be rate-limited or discontinued. See net-config.js.
+const SHARED_TURN=[{urls:['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443','turn:openrelay.metered.ca:443?transport=tcp','turns:openrelay.metered.ca:443?transport=tcp'],username:'openrelayproject',credential:'openrelayproject'}];
+let NETTK=0,iceCache=null;const NETDIAG={relay:null};
+const turnUrl=()=>{const c=window.RJ_TURN||{},m=c.metered;
+ return c.url||(m&&m.app&&m.apiKey?'https://'+encodeURIComponent(m.app)+'.metered.live/api/v1/turn/credentials?apiKey='+encodeURIComponent(m.apiKey):'')};
+async function loadIce(){
+ if(Array.isArray(window.RJ_ICE)&&window.RJ_ICE.length)return window.RJ_ICE;
+ if(iceCache&&Date.now()<iceCache.exp)return iceCache.v;
+ let extra=[];const url=turnUrl();
+ if(url){const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),6000);
+  try{const r=await fetch(url,{signal:ctl.signal,cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);
+   const j=await r.json();extra=(Array.isArray(j)?j:Array.isArray(j.iceServers)?j.iceServers:j.iceServers?[j.iceServers]:[]).filter(x=>x&&x.urls)}
+  catch(e){console.warn('TURN credential fetch failed, falling back',e)}finally{clearTimeout(t)}}
+ const v=STUN_ICE.concat(extra.length?extra:SHARED_TURN);
+ if(extra.length)iceCache={v,exp:Date.now()+10*60*1000};
+ return v}
+async function peerOpt(){const ice=await loadIce();
+ return Object.assign({config:{iceServers:ice,iceCandidatePoolSize:4}},window.RJ_PEER||{})}
+// Checks whether a relay candidate can be obtained. Without one, two players behind strict NATs
+// (mobile data, eduroam) cannot connect.
+function probeRelay(ice){return new Promise(res=>{let pc,fin=false;const r={relay:false};
+ const done=()=>{if(fin)return;fin=true;NETDIAG.relay=r.relay;try{pc&&pc.close()}catch(e){}res(r)};
+ try{pc=new RTCPeerConnection({iceServers:ice})}catch(e){return done()}
+ pc.onicecandidate=e=>{if(!e.candidate)return done();
+  const t=e.candidate.type||((/ typ (\w+)/.exec(e.candidate.candidate)||[])[1]);if(t=='relay'){r.relay=true;done()}};
+ try{pc.createDataChannel('p');pc.createOffer().then(o=>pc.setLocalDescription(o)).catch(done)}catch(e){done()}
+ setTimeout(done,7000)})}
+const NORELAY=' No relay server is reachable, so players on mobile data or campus Wi-Fi (eduroam) may fail to connect. See net-config.js.';
 const PeerC=()=>window.Peer||(window.peerjs&&window.peerjs.Peer);
 const netSend=m=>{try{if(NET&&NET.conn&&NET.conn.open)NET.conn.send(m)}catch(e){console.warn('send failed',e)}};
 const newCode=()=>{const a=new Uint32Array(5);crypto.getRandomValues(a);return[...a].map(x=>ALPH[x%ALPH.length]).join('')};
@@ -37,7 +62,7 @@ function lobby(title,o){o=o||{};$('frmenu').style.display='none';$('lt').textCon
 const netErr=e=>({'network':'Could not reach the matchmaking server. Check your internet connection.','server-error':'The matchmaking server returned an error. Try again in a moment.',
  'socket-error':'Lost connection to the matchmaking server.','socket-closed':'Lost connection to the matchmaking server.','browser-incompatible':'This browser does not support WebRTC.',
  'webrtc':'Could not establish a connection between the two devices (a firewall or network may be blocking it, and the relay server may be busy). Try again, or see README (TURN server).'}[e&&e.type]||('Connection problem: '+((e&&(e.type||e.message))||'unknown')));
-function netLeave(keepLobby){const N=NET;NET=null;
+function netLeave(keepLobby){const N=NET;NET=null;NETTK++;
  if(N){clearTimeout(N.to);clearTimeout(N.syncT);try{N.conn&&N.conn.close()}catch(e){}try{N.peer&&N.peer.destroy()}catch(e){}}
  if(!keepLobby)$('lobby').style.display='none'}
 
@@ -45,12 +70,14 @@ function wire(N,c){
  c.on('open',()=>{if(NET!==N)return;if(!N.host){clearTimeout(N.to);netSend({t:'hello',v:NETV,name:myName(),deck:ALL[$('d0').value].c});lobby('Connected',{status:'Waiting for the host to start the game...',nodeck:1})}});
  c.on('data',m=>{if(NET!==N||!m||!m.t)return;N.host?hostMsg(m):guestMsg(m)});
  c.on('close',()=>onClose(N));c.on('error',()=>onClose(N))}
-function hostRoom(){
+async function hostRoom(){
  if(!PeerC())return lobby('Online play unavailable',{nodeck:1,status:'The networking library did not load. Reload the page and try again.'});
  netLeave();syncDecks();lobby('Creating room...',{status:'Contacting the matchmaking server...'});
+ const tk=NETTK,PEEROPT=await peerOpt();if(tk!==NETTK)return;
  const open=n=>{const code=newCode(),peer=new(PeerC())(NETPRE+code,PEEROPT);
   const N=NET={host:true,peer,code,conn:null,ev:[],mull:[0,0],pref:[null,null],rm:[0,0],pre:null,dead:false};
-  peer.on('open',()=>{if(NET===N)lobby('Your room code',{code,status:'Waiting for your opponent... send them the code or the invite link.'})});
+  peer.on('open',()=>{if(NET!==N)return;const st='Waiting for your opponent... send them the code or the invite link.';lobby('Your room code',{code,status:st});
+   probeRelay(PEEROPT.config.iceServers).then(r=>{if(NET===N&&!N.conn&&!r.relay&&$('ls').textContent==st)$('ls').textContent=st+NORELAY})});
   peer.on('connection',c=>{if(NET!==N)return;
    if(N.conn&&N.conn.open){c.on('open',()=>{c.send({t:'full'});setTimeout(()=>c.close(),300)});return}
    N.conn=c;wire(N,c)});
@@ -59,15 +86,17 @@ function hostRoom(){
    if(e.type=='unavailable-id'&&n<6){try{peer.destroy()}catch(x){}open(n+1)}else lobby('Could not create room',{nodeck:1,status:netErr(e)})})};
  open(0)}
 function joinLobby(code){netLeave();syncDecks();lobby('Join a room',{join:1,status:'Pick your deck, enter the room code and press Join.'});$('lin').value=code||'';$('lin').focus()}
-function joinRoom(code){
+async function joinRoom(code){
  code=(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
  if(code.length!=5){lobby('Join a room',{join:1,status:'Enter the 5-character room code.'});return}
  if(!PeerC())return lobby('Online play unavailable',{nodeck:1,status:'The networking library did not load. Reload the page and try again.'});
  netLeave(1);lobby('Joining '+code+'...',{nodeck:1,status:'Connecting...'});
+ const tk=NETTK,PEEROPT=await peerOpt();if(tk!==NETTK)return;
  const peer=new(PeerC())(undefined,PEEROPT),N=NET={host:false,peer,code,conn:null};
+ probeRelay(PEEROPT.config.iceServers);
  const fail=m=>{if(NET!==N)return;netLeave(1);lobby('Could not join',{join:1,status:m})};
  peer.on('open',()=>{if(NET!==N)return;const c=peer.connect(NETPRE+code,{reliable:true,serialization:'json'});N.conn=c;wire(N,c);
-  N.to=setTimeout(()=>fail('Could not connect to that room (timed out). Check the code and that the host is still waiting. If you are on a different network, a firewall may be blocking the connection - try again or switch Wi-Fi / mobile data.'),35000)});
+  N.to=setTimeout(()=>fail('Could not connect to that room (timed out). Check the code and that the host is still waiting.'+(NETDIAG.relay===false?NORELAY:' If you are on a different network, a firewall may be blocking the connection - try again or switch Wi-Fi / mobile data.')),35000)});
  peer.on('error',e=>fail(e.type=='peer-unavailable'?'No room with that code. Check the code and try again.':netErr(e)))}
 function onClose(N){if(NET!==N||N.dead)return;N.dead=true;clearTimeout(N.syncT);
  if(N.pre){N.pre.res(N.pre.opts[0]);N.pre=null}

@@ -5,3 +5,4 @@ lab/validate_out/
 lab/deck_out/
 lab/sim_out/
 *.csv
+game/turn-secret.js
