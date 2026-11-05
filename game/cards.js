@@ -193,7 +193,7 @@ const CARDS = [
     Health: 7,
     Keywords: ["Unkillable"],
     Rule: "persistentGrowth",
-    Description: "While in Deck or Hand: Costs 2 less whenever you sacrifice a unit.",
+    Description: "While in Deck or Hand: Costs 1 less whenever you sacrifice a unit.",
     DescriptionClassic: "While In Hand: Costs 1 less whenever you sacrifice a unit.",
     Effects: [
       {
@@ -1304,8 +1304,8 @@ const CARDS = [
     Type: "Unit",
     Subtypes: ["Human"],
     Cost: 5,
-    Attack: 3,
-    Health: 4,
+    Attack: 2,
+    Health: 5,
     Keywords: ["Breakthrough"],
     Description: "After Combat: This does a Bonus Attack. Whenever this Damages a Unit, Bounce it.",
     Effects: [
