@@ -618,7 +618,7 @@ const CARDS = [
     Name: "Mouse",
     Type: "Unit",
     Subtypes: ["Machine"],
-    Cost: 3,
+    Cost: 4,
     Attack: 6,
     Health: 7,
     Keywords: ["Stunned"],
@@ -1001,7 +1001,7 @@ const CARDS = [
     Subtypes: ["Machine"],
     Cost: 1,
     Attack: 1,
-    Health: 2,
+    Health: 1,
     Description: "Whenever You play an Automaton: This Unit gets +1/+1.",
     Effects: [
       {
@@ -1054,7 +1054,7 @@ const CARDS = [
     Attack: 0,
     Health: 4,
     Rule: "persistentGrowth",
-    Description: "While in Deck or Hand: When a Friendly Machine is Destroyed gain +2 ATK.",
+    Description: "While in Deck or Hand: When a Friendly Machine is Destroyed gain +1 ATK.",
     DescriptionClassic: "While in Hand: When a Friendly Machine is Destroyed gain +3 ATK.",
     Effects: [
       {
@@ -1063,7 +1063,7 @@ const CARDS = [
         ZoneClassic: "Hand",
         Condition: { Condition: "IsSubtype", TargetParam: "Machine" },
         Actions: [
-          { Type: "BuffStats", Target: "Self", BuffAtk: 2 },
+          { Type: "BuffStats", Target: "Self", BuffAtk: 1 },
         ],
       },
     ],
