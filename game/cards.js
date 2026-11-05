@@ -800,16 +800,16 @@ const CARDS = [
     Name: "Mechanic",
     Type: "Unit",
     Subtypes: ["Human"],
-    Cost: 2,
-    Attack: 2,
-    Health: 2,
-    Description: "When Played: If there is a Friendly Machine on the Board gain +1/+2.",
+    Cost: 1,
+    Attack: 1,
+    Health: 1,
+    Description: "When Played: If there is a Friendly Machine on the Board gain +2/+2.",
     Effects: [
       {
         Trigger: "OnPlayed",
         Condition: { Condition: "HasSubtypeOnBoard", TargetParam: "Machine" },
         Actions: [
-          { Type: "BuffStats", Target: "Self", BuffAtk: 1, BuffHp: 2 },
+          { Type: "BuffStats", Target: "Self", BuffAtk: 2, BuffHp: 2 },
         ],
       },
     ],
