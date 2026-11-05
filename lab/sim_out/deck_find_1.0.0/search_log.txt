@@ -1,7 +1,0 @@
-deck search | bot=Smart (default weights) beam=5 depth=5 | workers=16 | 4 epochs x 8 gens x 16 kids | screen 28 + confirm 90 games | no card prior
-epoch 0: 40 seed decks measured, 15 cells filled (1.1 min)
-epoch 1: kids 128, promoted 85, new cells 4, cells improved 27 | archive 19 cells | best 77.1% (mid/units/Mixed) median 70.3% | 3.4 min
-epoch 2: kids 128, promoted 82, new cells 2, cells improved 24 | archive 21 cells | best 72.0% (fast/units/Animal) median 62.7% | 5.5 min
-epoch 3: kids 128, promoted 77, new cells 0, cells improved 27 | archive 21 cells | best 75.4% (mid/units/Machine) median 63.6% | 7.5 min
-epoch 4: kids 128, promoted 74, new cells 2, cells improved 20 | archive 23 cells | best 75.4% (mid/balanced/Aberration) median 66.1% | 9.3 min
-final candidates: 8 distinct decks (similarity <= 0.75) | 9.6 min
