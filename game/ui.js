@@ -433,8 +433,9 @@ const imgTag=(id,cls)=>`<img ${cls?`class="${cls}" `:''}src="${artSrc(id)}" alt=
 let toastT=0;
 function toast(msg,bad){const t=$('btoast');t.textContent=msg;t.className='on'+(bad?' bad':'');clearTimeout(toastT);toastT=setTimeout(()=>t.className='',2400)}
 const closeModal=()=>{$('bmodal').style.display='none';mOpen=false};
-function modal({title,text,ta,buttons}){
+function modal({title,text,ta,img,buttons}){
  $('mtitle').textContent=title;const p=$('mtext');p.textContent=text||'';p.hidden=!text;p.className='';
+ const im=$('mimg');im.hidden=!img;if(img)im.src=img;
  const t=$('mta');t.hidden=!ta;if(ta){t.value=ta.value||'';t.readOnly=!!ta.readonly;t.placeholder=ta.placeholder||''}
  const bx=$('mbtns');bx.innerHTML='';
  buttons.forEach(b=>{const el=document.createElement('button');el.textContent=b.label;if(b.pri)el.className='pri';
@@ -552,7 +553,7 @@ function renderDecks(){
  const tile=d=>{const m=countsOf(d.c),st=statsOf(m),ic=iconId(m),key=(d.custom?'c:':'b:')+d.n,mx=Math.max(1,...st.cv);
   return`<div class="dk${selDeck==key?' sel':''}${delConf==key?' dc':''}${d.built?' pre':''}" data-k="${hesc(key)}">
   <div class="dkart">${ic?imgTag(ic.Id):'<i class="dkq">?</i>'}<span class="dkn${st.n==30?'':' bad'}">${st.n}/30</span><div class="dkbs">${getDef()==d.n?'<span class="dkd">'+STAR+' Default</span>':''}${d.built?'<span class="dkt">Premade</span>':''}</div>
-   <div class="dkact"><button class="pri" data-a="edit">Edit</button><button data-a="def">${getDef()==d.n?'Unset default':'Set default'}</button><button data-a="del"${d.built?' disabled title="Premade decks cannot be deleted"':''}>Delete</button></div>
+   <div class="dkact"><button class="pri" data-a="edit">Edit</button><button data-a="def">${getDef()==d.n?'Unset default':'Set default'}</button><button data-a="png" title="Save this deck as a PNG image">Share PNG</button><button data-a="del"${d.built?' disabled title="Premade decks cannot be deleted"':''}>Delete</button></div>
    <div class="dkconf"><span>Delete this deck?</span><button data-a="yes">Delete</button><button data-a="no">Cancel</button></div></div>
   <div class="dkinfo"><b>${hesc(d.n)}</b><small>${st.u} units &middot; ${st.sp} spells<br>avg cost ${st.avg.toFixed(1)}</small>
    <div class="dkmini">${st.cv.map(q=>`<i style="height:${q?Math.max(12,q/mx*100):5}%"></i>`).join('')}</div></div></div>`};
@@ -564,6 +565,7 @@ $('dgrid').onclick=e=>{
  const t=e.target.closest('.dk');if(!t)return;const key=t.dataset.k,btn=e.target.closest('button'),a=btn&&btn.dataset.a;
  if(a=='edit')return editDeck(findDeck(key));
  if(a=='def'){const d=findDeck(key);if(!d)return;const on=getDef()!=d.n;setDefault(on?d.n:null);renderDecks();return toast(on?'"'+d.n+'" is now your default deck':'Default deck cleared')}
+ if(a=='png'){const d=findDeck(key);if(d)shareDeck(d.n,countsOf(d.c));return}
  if(a=='del'){delConf=key;return syncTiles()}
  if(a=='no'){delConf=null;return syncTiles()}
  if(a=='yes'){const d=findDeck(key);if(!d||!d.custom)return;saveC(loadC().filter(x=>x.n!=d.n));if(getDef()==d.n)putDef(null);selDeck=delConf=null;refreshDecks();renderDecks();return toast('Deleted "'+d.n+'"')}
@@ -626,8 +628,22 @@ $('bsave').onclick=()=>{
 $('bexp').onclick=()=>{const code=deckEncode(E.cards);if(!code)return hint('Add some cards first.',1);
  const tot=btot();
  modal({title:'Deck code',text:'Anyone can paste this code into Import to get your '+tot+' cards.',ta:{value:code,readonly:true},
-  buttons:[{label:'Copy',pri:1,fn:()=>{copyText(code).then(ok=>mSay(ok?'Copied to clipboard.':'Press Ctrl+C to copy the code.'));return false}},{label:'Close'}]});
+  buttons:[{label:'Copy',pri:1,fn:()=>{copyText(code).then(ok=>mSay(ok?'Copied to clipboard.':'Press Ctrl+C to copy the code.'));return false}},{label:'Save as PNG',fn:()=>{shareDeck($('bn').value.trim()||'Deck',{...E.cards});return false}},{label:'Close'}]});
  copyText(code).then(ok=>{if(ok&&mOpen)mSay('Copied to clipboard. Anyone can paste it into Import to get your '+tot+' cards.')})};
+// ---- Share as PNG (drawing lives in share.js) ----
+let pngUrl=null;
+const pngName=n=>((n||'deck').replace(/[^\w\- ]+/g,'').trim().replace(/\s+/g,'_')||'deck')+'.png';
+async function shareDeck(name,m){
+ const ids=expand(m);if(!ids.length)return toast('Add some cards first.',true);
+ toast('Drawing the deck image...');
+ try{
+  const blob=await RJShare.render({name,ids,icon:(iconId(m)||{}).Id,stats:statsOf(m),code:deckEncode(m)});
+  $('btoast').className='';if(pngUrl)URL.revokeObjectURL(pngUrl);pngUrl=URL.createObjectURL(blob);
+  const buttons=[{label:'Save PNG',pri:1,fn:()=>{const a=document.createElement('a');a.href=pngUrl;a.download=pngName(name);document.body.appendChild(a);a.click();a.remove();mSay('Saved as '+pngName(name)+'.');return false}}];
+  if(navigator.clipboard&&window.ClipboardItem)buttons.push({label:'Copy image',fn:()=>{navigator.clipboard.write([new ClipboardItem({'image/png':blob})]).then(()=>mSay('Image copied to the clipboard.'),()=>mSay('Your browser would not copy the image - use Save PNG.',1));return false}});
+  buttons.push({label:'Close'});
+  modal({title:name,text:'',img:pngUrl,buttons});
+ }catch(e){toast('Could not create the image in this browser.',true)}}
 function importDialog(fromTab){
  modal({title:'Import deck',text:fromTab?'Paste a deck code to create a new deck from it.':'Paste a deck code. It replaces the cards in this deck.',ta:{value:'',placeholder:'XXXXX-XXXXX-XXXXX-...'},
   buttons:[{label:'Cancel'},{label:'Import',pri:1,fn:v=>{let r;try{r=deckDecode(v)}catch(err){mSay(String(err),1);return false}
@@ -665,8 +681,13 @@ window.pkResolve=pkResolve;window.PKR=PKR;window.renderPickers=renderPickers;win
 // Random deck button on every deck picker (picks from premade + your own decks).
 // Random is a mode, not a preview: the deck is only drawn when the game starts (pkResolve), so it can't be rerolled until you like it.
 function pkRandom(sid){PKR[sid]=true;syncPickers()}
-function pkResolve(){['d0','d1'].forEach(sid=>{if(!PKR[sid]||!ALL.length)return;const n=ALL.length,cur=$(sid).selectedIndex;let i=Math.floor(Math.random()*n);
-  if(n>1&&i==cur)i=(i+1+Math.floor(Math.random()*(n-1)))%n;$(sid).selectedIndex=i})}
+// Random draws from every deck, or - with Settings > Random deck > "My decks only" - from your own decks (premade ones only if you have none).
+function pkResolve(){const mineOnly=$('rndpool')&&$('rndpool').value=='mine';
+ ['d0','d1'].forEach(sid=>{if(!PKR[sid]||!ALL.length)return;
+  let pool=ALL.map((d,i)=>i);if(mineOnly){const mine=pool.filter(i=>ALL[i].custom);if(mine.length)pool=mine}
+  const cur=$(sid).selectedIndex;let i=pool[Math.floor(Math.random()*pool.length)];
+  if(pool.length>1&&i==cur)i=pool[(pool.indexOf(i)+1+Math.floor(Math.random()*(pool.length-1)))%pool.length];
+  $(sid).selectedIndex=i})}
 PKS.forEach(([id,sid])=>{const el=$(id);if(!el||!el.parentElement)return;let h=el.parentElement.querySelector('.pkh');
  if(!h){h=document.createElement('div');h.className='pkh';h.style.justifyContent='flex-end';el.parentElement.insertBefore(h,el)}
  const b=document.createElement('button');b.type='button';b.className='pkrnd ghost';b.title='Pick a random deck';b.innerHTML='&#8635; Random';

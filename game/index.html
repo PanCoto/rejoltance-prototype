@@ -40,7 +40,7 @@
    <div id="emain"><div class="bfilt" id="fedit"></div><div class="bgrid" id="gedit"></div></div>
   </div>
   <div id="btoast"></div>
-  <div id="bmodal"><div class="mbox"><h3 id="mtitle"></h3><p id="mtext"></p><textarea id="mta" spellcheck="false" autocomplete="off"></textarea><div id="mbtns"></div></div></div>
+  <div id="bmodal"><div class="mbox"><h3 id="mtitle"></h3><p id="mtext"></p><img id="mimg" alt="" hidden><textarea id="mta" spellcheck="false" autocomplete="off"></textarea><div id="mbtns"></div></div></div>
  </div>
  <div class="scr" id="game">
   <div id="hdr"><button id="sur">Surrender</button><div id="phase"></div>
@@ -73,6 +73,7 @@
  <div class="ovl bk" id="setmenu"><div class="panel"><h2>Settings</h2>
   <div class="srow" id="prow"><label>Display name</label><input type="text" id="pname" maxlength="16" placeholder="Playerzacy" autocomplete="off" spellcheck="false"></div>
   <div class="srow"><label>Bot difficulty</label><select id="bot"><option value="smart">Smart (harder)</option><option value="basic">Basic (easier)</option></select></div>
+  <div class="srow"><label>Random deck</label><select id="rndpool" title="What the Random button picks from. With &quot;My decks (if any)&quot; it only picks your own decks; premade decks are used only when you have none."><option value="all">Any deck</option><option value="mine">My decks (if any)</option></select></div>
   <div class="srow"><label>Font</label><select id="fnt"><option value="pix">Pixelify Sans (pixel)</option><option value="dot">DotGothic16 (pixel)</option><option value="jer">Jersey 15 (pixel)</option><option value="sil">Silkscreen (pixel)</option><option value="cin">Cinzel + Alegreya (serif)</option></select></div>
   <div class="srow"><label>Sound effects</label><input type="range" id="sfxv" min="0" max="100" step="5"><b id="sfxn"></b></div>
   <div class="srow"><label>Music</label><input type="range" id="musv" min="0" max="100" step="5"><b id="musn"></b></div>
@@ -90,5 +91,5 @@
 </div>
 <div id="rot">Please rotate your device to landscape (this game is designed for a wide screen).</div>
 <audio id="au" loop></audio>
-<script src="cards.js"></script><script src="decks.js"></script><script src="live-config.js"></script><script src="cards-live.js"></script><script src="img-index.js"></script><script src="engine.js"></script><script src="bot.js"></script><script src="sfx.js"></script><script src="music.js"></script><script src="ui.js"></script><script src="peerjs.min.js"></script><script src="net-config.js"></script><script src="turn-secret.js" onerror="void 0"></script><script src="net.js"></script><script src="menu.js"></script>
+<script src="cards.js"></script><script src="decks.js"></script><script src="live-config.js"></script><script src="cards-live.js"></script><script src="img-index.js"></script><script src="engine.js"></script><script src="bot.js"></script><script src="sfx.js"></script><script src="music.js"></script><script src="share.js"></script><script src="ui.js"></script><script src="peerjs.min.js"></script><script src="net-config.js"></script><script src="turn-secret.js" onerror="void 0"></script><script src="net.js"></script><script src="menu.js"></script>
 </body></html>

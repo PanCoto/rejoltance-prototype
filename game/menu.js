@@ -13,6 +13,8 @@ addEventListener('keydown',e=>{if(e.key!='Escape')return;if($('game').style.disp
  if($('lobby').style.display=='flex')$('lcancel').click();else closePanels()});
 {const b=lsGet('rj_bot');if(b==='smart'||b==='basic')$('bot').value=b}
 $('bot').onchange=()=>{lsSet('rj_bot',$('bot').value);refreshBotDiff()};
+{const r=lsGet('rj_rndpool');if(r==='all'||r==='mine')$('rndpool').value=r}
+$('rndpool').onchange=()=>lsSet('rj_rndpool',$('rndpool').value);
 const pct=(id,key,def,apply)=>{const el=$(id),n=$(id.replace('v','n'));let v=lsGet(key);v=v===null||v===''||isNaN(+v)?def:Math.max(0,Math.min(100,+v));
  el.value=v;n.textContent=v+'%';apply(v);
  el.oninput=()=>{n.textContent=el.value+'%';apply(+el.value);lsSet(key,el.value)};return el};
