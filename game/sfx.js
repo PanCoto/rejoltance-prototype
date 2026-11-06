@@ -7,7 +7,7 @@ function sfxInit(){
  try{const AC=window.AudioContext||window.webkitAudioContext;SFX.ctx=new AC()}catch(e){SFX.ctx=null}
  SFX.mode=SFX.ctx&&location.protocol!='file:'?'web':'html';
  SFX_NAMES.forEach(n=>{SFX.bufs[n]=[];SFX.aud[n]=[];for(let i=1;i<=SFX_VARIANTS;i++)sfxLoad(n,i)})}
-function sfxLoad(n,i){const url='sfx/'+n+'_'+i+SFX_EXT;
+function sfxLoad(n,i){const url='sfx/'+n.toLowerCase()+'_'+i+SFX_EXT;
  if(SFX.mode=='web')fetch(url).then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>SFX.ctx.decodeAudioData(b)).then(buf=>SFX.bufs[n].push(buf)).catch(()=>{});
  else{const a=new Audio();a.preload='auto';a.addEventListener('canplaythrough',()=>{if(!SFX.aud[n].includes(a))SFX.aud[n].push(a)},{once:true});a.src=url}}
 function sfx(n,o){o=o||{};if(SFX.vol<=0||!SFX.started)return;
