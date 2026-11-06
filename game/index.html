@@ -7,7 +7,7 @@
 </head><body>
 <div id="stage">
  <div class="scr" id="menu">
-  <h1>RE<span>:</span>Joltance</h1>
+  <div class="thead"><h1>RE<span>:</span>Joltance</h1><button id="achopen" title="Achievements"><span class="aico"></span>Achievements <b id="achcnt"></b></button></div>
   <div class="tiles four">
    <button class="tile" id="tfriend"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M2 2h4v4H2zM1 6h6v4H1zM1 10h2v4H1zM5 10h2v4H5zM10 2h4v4h-4zM9 6h6v4H9zM9 10h2v4H9zM13 10h2v4h-2z"/><path fill="#c4161c" d="M7 7h2v2H7z"/></svg><b>Play with a friend</b><small>1 vs 1 online</small></button>
    <button class="tile" id="tbot"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M7 0h2v2H7zM3 2h10v8H3zM1 4h2v4H1zM13 4h2v4h-2zM4 11h8v4H4z"/><path fill="#050505" d="M5 5h2v2H5zM9 5h2v2H9zM5 8h6v1H5z"/></svg><b>Play with the bot</b><small>Solo practice</small></button>
@@ -60,7 +60,7 @@
   <div id="arc"></div><div id="hand"></div>
   <div id="msg"></div><div id="endl"></div><div id="bpop"></div>
  </div>
- <div id="zoom"></div>
+ <div id="zoom"></div><div id="apop"></div>
 <div class="ovl bk" id="frmenu"><div class="panel"><h2>Play with a friend</h2><div class="sub">1 vs 1 online - no account needed</div>
   <div class="btns"><button class="opt" id="mhost"><b>Host Online</b><small>Create a room and share the code</small></button><button class="opt" id="mjoin"><b>Join Online</b><small>Enter your friend's room code</small></button></div>
   <div class="btns"><button id="frback">Back</button></div></div></div>
@@ -75,9 +75,9 @@
   </div>
   <div class="pkhint">Tip: set a default deck in Card Collection &rsaquo; Decks and it is pre-selected here.</div>
   <div class="btns"><button id="go">Start</button><button id="botback">Back</button></div></div></div>
+ <div class="ovl bk" id="achmenu"><div class="panel wide"><h2>Achievements</h2><div class="sub" id="achsum"></div><div id="achbar"><i></i></div><div id="achlist"></div><div class="btns"><button id="achback">Back</button></div></div></div>
  <div class="ovl bk" id="setmenu"><div class="panel"><h2>Settings</h2>
   <div class="srow" id="prow"><label>Display name</label><input type="text" id="pname" maxlength="16" placeholder="Playerzacy" autocomplete="off" spellcheck="false"></div>
-  <div class="srow"><label>Bot difficulty</label><select id="bot"><option value="smart">Smart (harder)</option><option value="basic">Basic (easier)</option></select></div>
   <div class="srow"><label>Random deck</label><select id="rndpool" title="What the Random button picks from. With &quot;My decks (if any)&quot; it only picks your own decks; premade decks are used only when you have none."><option value="all">Any deck</option><option value="mine">My decks (if any)</option></select></div>
   <div class="srow"><label>Font</label><select id="fnt"><option value="pix">Pixelify Sans (pixel)</option><option value="dot">DotGothic16 (pixel)</option><option value="jer">Jersey 15 (pixel)</option><option value="sil">Silkscreen (pixel)</option><option value="cin">Cinzel + Alegreya (serif)</option></select></div>
   <div class="srow"><label>Sound effects</label><input type="range" id="sfxv" min="0" max="100" step="5"><b id="sfxn"></b></div>
@@ -96,5 +96,5 @@
 </div>
 <div id="rot">Please rotate your device to landscape (this game is designed for a wide screen).</div>
 <audio id="au" loop></audio>
-<script src="cards.js"></script><script src="decks.js"></script><script src="live-config.js"></script><script src="cards-live.js"></script><script src="img-index.js"></script><script src="engine.js"></script><script src="bot.js"></script><script src="sfx.js"></script><script src="music.js"></script><script src="share.js"></script><script src="ui.js"></script><script src="peerjs.min.js"></script><script src="net-config.js"></script><script src="turn-secret.js" onerror="void 0"></script><script src="net.js"></script><script src="menu.js"></script>
+<script src="cards.js"></script><script src="decks.js"></script><script src="live-config.js"></script><script src="cards-live.js"></script><script src="img-index.js"></script><script src="engine.js"></script><script src="bot.js"></script><script src="sfx.js"></script><script src="music.js"></script><script src="share.js"></script><script src="ui.js"></script><script src="peerjs.min.js"></script><script src="net-config.js"></script><script src="turn-secret.js" onerror="void 0"></script><script src="net.js"></script><script src="menu.js"></script><script src="ach.js"></script>
 </body></html>

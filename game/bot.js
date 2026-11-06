@@ -171,5 +171,5 @@ function botMullSmart(G,p){
  if(!p.hand.some(c=>CD[c.id].Cost<=2&&!out.includes(c.uid))&&p.hand.length)out.push(...p.hand.filter(c=>CD[c.id].Cost>=4&&!out.includes(c.uid)).map(c=>c.uid));
  mulligan(G,p,out)}
 
-function botPlan(G,p){return BOTMODE=='basic'?botPlanBasic(G,p):botPlanSmart(G,p)}
-function botMull(G,p){return BOTMODE=='basic'?botMullBasic(G,p):botMullSmart(G,p)}
+function botPlan(G,p){return botPlanSmart(G,p)}
+function botMull(G,p){return botMullSmart(G,p)}
