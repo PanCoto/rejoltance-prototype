@@ -462,3 +462,18 @@ body[data-font=sil]{--fd:Sil,"Courier New",monospace;--fb:Sil,"Courier New",mono
 .pkinfo b{font-size:23px;padding-right:0}
 .dkact button[data-a=edit],.dkact button[data-a=del]{width:140px}
 .dkact [data-a=def]{order:3;width:294px}
+
+/* card collection: locked card highlight */
+#gcards .bc.pinned .card{outline:4px solid #fff;outline-offset:2px}
+/* log: card rows show details on hover/click */
+.hr[data-cid]{cursor:pointer;padding:4px 8px;margin:4px -8px;border-radius:8px}
+.hr[data-cid]:hover{background:#1a1a1a}
+/* deck picker random button */
+#stage .ovl button.pkrnd{height:48px;font-size:24px;padding:0 20px;border-width:3px;border-radius:26px;flex:none;align-self:center;letter-spacing:1px}
+#stage .ovl button.pkrnd:hover{border-color:var(--red);color:#fff}
+#stage .ovl button.pkrnd.on{border-color:var(--red);color:#fff;background:#c4161c33}
+#ldrow{width:min(720px,86vw)}
+#pkl{max-height:440px}
+#pkl{flex:none;max-height:380px}
+#ldrow{flex:none}
+#pkl{grid-auto-rows:max-content}

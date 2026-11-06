@@ -78,7 +78,7 @@
   <div class="srow"><label>Music</label><input type="range" id="musv" min="0" max="100" step="5"><b id="musn"></b></div>
   <div class="btns"><button id="setclose">Close</button></div></div></div>
  <div class="ovl bk" id="lobby"><div class="panel"><h2 id="lt"></h2><div id="lcode"></div><input id="lin" maxlength="5" placeholder="ROOM CODE" autocomplete="off" spellcheck="false">
-  <div id="ldrow"><div class="pkh"><label>Your deck</label><span class="pkcur" id="pknl"></span></div><div class="pkgrid row" id="pkl"></div></div><div id="ls"></div>
+  <div id="ldrow"><div class="pkh"><label>Your deck</label><span class="pkcur" id="pknl"></span></div><div class="pkgrid" id="pkl"></div></div><div id="ls"></div>
   <div style="display:flex;gap:30px"><button id="lgo">Join</button><button id="lcopy">Copy invite link</button><button id="lcancel">Cancel</button></div></div></div>
  <div class="ovl" id="mul"><h2 id="mt">Mulligan - click cards to replace</h2><div id="mh"></div><button id="mok">Confirm</button><div id="mpr" style="display:none;gap:40px"><button id="mfirst">Go first</button><button id="msecond">Go second</button></div></div>
  <div class="ovl" id="hist"></div>
@@ -89,6 +89,6 @@
   <div class="btns"><button id="dkok">Use this deck</button><button id="dkcancel">Back</button></div></div></div>
 </div>
 <div id="rot">Please rotate your device to landscape (this game is designed for a wide screen).</div>
-<audio id="au" src="audio/music.mp3" loop></audio>
+<audio id="au" loop></audio>
 <script src="cards.js"></script><script src="decks.js"></script><script src="live-config.js"></script><script src="cards-live.js"></script><script src="img-index.js"></script><script src="engine.js"></script><script src="bot.js"></script><script src="sfx.js"></script><script src="music.js"></script><script src="ui.js"></script><script src="peerjs.min.js"></script><script src="net-config.js"></script><script src="turn-secret.js" onerror="void 0"></script><script src="net.js"></script><script src="menu.js"></script>
 </body></html>

@@ -91,7 +91,7 @@ function cardOf(t){let x=null,live=false;
 const cardKey=t=>t.dataset.u?'u'+t.dataset.u:t.dataset.c?'c'+t.dataset.c:'i'+t.dataset.cid;
 // Click-to-pin: a clicked card stays zoomed until it is clicked again, another card is clicked, or the board is clicked.
 let pinKey=null;
-function unpin(){pinKey=null;stickyZoom=false;$('zoom').style.display='none'}
+function unpin(){pinKey=null;stickyZoom=false;$('zoom').style.display='none';document.querySelectorAll('#gcards .bc.pinned').forEach(b=>b.classList.remove('pinned'))}
 function pinCard(t){const k=cardKey(t);
  if(stickyZoom&&pinKey===k){unpin();const c=cardOf(t);if(c)showZoom(c.x,c.live);return}   // click again: unpin (hover zoom resumes)
  const c=cardOf(t);if(!c)return;pinKey=k;stickyZoom=true;showZoom(c.x,c.live)}
@@ -363,9 +363,9 @@ async function flow(){busy=true;const my=gid;
    play(G,G.p[1],m.ci,m.ln,m.pk);render();anim()}
   await sleep(300);if(my!=gid)return;nextStep(G)}
  if(my==gid){render();netPush()}}
-function showHist(){const rows=G.hist.slice().reverse().map(h=>`<div class="hr"><img src="${artSrc(h.id)}" alt="" onerror="artErr(this,${h.id})"><span><b>${CD[h.id].Name}</b> ${CD[h.id].Type=='Spell'?'cast':'played'} by ${h.p?'Enemy':'You'}${h.tg?' -> '+h.tg:''}<br><small>Round ${h.t}</small></span></div>`).join('')||'<small>No cards played yet.</small>';
- $('hist').innerHTML=`<div class="hb"><h3>Cards played</h3>${rows}<h3>Events</h3><small>${G.log.slice().reverse().slice(0,120).join('<br>')}</small><p><small>(click anywhere to close)</small></p></div>`;$('hist').style.display='flex'}
-$('hs').onclick=()=>{if(G)showHist()};$('strip').onclick=()=>{if(G)showHist()};$('hist').onclick=()=>$('hist').style.display='none';
+function showHist(){const rows=G.hist.slice().reverse().map(h=>`<div class="hr" data-cid="${h.id}"><img src="${artSrc(h.id)}" alt="" onerror="artErr(this,${h.id})"><span><b>${CD[h.id].Name}</b> ${CD[h.id].Type=='Spell'?'cast':'played'} by ${h.p?'Enemy':'You'}${h.tg?' -> '+h.tg:''}<br><small>Round ${h.t}</small></span></div>`).join('')||'<small>No cards played yet.</small>';
+ $('hist').innerHTML=`<div class="hb"><h3>Cards played</h3>${rows}<p><small>Hover or click a card to see what it does. Click anywhere else to close.</small></p></div>`;$('hist').style.display='flex'}
+$('hs').onclick=()=>{if(G)showHist()};$('strip').onclick=()=>{if(G)showHist()};$('hist').onclick=e=>{if(e.target.closest('.hr'))return;$('hist').style.display='none'};
 let viewing=false;
 function viewPile(title,cards){if(!G||$('mul').style.display=='flex')return;viewing=true;
  $('mt').textContent=title;$('mok').style.display='';$('mok').textContent='Close';$('mok').onclick=closeMul;
@@ -384,11 +384,11 @@ $('sur').onclick=()=>{if(G&&!G.over)$('modal').style.display='flex'};$('mno').on
 $('myes').onclick=()=>{$('modal').style.display='none';if(!G||G.over)return;if(NET&&!NET.host){netSend({t:'sur'});return}
  G.over={win:1,sur:1};L(G,'You surrendered');pend=null;sel=null;castMode=false;say('');$('mul').style.display='none';$('hist').style.display='none';render();netPush()};
 $('ovr').onclick=()=>NET?rematch():start();
-const ovDeckLabel=()=>ALL[$('d0').value]?'Your deck: '+ALL[$('d0').value].n:'';
+const ovDeckLabel=()=>PKR.d0?'Your deck: Random':ALL[$('d0').value]?'Your deck: '+ALL[$('d0').value].n:'';
 let pkPrev=0;
-$('ovd').onclick=()=>{pkPrev=$('d0').selectedIndex;$('dkpick').style.display='flex';pkReveal('pk2')};
+$('ovd').onclick=()=>{pkPrev=$('d0').selectedIndex;pkPrevR=PKR.d0;$('dkpick').style.display='flex';pkReveal('pk2')};
 $('dkok').onclick=()=>{$('dkpick').style.display='none';$('ovdk').textContent=ovDeckLabel()};
-$('dkcancel').onclick=()=>{$('d0').selectedIndex=pkPrev;syncPickers();$('dkpick').style.display='none'};
+$('dkcancel').onclick=()=>{$('d0').selectedIndex=pkPrev;PKR.d0=pkPrevR;syncPickers();$('dkpick').style.display='none'};
 $('dkpick').addEventListener('click',e=>{if(e.target===$('dkpick'))$('dkcancel').click()});
 $('dkpick').addEventListener('dblclick',e=>{if(e.target.closest('.pk'))$('dkok').click()});
 addEventListener('keydown',e=>{if(e.key=='Escape'&&$('dkpick').style.display=='flex')$('dkcancel').click()});
@@ -407,7 +407,7 @@ const mulOK=()=>{const ids=[...mulSel];
  mulligan(G,G.p[0],ids);botMull(G,G.p[1]);
  askOrder(v=>{decideStart(G,v,'first');startRound(G);flow()})};
 $('mok').onclick=mulOK;
-function start(){unpin();if(NET)netLeave();$('ovr').style.display='';$('ovr').textContent='Rematch';gid++;BOTMODE=$('bot').value;G=newGame(ALL[$('d0').value].c,ALL[$('d1').value].c);busy=true;sel=pend=null;castMode=false;stickyZoom=false;
+function start(){unpin();pkResolve();musicNewGame();if(NET)netLeave();$('ovr').style.display='';$('ovr').textContent='Rematch';gid++;BOTMODE=$('bot').value;G=newGame(ALL[$('d0').value].c,ALL[$('d1').value].c);busy=true;sel=pend=null;castMode=false;stickyZoom=false;
  show('game');$('ov').style.display='none';say('');render();showMul()}
 function toMenu(){unpin();$('dkpick').style.display='none';if(NET)netLeave();$('ovr').style.display='';$('ovr').textContent='Rematch';gid++;$('ov').style.display='none';$('mul').style.display='none';$('hist').style.display='none';show('menu');$('zoom').style.display='none';G=null;musicUpdate()}
 $('go').onclick=()=>{$('botmenu').style.display='none';start();musicStart()};
@@ -529,6 +529,10 @@ document.addEventListener('click',()=>{if(popOpen)popOpen(false)});
 
 const cEls=buildGrid($('gcards'),false),eEls=buildGrid($('gedit'),true);
 const FC=mkFilter($('fcards'),$('gcards'),cEls),FE=mkFilter($('fedit'),$('gedit'),eEls);
+// Card Collection: click a card to lock its zoom; click it again (or another card) to release / switch.
+$('gcards').addEventListener('click',e=>{const t=e.target.closest(CARDSEL);if(!t||t.closest('#zoom'))return;
+ const k=cardKey(t),was=stickyZoom&&pinKey===k;document.querySelectorAll('#gcards .bc.pinned').forEach(b=>b.classList.remove('pinned'));
+ pinCard(t);const bc=t.closest('.bc');if(bc&&!was&&stickyZoom)bc.classList.add('pinned')});
 
 function setView(v){
  bview=v;if(popOpen)popOpen(false);
@@ -536,11 +540,11 @@ function setView(v){
  $('btabs').style.display=v=='edit'?'none':'flex';[...$('btabs').children].forEach(b=>b.classList.toggle('on',b.dataset.tab==v));
  $('btitle').textContent=v=='edit'?(E.fresh?'New deck':'Edit deck'):'Card Collection';
  $('bback').innerHTML=v=='edit'?'&lsaquo; Decks':'&lsaquo; Menu';
- $('zoom').style.display='none';
+ unpin();
  if(v=='decks')renderDecks();if(v=='edit')renderEdit();refit()}
 $('bopen').onclick=()=>{setView('cards');show('bld')};
 $('btabs').onclick=e=>{const b=e.target.closest('button');if(b)setView(b.dataset.tab)};
-$('bback').onclick=()=>{if(bview=='edit')leaveEdit();else{show('menu');refreshDecks()}};
+$('bback').onclick=()=>{if(bview=='edit')leaveEdit();else{unpin();show('menu');refreshDecks()}};
 
 function renderDecks(){
  const all=allDecks(),cust=all.filter(d=>d.custom),pre=all.filter(d=>d.built);
@@ -634,6 +638,7 @@ $('bimp').onclick=()=>importDialog(false);
 $('bmodal').addEventListener('mousedown',e=>{if(e.target===$('bmodal'))closeModal()});
 
 
+const PKR={d0:false,d1:false};let pkPrevR=false;
 const PKS=[['pk0','d0','pkn0'],['pk1','d1','pkn1'],['pkl','d0','pknl'],['pk2','d0']];
 const pkRank=(i,bot)=>{const d=ALL[i];return !bot&&getDef()==d.n?0:d.custom?1:2};
 function renderPickers(){
@@ -649,13 +654,23 @@ function renderPickers(){
   el.onkeydown=e=>{if(e.key=='Enter'||e.key==' '){const t=e.target.closest('.pk');if(t){e.preventDefault();pickDeck(sid,+t.dataset.i)}}}});
  syncPickers()}
 function syncPickers(){
- PKS.forEach(([id,sid,nm])=>{const el=$(id);if(!el)return;const cur=$(sid).selectedIndex;
-  el.querySelectorAll('.pk').forEach(t=>t.classList.toggle('sel',+t.dataset.i==cur));
-  if(nm&&$(nm)&&ALL[cur])$(nm).textContent=ALL[cur].n})}
-function pickDeck(sid,i){$(sid).selectedIndex=i;syncPickers()}
+ PKS.forEach(([id,sid,nm])=>{const el=$(id);if(!el)return;const cur=$(sid).selectedIndex,rnd=!!PKR[sid];
+  el.querySelectorAll('.pk').forEach(t=>t.classList.toggle('sel',!rnd&&+t.dataset.i==cur));
+  const rb=el.parentElement.querySelector('.pkrnd');if(rb)rb.classList.toggle('on',rnd);
+  if(nm&&$(nm)&&ALL[cur])$(nm).textContent=rnd?'Random deck':ALL[cur].n})}
+function pickDeck(sid,i){PKR[sid]=false;$(sid).selectedIndex=i;syncPickers()}
 function pkReveal(...ids){requestAnimationFrame(()=>ids.forEach(id=>{const t=$(id)&&$(id).querySelector('.pk.sel');if(t)t.scrollIntoView({block:'nearest',inline:'nearest'})}))}
 function setDefault(name){putDef(name);if(name){const j=ALL.findIndex(d=>d.n==name);if(j>=0)$('d0').selectedIndex=j}renderPickers()}
-window.renderPickers=renderPickers;window.syncPickers=syncPickers;window.pkReveal=pkReveal;window.setDefault=setDefault;
+window.pkResolve=pkResolve;window.PKR=PKR;window.renderPickers=renderPickers;window.syncPickers=syncPickers;window.pkReveal=pkReveal;window.setDefault=setDefault;
+// Random deck button on every deck picker (picks from premade + your own decks).
+// Random is a mode, not a preview: the deck is only drawn when the game starts (pkResolve), so it can't be rerolled until you like it.
+function pkRandom(sid){PKR[sid]=true;syncPickers()}
+function pkResolve(){['d0','d1'].forEach(sid=>{if(!PKR[sid]||!ALL.length)return;const n=ALL.length,cur=$(sid).selectedIndex;let i=Math.floor(Math.random()*n);
+  if(n>1&&i==cur)i=(i+1+Math.floor(Math.random()*(n-1)))%n;$(sid).selectedIndex=i})}
+PKS.forEach(([id,sid])=>{const el=$(id);if(!el||!el.parentElement)return;let h=el.parentElement.querySelector('.pkh');
+ if(!h){h=document.createElement('div');h.className='pkh';h.style.justifyContent='flex-end';el.parentElement.insertBefore(h,el)}
+ const b=document.createElement('button');b.type='button';b.className='pkrnd ghost';b.title='Pick a random deck';b.innerHTML='&#8635; Random';
+ b.onclick=e=>{e.stopPropagation();pkRandom(sid)};h.appendChild(b)});
 renderPickers();
 
 addEventListener('keydown',e=>{if($('bld').style.display!='block')return;

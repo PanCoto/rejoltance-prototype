@@ -67,7 +67,7 @@ function netLeave(keepLobby){const N=NET;NET=null;NETTK++;
  if(!keepLobby)$('lobby').style.display='none'}
 
 function wire(N,c){
- c.on('open',()=>{if(NET!==N)return;if(!N.host){clearTimeout(N.to);netSend({t:'hello',v:NETV,name:myName(),deck:ALL[$('d0').value].c});lobby('Connected',{status:'Waiting for the host to start the game...',nodeck:1})}});
+ c.on('open',()=>{if(NET!==N)return;if(!N.host){clearTimeout(N.to);pkResolve();netSend({t:'hello',v:NETV,name:myName(),deck:ALL[$('d0').value].c});lobby('Connected',{status:'Waiting for the host to start the game...',nodeck:1})}});
  c.on('data',m=>{if(NET!==N||!m||!m.t)return;N.host?hostMsg(m):guestMsg(m)});
  c.on('close',()=>onClose(N));c.on('error',()=>onClose(N))}
 async function hostRoom(){
@@ -109,7 +109,7 @@ const okDeck=dk=>Array.isArray(dk)&&dk.length>=10&&dk.length<=60&&dk.every(id=>C
 function rematch(){if(!NET||NET.dead)return;
  $('ovd').style.display='none';$('dkpick').style.display='none';
  if(NET.host){NET.rm[0]=1;if(NET.rm[1])hostStart();else{$('ovr').textContent='Waiting for opponent...';netSend({t:'rm'})}}
- else{netSend({t:'rm',deck:ALL[$('d0').value].c});$('ovr').textContent='Waiting for opponent...'}}
+ else{pkResolve();netSend({t:'rm',deck:ALL[$('d0').value].c});$('ovr').textContent='Waiting for opponent...'}}
 
 const HQ=[];let hrun=false;
 function hostMsg(m){
@@ -117,6 +117,7 @@ function hostMsg(m){
  HQ.push(m);if(!hrun)hpump()}
 async function hpump(){hrun=true;while(HQ.length&&NET){const m=HQ.shift();try{await hostHandle(m)}catch(e){console.error('net',e)}}hrun=false}
 function hostStart(){
+ pkResolve();musicNewGame();
  NET.deckH=ALL[$('d0').value].c.slice();
  gid++;G=newGame(NET.deckH,NET.deckG);busy=true;sel=pend=null;castMode=false;stickyZoom=false;
  NET.mull=[0,0];NET.pref=[null,null];NET.rm=[0,0];NET.ev=[];NET.pre=null;
@@ -160,7 +161,7 @@ async function guestHandle(m){
  case'start':
   OPN=cleanName(m.name).trim();gid++;G=unsnap(m.s);busy=true;sel=pend=null;castMode=false;stickyZoom=false;
   ['lobby','ov','hist','modal'].forEach(k=>$(k).style.display='none');$('ovr').style.display='';$('ovr').textContent='Rematch';
-  show('game');say('');render();showMul();startAudio();break;
+  musicNewGame();show('game');say('');render();showMul();startAudio();break;
  case'st':{clearTimeout(NET.syncT);busy=true;
   if(m.fly&&m.fly.by==0)await flyCard(m.fly.id,heroFrom(),m.fly.sp?centerRect():slotRect(1,m.fly.ln),{out:!!m.fly.sp,dur:m.fly.sp?480:380,hold:300,fc:m.fly.fc,ba:m.fly.ba});
   G=unsnap(m.s,m.ev);sel=pend=null;castMode=false;
