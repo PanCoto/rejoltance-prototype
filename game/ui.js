@@ -150,10 +150,16 @@ function render(){
  const act=mine();$('end').disabled=!act;$('end').textContent=G.step>=3?'Combat…':act?'End Turn':'Enemy…';
  refreshPin();musicUpdate();if(G.over)finish()}
 function info(x,live){showZoom(x,live)}
+// Pop-up banner for Endless Mode boss events (upgrades, new deck). Several in one round are shown one after another.
+const BPQ=[];let bpBusy=false;
+function bpNext(){const e=BPQ.shift(),el=$('bpop');if(!e){bpBusy=false;return}bpBusy=true;el.innerHTML='<b>'+e.h+'</b><span>'+e.t+'</span>';el.classList.remove('show');void el.offsetWidth;el.classList.add('show');setTimeout(()=>{el.classList.remove('show');setTimeout(bpNext,200)},2600)}
+function bossPop(e){BPQ.push(e);if(!bpBusy)bpNext()}
+function bpClear(){BPQ.length=0;$('bpop').classList.remove('show')}
 function anim(){const ev=G.ev;G.ev=[];if(NET&&NET.host)NET.ev.push(...ev);const aoeU=new Set();ev.forEach(e=>e.k=='aoe'&&e.us.forEach(x=>aoeU.add(x.u)));const inU=new Set(ev.filter(x=>x.k=='in').map(x=>x.u));const tfJust=ev.some(x=>x.k=='tf'&&inU.has(x.u));ev.forEach(x=>{if(x.k=='tf')x.just=tfJust});let dl=0;ev.forEach(e=>{
  const q=e.u?document.querySelector(`#board [data-u="${e.u}"]`):null;
  const run=()=>{sfxEv(e);
  if(e.k=='trig'&&q)q.classList.add('shake');
+ else if(e.k=='boss')bossPop(e);
  else if(e.k=='in'){if(q)q.classList.add('pop');fxLand(e.u)}
  else if(e.k=='atk'){if(e.bonus)fxLunge(e,q,inU.has(e.u),e.post);else if(e.hr===0)fxSpark(1-e.o,e.l)}
  else if(e.k=='dmg'){const host=e.h!=null?$(e.h?'ehero':'phero'):q&&q.parentElement;if(!host)return;
@@ -411,10 +417,11 @@ const mulOK=()=>{const ids=[...mulSel];
  mulligan(G,G.p[0],ids);botMull(G,G.p[1]);
  askOrder(v=>{decideStart(G,v,'first');startRound(G);flow()})};
 $('mok').onclick=mulOK;
-function start(){unpin();pkResolve();musicNewGame();if(NET)netLeave();$('ovr').style.display='';$('ovr').textContent='Rematch';gid++;BOTMODE=MODE=='endless'?'smart':$('bot').value;
- if(MODE=='mirror'){const m=mirrorDeck();G=newGame(m,m,{mir:1})}else G=newGame(ALL[$('d0').value].c,ALL[$('d1').value].c,MODE=='endless'?{endless:1}:null);busy=true;sel=pend=null;castMode=false;stickyZoom=false;
+function start(){unpin();bpClear();pkResolve();musicNewGame();if(NET)netLeave();$('ovr').style.display='';$('ovr').textContent='Rematch';gid++;BOTMODE=MODE=='endless'?'smart':$('bot').value;
+ if(MODE=='mirror'){const m=mirrorDeck();G=newGame(m,m,{mir:1})}else if(MODE=='endless')G=newGame(ALL[$('d0').value].c,mirrorDeck(),{endless:1}); // the Boss always plays a random deck - it can't be rigged
+ else G=newGame(ALL[$('d0').value].c,ALL[$('d1').value].c);busy=true;sel=pend=null;castMode=false;stickyZoom=false;
  show('game');$('ov').style.display='none';say('');render();showMul()}
-function toMenu(){unpin();$('dkpick').style.display='none';if(NET)netLeave();$('ovr').style.display='';$('ovr').textContent='Rematch';gid++;$('ov').style.display='none';$('mul').style.display='none';$('hist').style.display='none';show('menu');$('zoom').style.display='none';G=null;musicUpdate()}
+function toMenu(){unpin();bpClear();$('dkpick').style.display='none';if(NET)netLeave();$('ovr').style.display='';$('ovr').textContent='Rematch';gid++;$('ov').style.display='none';$('mul').style.display='none';$('hist').style.display='none';show('menu');$('zoom').style.display='none';G=null;musicUpdate()}
 $('go').onclick=()=>{$('botmenu').style.display='none';start();musicStart()};
 $('ovb').onclick=toMenu;
 const cmpC=(a,b)=>(a.Cost-b.Cost)||((a.Type==b.Type)?0:a.Type=='Unit'?-1:1)||a.Name.localeCompare(b.Name);

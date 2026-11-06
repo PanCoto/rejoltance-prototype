@@ -94,7 +94,7 @@ function roundTrig(G,trig){if(G.over)return;
  [G.start,1-G.start].forEach(i=>G.p[i].ln.slice().forEach(u=>{if(u&&!u.gone&&u.hp>0&&!G.over)fire(G,trig,u,{u})}));resolve(G)}
 function startRound(G){G.turn++;G.start=(G.turn%2?0:1)^(G.fp|0);G.step=0;setStep(G);G.p.forEach(p=>{p.mb=Math.min(10,G.turn)+(G.en&&p.i==1?G.en.mod.mana:0);p.b=p.mb;if(G.turn>1){draw(G,p);if(G.en&&p.i==1)for(let k=0;k<G.en.mod.draw;k++)draw(G,p)}});L(G,'— Round '+G.turn+' —');if(G.en)bossRound(G);roundTrig(G,'OnStartOfRound')}
 function draw(G,p,quiet,idx){
- if(G.en&&p.i==1&&!p.deck.length&&p.disc.length){p.deck=shuf(p.disc.splice(0).map(c=>({uid:UID++,id:c.id})));L(G,'Boss reshuffles his discard pile into his deck')}
+ if(G.en&&p.i==1&&!p.deck.length){p.deck=mirrorDeck().map(id=>({uid:UID++,id}));L(G,'Boss draws a brand new deck');EV(G,{k:'boss',h:'NEW DECK',t:'The Boss is out of cards - he gets a brand new deck!'})}
  if(RULES.fullHandRework&&p.hand.length>=HAND_MAX){L(G,(p.i?'Enemy hand':'Your hand')+' is full - draw cancelled');return}
  if(!p.deck.length){p.fat=(p.fat||0)+1;L(G,(p.i?'Enemy':'You')+' ha'+(p.i?'s':'ve')+' no cards - fatigue '+p.fat);EV(G,{k:'snd',n:'cardDrawn',o:p.i});dmg(G,H(p.i),p.fat,null,2);return}
  const c=idx!=null?p.deck.splice(idx,1)[0]:p.deck.shift();
@@ -131,7 +131,7 @@ function chk(G){if(G.en&&G.p[1].hp<=0)G.p[1].hp+=20*Math.ceil((1-G.p[1].hp)/20);
 // ===== ENDLESS MODE ===========================================================================
 // Player 1 is the Boss. His hero never dies: whenever his HP would hit 0 it refills by 20 (one "life bar" lost).
 // G.en.dealt = total damage dealt to the Boss hero = the run's SCORE. Every 20 damage the Boss gets the next upgrade (applied at the start of a round).
-// Boss deck never runs out: the discard pile is reshuffled into it (see draw()).
+// Boss deck never runs out: when it is empty he gets a completely NEW random deck (see draw()). His starting deck is random too (see start() in ui.js).
 const BOSS_TIERS=['conj','draw','stat','mana','pulse','conj'],BOSS_CYCLE=['stat','draw','pulse','conj','mana','stat'];
 const BOSS_MANA_CAP=3;
 const bossTierKind=n=>n<=BOSS_TIERS.length?BOSS_TIERS[n-1]:BOSS_CYCLE[(n-BOSS_TIERS.length-1)%BOSS_CYCLE.length];
@@ -139,7 +139,7 @@ const BOSS_TXT={conj:'conjures an extra random card every round',draw:'draws an 
 const bossNext=G=>(G.en.tier+1)*20;
 function bossRound(G){const e=G.en,b=G.p[1],want=Math.floor(e.dealt/20);
  while(e.tier<want){e.tier++;let k=bossTierKind(e.tier);if(k=='mana'&&e.mod.mana>=BOSS_MANA_CAP)k='stat';e.mod[k]++;
-  const t='Boss upgrade '+e.tier+': '+BOSS_TXT[k];e.log.push(t);L(G,t);EV(G,{k:'snd',n:'buff'})}
+  const t='Boss upgrade '+e.tier+': '+BOSS_TXT[k];e.log.push(t);L(G,t);EV(G,{k:'snd',n:'buff'});EV(G,{k:'boss',h:'BOSS UPGRADE '+e.tier,t:'The Boss '+BOSS_TXT[k]})}
  b.mb=Math.min(10,G.turn)+e.mod.mana;b.b=b.mb;
  const pool=CARDS.filter(c=>c.Id<900&&!CARDS_NOCONJ(c));
  for(let i=0;i<e.mod.conj;i++){if(b.hand.length>=HAND_MAX)break;const d=pool[R(pool.length)];b.hand.push({uid:UID++,id:d.Id,tok:1});L(G,'Boss conjures '+d.Name);gained(G,b,'add')}

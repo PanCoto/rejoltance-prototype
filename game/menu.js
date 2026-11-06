@@ -3,8 +3,8 @@ const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}},lsSet=
 const openPanel=id=>{PANELS.forEach(k=>$(k).style.display=k==id?'flex':'none')},closePanels=()=>openPanel('');
 const botLabel=()=>$('bot').value=='basic'?'Basic':'Smart';
 const refreshBotDiff=()=>{if(MODE=='endless')return;$('botdiff').textContent='Difficulty: '+botLabel()+' (change it in Settings)'};
-const botPanel=m=>{MODE=m;const en=m=='endless';$('bott').textContent=en?'Endless Mode':'Play with the bot';$('botlbl').textContent=en?'Boss\'s deck':'Bot\'s deck';
- $('botdiff').textContent=en?'Deal as much damage to the Boss as you can. His deck never runs out and he gets stronger every 20 damage.':'Difficulty: '+botLabel()+' (change it in Settings)';openPanel('botmenu');pkReveal('pk0','pk1')};
+const botPanel=m=>{MODE=m;const en=m=='endless';$('bott').textContent=en?'Endless Mode':'Play with the bot';$('pk1').closest('.pkcol').style.display=en?'none':'';document.querySelector('#botmenu .pkcols').style.gridTemplateColumns=en?'1fr':'';
+ $('botdiff').textContent=en?'Deal as much damage to the Boss as you can. He plays a random deck, never runs out of cards and gets stronger every 20 damage.':'Difficulty: '+botLabel()+' (change it in Settings)';openPanel('botmenu');pkReveal('pk0','pk1')};
 $('tfriend').onclick=()=>{MODE='online';openPanel('frmenu')};
 $('tbot').onclick=()=>botPanel('bot');$('tendless').onclick=()=>botPanel('endless');
 $('tmirror').onclick=()=>{MODE='mirror';openPanel('mirmenu')};

@@ -619,7 +619,7 @@ const CARDS = [
     Type: "Unit",
     Subtypes: ["Machine"],
     Cost: 3,
-    Attack: 5,
+    Attack: 6,
     Health: 6,
     Keywords: ["Stunned"],
     Description: "Whenever this unit damages an enemy: Stun this unit.",
@@ -1002,7 +1002,7 @@ const CARDS = [
     Cost: 1,
     Attack: 1,
     Health: 1,
-    Description: "Whenever You play an Automaton: This Unit gets +1/+1.",
+    Description: "Whenever You play a Machine: This Unit gets +1/+1.",
     Effects: [
       {
         Trigger: "OnPlayed",
