@@ -141,7 +141,7 @@ function render(){
   const dx=960-95+(i-mid)*step,dy=Math.pow(i-mid,2)*3,rot=(i-mid)*1.7,html=cardHTML(c,0,'',`data-c="${c.uid}"`);
   if(fresh){el=document.createElement('div');el.dataset.hid=c.uid;hc.appendChild(el);el.style.setProperty('--x',dx+'px');el.style.setProperty('--y','340px');el.style.setProperty('--r','0deg')}
   if(el.dataset.html!==html){el.innerHTML=html;el.dataset.html=html}
-  el.className='hc'+(sel==i?' sel':'')+(mine()&&playable(G,me,i)?'':' np');el.dataset.h=i;el.style.setProperty('--z',i+2);
+  el.className='hc'+(sel==i?' sel':'')+(mine()&&playable(G,me,i)?'':' np');el.dataset.h=i;if(i<8)el.dataset.n=i+1;else delete el.dataset.n;el.style.setProperty('--z',i+2);
   if(fresh)el.getBoundingClientRect();
   el.style.setProperty('--x',dx+'px');el.style.setProperty('--y',dy+'px');el.style.setProperty('--r',rot+'deg')});
  Object.values(ex).forEach(e=>e.remove());

@@ -501,3 +501,6 @@ body[data-font=dys] .panel .opt small{font-size:20px}
 #fprev{position:absolute;left:calc(100% + 40px);top:50%;transform:translateY(-50%);width:270px;display:flex;flex-direction:column;gap:10px;pointer-events:none}
 #fprev small{font-size:20px;white-space:nowrap;color:#777;letter-spacing:1px;text-transform:uppercase;text-align:center}
 #fpc{width:100%}
+
+/* hand card hotkey numbers (Settings > Show card numbers) */
+body.hn .hc[data-n]::before{content:attr(data-n);position:absolute;left:50%;top:-34px;transform:translateX(-50%);min-width:30px;height:30px;line-height:30px;text-align:center;background:#000;color:#fff;border:2px solid #c4161c;font-weight:700;font-size:22px;font-family:var(--fd);pointer-events:none;z-index:5}

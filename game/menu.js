@@ -19,6 +19,8 @@ addEventListener('keydown',e=>{if(e.key!='Escape')return;if($('game').style.disp
  if($('lobby').style.display=='flex')$('lcancel').click();else closePanels()});
 $('rndprem').checked=lsGet('rj_rndpool')!=='mine';
 $('rndprem').onchange=()=>lsSet('rj_rndpool',$('rndprem').checked?'all':'mine');
+$('hotnum').checked=lsGet('rj_hotnum')==='1';document.body.classList.toggle('hn',$('hotnum').checked);
+$('hotnum').onchange=()=>{lsSet('rj_hotnum',$('hotnum').checked?'1':'0');document.body.classList.toggle('hn',$('hotnum').checked)};
 const pct=(id,key,def,apply)=>{const el=$(id),n=$(id.replace('v','n'));let v=lsGet(key);v=v===null||v===''||isNaN(+v)?def:Math.max(0,Math.min(100,+v));
  el.value=v;n.textContent=v+'%';apply(v);
  el.oninput=()=>{n.textContent=el.value+'%';apply(+el.value);lsSet(key,el.value)};return el};
