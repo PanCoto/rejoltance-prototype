@@ -512,7 +512,6 @@ body.hn .hc[data-n]::before{content:attr(data-n);position:absolute;left:50%;top:
 #menu .tile b{font-size:46px;line-height:1.05;color:#ddd;letter-spacing:1px}
 #menu .tile small{font-size:25px;line-height:1.2;color:#777;font-weight:400;letter-spacing:1px}
 #menu .tile:hover{border-color:var(--red);color:#e6e6e6;box-shadow:0 0 0 2px #c4161c55}
-#menu .tile.feat{border-color:#5a1a1d;background:linear-gradient(135deg,#1c0508,#000 70%)}#menu .tile.feat b{color:#fff}#menu .tile.feat svg{color:#e4e4e4}
 #menu p{width:1300px;font-size:21px;color:#555;line-height:1.4;margin:0}
 body[data-font=dys] #menu .tile b{font-size:36px}body[data-font=dys] #menu .tile small{font-size:20px}body[data-font=dys] #menu .mgrp h3{font-size:26px}
 
@@ -522,9 +521,9 @@ body[data-font=dys] #menu .tile b{font-size:36px}body[data-font=dys] #menu .tile
 .av i{font-style:normal;font-family:var(--fd);font-size:40px;color:#888;line-height:1}
 .rkr em.av{width:56px;height:56px;border-radius:12px}.rkr em.av i{font-size:34px}
 .rkr:hover{border-color:#5a5a5a}.rkr.me:hover{border-color:var(--red)}
-#menu #pchip{height:78px;border-radius:39px;padding:0 30px 0 8px;display:flex;align-items:center;gap:16px;border-color:#5a1a1d;background:linear-gradient(135deg,#1c0508,#000 70%);color:#ddd;text-align:left}
-#pchip .av{width:60px;height:60px;border-radius:50%;border-color:#5a1a1d}#pchip .av i{font-size:36px}
-#pchip .pi{display:flex;flex-direction:column;gap:2px;min-width:0}#pchip b{font-size:32px;color:#fff;line-height:1;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#pchip small{font-size:20px;color:#ff4a50;line-height:1;letter-spacing:1px;font-weight:400}
+#menu #pchip{height:78px;border-radius:39px;padding:0 30px 0 8px;display:flex;align-items:center;gap:16px;text-align:left}
+#pchip .av{width:60px;height:60px;border-color:#777}#pchip .av i{font-size:36px}
+#pchip .pi{display:flex;flex-direction:column;gap:2px;min-width:0}#pchip b{font-size:32px;color:inherit;line-height:1;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#pchip small{font-size:20px;color:#ff4a50;line-height:1;letter-spacing:1px;font-weight:400}
 #acctmenu .panel.prof{width:1300px;max-width:1300px}
 .pfbody{display:grid;grid-template-columns:340px minmax(0,1fr);gap:56px;width:100%;align-items:start;margin-top:8px}
 .pfl{display:flex;flex-direction:column;align-items:center;gap:16px}
@@ -582,3 +581,8 @@ body[data-font=dys] #menu .tile b{font-size:36px}body[data-font=dys] #menu .tile
 #menu .mutil{gap:12px}
 #menu .mutil button{height:68px;font-size:26px;padding:0 20px;gap:10px}
 #menu #pchip{padding:0 22px 0 6px}#pchip .av{width:54px;height:54px}#pchip b{font-size:28px;max-width:170px}#pchip small{font-size:18px}
+
+/* profile pictures are circles */
+.av,.rkr em.av,.frow .av,#pchip .av{border-radius:50%}
+.pfav,#acctmenu .pfav{border-radius:50%}
+.pfav i{font-size:150px}
