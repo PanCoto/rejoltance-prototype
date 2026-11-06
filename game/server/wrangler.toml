@@ -14,12 +14,12 @@ new_sqlite_classes = ["Hub"]
 
 [vars]
 # Website ORIGIN allowed to call the API: scheme + host only, no path and no trailing slash, e.g. "https://pancoto.github.io". "*" = any.
-ALLOW_ORIGIN = "*"
+ALLOW_ORIGIN = "https://pancoto.github.io"
 
 # --- Discord login (optional, see README) ---
 # Client ID of your Discord application (public value). The client SECRET is NOT stored here: `npx wrangler secret put DISCORD_CLIENT_SECRET`.
-DISCORD_CLIENT_ID = ""
+DISCORD_CLIENT_ID = "1568393456676503694"
 # FULL address of the game page (with its path), where players are sent back after logging in, e.g. "https://pancoto.github.io/rejoltance-prototype/".
-GAME_URL = ""
+GAME_URL = "https://pancoto.github.io/rejoltance-prototype/"
 # "1" = Ranked games need a Discord-linked account (guests can still play Quick Match). "0" = guests may play Ranked too.
 REQUIRE_DISCORD = "0"
