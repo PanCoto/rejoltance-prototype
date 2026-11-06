@@ -104,6 +104,8 @@ function onClose(N){if(NET!==N||N.dead)return;N.dead=true;clearTimeout(N.syncT);
  const inGame=G&&$('game').style.display=='block';
  if(inGame){if(!G.over){G.over={win:0,left:1};say('');$('mul').style.display='none';$('hist').style.display='none';$('modal').style.display='none';pend=sel=null;castMode=false}
   $('ovr').style.display='none';busy=false;render();finish();return}
+ if(N.mm){mmLost(N);return}
+ if(N.qm){qmAgain();return}
  if(N.host){N.conn=null;N.dead=false;lobby('Your room code',{code:N.code,nodeck:N.mirror,status:'Your opponent left. Waiting for someone to join...'})}
  else{netLeave(1);lobby('Disconnected',{join:1,status:'The connection to the host was lost.'})}}
 const okDeck=dk=>Array.isArray(dk)&&dk.length>=10&&dk.length<=60&&dk.every(id=>CD[id]&&id<900);
@@ -174,7 +176,7 @@ async function guestHandle(m){
   await strikeLane(m.i);G=unsnap(m.s,m.ev);flash=-1;render();anim();recoil();await sleep((m.ev||[]).some(x=>x.k=='atk'&&x.post)?1150:650);break}
  case'pre':{busy=true;flash=m.i;render();const u=await choosePre(G.p[0].ln[m.i]);netSend({t:'preAns',u:u.uid});say('Combat!');render();break}
  case'rm':if($('ovr').textContent=='Rematch')$('ovr').textContent='Rematch (opponent ready)';break;
- case'full':case'err':{const msg=m.t=='full'?'That room already has two players.':m.msg;netLeave(1);lobby('Could not join',{join:1,status:msg});break}}}
+ case'full':case'err':{if(m.t=='full'&&NET.qm){qmAgain();break}const msg=m.t=='full'?'That room already has two players.':m.msg;netLeave(1);lobby('Could not join',{join:1,status:msg});break}}}
 
 $('mhost').onclick=()=>{LB='frmenu';startAudio();hostRoom(false)};
 $('mjoin').onclick=()=>{LB='frmenu';joinLobby('')};
@@ -185,3 +187,43 @@ $('lcopy').onclick=()=>{if(!NET||!NET.code)return;const url=location.origin+loca
  (navigator.clipboard?navigator.clipboard.writeText(url).then(()=>{$('ls').textContent='Invite link copied. Send it to your opponent.'}).catch(()=>prompt('Copy this link:',url)):prompt('Copy this link:',url))};
 addEventListener('pagehide',()=>{try{NET&&NET.conn&&NET.conn.close()}catch(e){}});
 {const r=new URLSearchParams(location.search).get('room');if(r)joinLobby(r.toUpperCase().slice(0,5))}
+
+// ===== QUICK MATCH (serverless matchmaking) ==========================================================
+// No backend: everybody who presses Quick Match first tries to register ONE well-known PeerJS id (derived from the card-data version, so only
+// compatible clients meet). If the id is free you are "in the queue" and wait as host. If it is taken, someone is waiting: you join them.
+// As soon as a match is connected the host drops its signalling link (peer.disconnect(); the game connection stays alive), which frees the id
+// for the next searching player. Lost races (host just got taken / left) simply retry after a short random delay.
+let QMN=0;
+const qmCode=()=>{let h=0;for(const ch of NETV)h=(h*31+ch.charCodeAt(0))>>>0;return'Q'+ALPH[h%32]+ALPH[(h>>5)%32]+'MM'};
+const qmLobby=st=>lobby('Quick Match',{status:st+(window.QMNOTE||'')});
+function quickMatch(){
+ if(!PeerC())return lobby('Online play unavailable',{nodeck:1,status:'The networking library did not load. Reload the page and try again.'});
+ netLeave();syncDecks();QMN=0;qmLobby('Searching for an opponent...');qmStep()}
+function qmAgain(){netLeave(1);const tk=NETTK;
+ if(++QMN>10)return lobby('Quick Match',{nodeck:1,status:'Could not find a match right now. Press Cancel and try again in a moment.'});
+ qmLobby('Searching for an opponent...');setTimeout(()=>{if(tk===NETTK)qmStep()},300+Math.random()*900)}
+async function qmStep(){
+ const tk=NETTK,code=qmCode(),PEEROPT=await peerOpt();if(tk!==NETTK)return;
+ const peer=new(PeerC())(NETPRE+code,PEEROPT);
+ const N=NET={host:true,qm:1,mirror:false,peer,code,conn:null,ev:[],mull:[0,0],pref:[null,null],rm:[0,0],pre:null,dead:false};
+ peer.on('open',()=>{if(NET!==N)return;QMN=0;
+  const st='In the queue - waiting for an opponent. Pick your deck while you wait.';qmLobby(st);
+  probeRelay(PEEROPT.config.iceServers).then(r=>{if(NET===N&&!N.conn&&!r.relay&&$('ls').textContent==st)$('ls').textContent=st+NORELAY})});
+ peer.on('connection',c=>{if(NET!==N)return;
+  if(N.conn){c.on('open',()=>{c.send({t:'full'});setTimeout(()=>c.close(),300)});return}
+  N.conn=c;wire(N,c);
+  c.on('open',()=>{if(NET!==N)return;N.matched=1;try{peer.disconnect()}catch(e){}})});   // free the queue id for the next player
+ peer.on('disconnected',()=>{try{if(NET===N&&!N.matched&&!peer.destroyed)peer.reconnect()}catch(e){}});
+ peer.on('error',e=>{if(NET!==N)return;
+  if(e.type=='unavailable-id'){try{peer.destroy()}catch(x){}qmJoin(tk)}
+  else lobby('Could not start Quick Match',{nodeck:1,status:netErr(e)})})}
+async function qmJoin(tk){
+ if(tk!==NETTK)return;
+ const PEEROPT=await peerOpt();if(tk!==NETTK)return;
+ const code=qmCode(),peer=new(PeerC())(undefined,PEEROPT),N=NET={host:false,qm:1,peer,code,conn:null};
+ qmLobby('Opponent found, connecting...');
+ peer.on('open',()=>{if(NET!==N)return;const c=peer.connect(NETPRE+code,{reliable:true,serialization:'json'});N.conn=c;wire(N,c);
+  N.to=setTimeout(()=>{if(NET===N)qmAgain()},12000)});
+ peer.on('error',e=>{if(NET!==N)return;
+  if(e.type=='peer-unavailable')qmAgain();else{netLeave(1);lobby('Quick Match',{nodeck:1,status:netErr(e)})}})}
+$('mquick').onclick=()=>{LB='frmenu';startAudio();quickMatch()};

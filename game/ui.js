@@ -385,7 +385,7 @@ $('pile').title='Click to view your discard pile';$('deckb').title='Click to vie
 function closeMul(){viewing=false;$('mh').style.removeProperty('--cw');$('mul').style.display='none';$('mok').textContent='Confirm';$('mok').onclick=mulOK}
 function finish(){if($('ov').style.display=='flex')return;$('ovd').style.display=$('ovr').style.display=='none'?'none':'';$('ovdk').textContent=ovDeckLabel();$('ovt').textContent=G.over.left?'OPPONENT LEFT':G.over.draw?'DRAW':G.over.sur&&G.over.win==1?'SURRENDERED':G.over.win==0?'VICTORY':'DEFEAT';sfx(G.over.left||(!G.over.draw&&G.over.win==0)?'victory':'defeat',{pitch:0});endHook();$('ov').style.display='flex'}
 // Endless Mode: the run ends when you die (or surrender). Score = total damage dealt to the Boss; best score is saved locally.
-function endHook(){achEnd();if(G.mir||G.en)$('ovd').style.display='none';
+function endHook(){achEnd();if($('ovmm'))$('ovmm').textContent='';if(typeof mmEnd=='function')mmEnd();if(G.mir||G.en)$('ovd').style.display='none';
  if(G.en){const sc=G.en.dealt,b=Math.max(sc,+lsGet('rj_endless_best')||0);lsSet('rj_endless_best',b);$('ovt').textContent='RUN OVER';$('ovdk').textContent='Score: '+sc+'  -  Best: '+b+(sc>=b&&sc>0?'  (new record!)':'');$('ovr').textContent='New run'}}
 $('end').onclick=()=>{if(!mine())return;sfx('endTurn');sel=pend=null;castMode=false;say('');
  if(NET&&!NET.host){busy=true;netSend({t:'end'});armSync();return}

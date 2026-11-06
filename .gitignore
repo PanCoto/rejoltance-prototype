@@ -6,3 +6,5 @@ lab/deck_out/
 lab/sim_out/
 *.csv
 game/turn-secret.js
+node_modules/
+.wrangler/

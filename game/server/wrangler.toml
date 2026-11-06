@@ -1,0 +1,17 @@
+name = "rejoltance-mm"
+main = "worker.js"
+compatibility_date = "2025-06-01"
+
+# One Durable Object (SQLite storage) holds accounts, ratings, matches, the queue and the leaderboard.
+# SQLite-backed Durable Objects are available on the Workers FREE plan.
+[[durable_objects.bindings]]
+name = "HUB"
+class_name = "Hub"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Hub"]
+
+[vars]
+# Which website origin(s) may call the API. "*" = any. Set to your game URL once it is deployed, e.g. "https://you.github.io".
+ALLOW_ORIGIN = "https://pancoto.github.io"

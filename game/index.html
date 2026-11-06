@@ -14,7 +14,7 @@
    <button class="tile" id="tmirror"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M1 3h5v10H1zM10 3h5v10h-5z"/><path fill="#c4161c" d="M7 2h2v12H7z"/><path fill="#050505" d="M2 5h3v2H2zM11 5h3v2h-3zM2 9h3v1H2zM11 9h3v1h-3z"/></svg><b>Mirror Match UP</b><small>Same deck, same draws</small></button>
    <button class="tile" id="tendless"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M2 5h4v2H4v2h2v2H2zM10 5h4v2h-2v2h2v2h-4z"/><path fill="#c4161c" d="M6 7h4v2H6z"/></svg><b>Endless Mode</b><small>Bot Boss - high score</small></button>
   </div>
-  <div class="mprow"><button id="bopen">Card Collection</button><button id="sopen">Settings</button></div>
+  <div class="mprow"><button id="rkopen">Ranked</button><button id="bopen">Card Collection</button><button id="sopen">Settings</button></div>
   <p>Each round: the starting player plays Units, then the other player plays Units and Actions, then the starter plays Actions. After that all four lanes fight. Click a card in your hand, then a glowing lane, target, or (for spells without a target) anywhere on the board.</p>
  </div>
  <div class="scr" id="bld">
@@ -62,7 +62,7 @@
  </div>
  <div id="zoom"></div><div id="apop"></div>
 <div class="ovl bk" id="frmenu"><div class="panel"><h2>Play with a friend</h2><div class="sub">1 vs 1 online - no account needed</div>
-  <div class="btns"><button class="opt" id="mhost"><b>Host Online</b><small>Create a room and share the code</small></button><button class="opt" id="mjoin"><b>Join Online</b><small>Enter your friend's room code</small></button></div>
+  <div class="btns"><button class="opt" id="mquick"><b>Quick Match</b><small>Find a random opponent automatically</small></button><button class="opt" id="mhost"><b>Host Online</b><small>Create a room and share the code</small></button><button class="opt" id="mjoin"><b>Join Online</b><small>Enter your friend's room code</small></button></div>
   <div class="btns"><button id="frback">Back</button></div></div></div>
  <div class="ovl bk" id="mirmenu"><div class="panel"><h2>Mirror Match UP</h2><div class="sub">Both players get the same random deck in the same draw order - the better player wins.</div>
   <div class="btns"><button class="opt" id="mirbot"><b>Play vs Bot</b><small>Bot uses the same deck</small></button><button class="opt" id="mirhost"><b>Host Online</b><small>Create a room and share the code</small></button><button class="opt" id="mirjoin"><b>Join Online</b><small>Enter your friend's room code</small></button></div>
@@ -76,6 +76,13 @@
   <div class="pkhint">Tip: set a default deck in Card Collection &rsaquo; Decks and it is pre-selected here.</div>
   <div class="btns"><button id="go">Start</button><button id="botback">Back</button></div></div></div>
  <div class="ovl bk" id="achmenu"><div class="panel wide"><h2>Achievements</h2><div class="sub" id="achsum"></div><div id="achbar"><i></i></div><div id="achlist"></div><div class="btns"><button id="achback">Back</button></div></div></div>
+ <div class="ovl bk" id="rkmenu"><div class="panel wide"><h2>Ranked</h2><div class="sub" id="rksub"></div><div id="rkme"></div>
+  <div id="rklist"></div>
+  <div id="rkacct"><div class="srow"><label>Display name</label><input type="text" id="rkname" maxlength="16" autocomplete="off" spellcheck="false"><button id="rksave">Save</button></div>
+   <div class="srow"><label>Transfer code</label><input type="password" id="rkxfer" readonly autocomplete="off" spellcheck="false"><span class="rkbt"><button id="rkshow">Show</button><button id="rkcopy">Copy</button></span></div>
+   <div class="srow"><label>Import code</label><input type="text" id="rkimpin" placeholder="paste a transfer code" autocomplete="off" spellcheck="false"><button id="rkimp">Import</button></div>
+   <div id="rkamsg"></div><div class="rkwarn">Your account is a secret code stored in this browser. Anyone who has it can play as you; if you clear your browser data without saving it, the account and its rating are lost.</div></div>
+  <div class="btns"><button id="rkplay">Play Ranked</button><button id="rkacc">Account</button><button id="rkback">Back</button></div></div></div>
  <div class="ovl bk" id="setmenu"><div class="panel"><h2>Settings</h2><div id="fprev"><small>Font preview</small><div id="fpc"></div></div>
   <div class="srow" id="prow"><label>Display name</label><input type="text" id="pname" maxlength="16" placeholder="Playerzacy" autocomplete="off" spellcheck="false"></div>
   <div class="srow"><label>Font</label><select id="fnt"><option value="jer">Jersey 15 (pixel)</option><option value="pxd">Pixeloid Sans (pixel)</option><option value="dys">OpenDyslexic (dyslexia friendly)</option></select></div>
@@ -90,12 +97,12 @@
  <div class="ovl" id="mul"><h2 id="mt">Mulligan - click cards to replace</h2><div id="mh"></div><button id="mok">Confirm</button><div id="mpr" style="display:none;gap:40px"><button id="mfirst">Go first</button><button id="msecond">Go second</button></div></div>
  <div class="ovl" id="hist"></div>
  <div class="ovl" id="modal"><h2>Surrender?</h2><div style="display:flex;gap:30px"><button id="myes">Yes</button><button id="mno">No</button></div></div>
- <div class="ovl" id="ov"><div id="ovt"></div><div id="ovdk"></div><div style="display:flex;gap:30px"><button id="ovr">Rematch</button><button id="ovd">Change deck</button><button id="ovb">Menu</button></div></div>
+ <div class="ovl" id="ov"><div id="ovt"></div><div id="ovdk"></div><div id="ovmm"></div><div style="display:flex;gap:30px"><button id="ovr">Rematch</button><button id="ovd">Change deck</button><button id="ovb">Menu</button></div></div>
  <div class="ovl bk" id="dkpick"><div class="panel wide"><h2>Choose your deck</h2><div class="sub">Used for the next game</div>
   <div class="pkgrid big" id="pk2"></div>
   <div class="btns"><button id="dkok">Use this deck</button><button id="dkcancel">Back</button></div></div></div>
 </div>
 <div id="rot">Please rotate your device to landscape (this game is designed for a wide screen).</div>
 <audio id="au" loop></audio>
-<script src="cards.js"></script><script src="decks.js"></script><script src="live-config.js"></script><script src="cards-live.js"></script><script src="img-index.js"></script><script src="engine.js"></script><script src="bot.js"></script><script src="sfx.js"></script><script src="music.js"></script><script src="share.js"></script><script src="ui.js"></script><script src="peerjs.min.js"></script><script src="net-config.js"></script><script src="turn-secret.js" onerror="void 0"></script><script src="net.js"></script><script src="menu.js"></script><script src="ach.js"></script>
+<script src="cards.js"></script><script src="decks.js"></script><script src="live-config.js"></script><script src="cards-live.js"></script><script src="img-index.js"></script><script src="engine.js"></script><script src="bot.js"></script><script src="sfx.js"></script><script src="music.js"></script><script src="share.js"></script><script src="ui.js"></script><script src="peerjs.min.js"></script><script src="net-config.js"></script><script src="turn-secret.js" onerror="void 0"></script><script src="net.js"></script><script src="menu.js"></script><script src="mm.js"></script><script src="ach.js"></script>
 </body></html>
