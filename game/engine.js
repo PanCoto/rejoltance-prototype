@@ -8,8 +8,16 @@ const RULES={
  persistentGrowth:true, // Thor / The Creature / Rustler keep growing in Deck, Hand AND Discard pile (ZoneClassic = Hand only).
  hpOneTrigger:true,     // OnFriendlyUnitHpOne fires when a friendly unit's HP reaches 1 (incl. Soul Guard breaking). Used by Death.
  onKillUnkillable:true, // On Kill (Blighteinstein, FireAxe Man...) also triggers when the victim is Unkillable (it is still destroyed - it just returns to hand).
- onKillSoulGuard:false  // On Kill also triggers on the hit that BREAKS a Soul Guard. Off: the unit survived, so it was not killed.
+ onKillSoulGuard:false, // On Kill also triggers on the hit that BREAKS a Soul Guard. Off: the unit survived, so it was not killed.
+ fullHandRework:true    // NEW full-hand rules (PvZ Heroes style). OFF = old behaviour.
+                        //   ON : drawing with a full hand is CANCELLED (the card stays on top of the deck, no fatigue).
+                        //        Bounced units and Unkillable returns ALWAYS go to hand, even over the limit (hand can read 11/8);
+                        //        you can't draw again until the hand is back under the limit (7/8 or less).
+                        //        Only "gain" cards (gift from the opponent) are lost to the discard pile when the hand is full.
+                        //   OFF: a card drawn into a full hand goes straight to the discard pile, and bounced / Unkillable cards
+                        //        that don't fit are discarded too.
 };
+const HAND_MAX=8;
 // Cards may carry DescriptionClassic (old text) next to Description (new text); Rule names the switch that picks between them.
 function applyRules(o){if(o)Object.assign(RULES,o);
  Object.values(CD).forEach(d=>{if(d.DescriptionClassic==null)return;if(d.DescriptionNew==null)d.DescriptionNew=d.Description;
@@ -75,9 +83,10 @@ function roundTrig(G,trig){if(G.over)return;
  [G.start,1-G.start].forEach(i=>G.p[i].ln.slice().forEach(u=>{if(u&&!u.gone&&u.hp>0&&!G.over)fire(G,trig,u,{u})}));resolve(G)}
 function startRound(G){G.turn++;G.start=(G.turn%2?0:1)^(G.fp|0);G.step=0;setStep(G);G.p.forEach(p=>{p.mb=Math.min(10,G.turn);p.b=p.mb;if(G.turn>1)draw(G,p)});L(G,'— Round '+G.turn+' —');roundTrig(G,'OnStartOfRound')}
 function draw(G,p,quiet,idx){
+ if(RULES.fullHandRework&&p.hand.length>=HAND_MAX){L(G,(p.i?'Enemy hand':'Your hand')+' is full - draw cancelled');return}
  if(!p.deck.length){p.fat=(p.fat||0)+1;L(G,(p.i?'Enemy':'You')+' ha'+(p.i?'s':'ve')+' no cards - fatigue '+p.fat);EV(G,{k:'snd',n:'cardDrawn',o:p.i});dmg(G,H(p.i),p.fat,null,2);return}
  const c=idx!=null?p.deck.splice(idx,1)[0]:p.deck.shift();
- if(p.hand.length>=8){p.disc.push(c);return}
+ if(p.hand.length>=HAND_MAX){p.disc.push(c);return}
  p.hand.push(c);aura(G);if(quiet)return;EV(G,{k:'snd',n:'cardDrawn',o:p.i});
  if(!RULES.drawMeansGain)p.ln.forEach(u=>u&&fire(G,'OnFriendlyCardDrawn',u,{}));
  if(!RULES.drawMeansGain)G.p[1-p.i].ln.forEach(u=>u&&fire(G,'OnOpponentCardDrawn',u,{}));
@@ -259,8 +268,8 @@ function act(G,a,s,c){
 case'AddCardToHand':{
   const owners=ts.length&&ts[0].h?ts.filter(t=>t.h).map(t=>G.p[t.p]):[me];
   owners.forEach(pl=>{for(let i=0;i<(a.Count||1);i++){let id=a.ValueParam;if(a.Filter||id==null){const pp=poolOf(a.Filter);if(!pp.length)break;id=pp[R(pp.length)].Id}
-   if(pl.hand.length<8){pl.hand.push({uid:UID++,id,tok:1,...(a.FreeThisTurn?{z:G.turn}:{})});gained(G,pl,'add')}}});break}
-case'ReturnToHand':unitsOnly.filter(t=>!t.gone&&(!a.IfAlive||t.hp>0)).forEach(t=>{const o=G.p[t.o];if(o.ln[t.lane]!==t)return;EV(G,{k:'bnc',id:t.id,atk:t.atk,hp:Math.max(t.hp,0),o:t.o,lane:t.lane});L(G,t.d.Name+' returned to hand');o.ln[t.lane]=null;t.gone=1;if(o.hand.length<8&&t.id<900){o.hand.push({uid:UID++,id:t.id,unk:t.kw.has('Unkillable')?1:0,...(t.cr?{red:t.cr}:{}),...(t.cba?{ba:t.cba}:{}),...(a.FreeThisTurn?{z:G.turn}:{})});gained(G,o,'bounce')}});break
+   if(pl.hand.length<HAND_MAX){pl.hand.push({uid:UID++,id,tok:1,...(a.FreeThisTurn?{z:G.turn}:{})});gained(G,pl,'add')}}});break}
+case'ReturnToHand':unitsOnly.filter(t=>!t.gone&&(!a.IfAlive||t.hp>0)).forEach(t=>{const o=G.p[t.o];if(o.ln[t.lane]!==t)return;EV(G,{k:'bnc',id:t.id,atk:t.atk,hp:Math.max(t.hp,0),o:t.o,lane:t.lane});L(G,t.d.Name+' returned to hand');o.ln[t.lane]=null;t.gone=1;if((o.hand.length<HAND_MAX||RULES.fullHandRework)&&t.id<900){o.hand.push({uid:UID++,id:t.id,unk:t.kw.has('Unkillable')?1:0,...(t.cr?{red:t.cr}:{}),...(t.cba?{ba:t.cba}:{}),...(a.FreeThisTurn?{z:G.turn}:{})});gained(G,o,'bounce')}});break
  case'SacrificeUnits':{
   const list=(c.sacs||[]).filter(u=>u&&!u.gone&&u!==s&&u.o==s.o&&me.ln[u.lane]===u);let ga=0,gh=0;
   list.forEach(v=>{if(v.gone)return;c.last=v;c.sacd=1;const va=v.atk,vh=Math.max(0,v.hp);sacrifice(G,v,s);if(a.Absorb){ga+=va;gh+=vh}else{ga++;gh++}});
@@ -268,9 +277,9 @@ case'ReturnToHand':unitsOnly.filter(t=>!t.gone&&(!a.IfAlive||t.hp>0)).forEach(t=
 case'LoseHealth':ts.forEach(t=>{if(t.h)dmg(G,t,a.Amount||1,null,2);else{t.hp-=a.Amount||1;EV(G,{k:'dmg',u:t.uid,n:a.Amount||1})}});break;
  case'ModifyGlobalBuff':EV(G,{k:'snd',n:'buff'});if(!G.sim&&units(me).length)EV(G,{k:'aoe',T:'BuffStats',st:'',pos:1,o:me.i,us:units(me).map(x=>({u:x.uid,o:x.o,l:x.lane}))});me.gb.a+=a.BuffAtk||0;me.gb.h+=a.BuffHp||0;units(me).forEach(u=>{u.atk+=a.BuffAtk||0;u.hp+=a.BuffHp||0;u.mx+=a.BuffHp||0});break;
  case'BonusAttack':unitsOnly.forEach(t=>strike(G,t));break;
- case'TutorCard':{let i=c.tut?me.deck.findIndex(x=>x.uid==c.tut.uid):-1;if(i<0)i=me.deck.reduce((b,c2,k)=>CD[c2.id].Cost>CD[me.deck[b].id].Cost?k:b,0);const got=me.deck.length&&me.hand.length<8;if(got)me.hand.push(me.deck.splice(i,1)[0]);shuf(me.deck);if(got)gained(G,me,'tutor');break}
+ case'TutorCard':{let i=c.tut?me.deck.findIndex(x=>x.uid==c.tut.uid):-1;if(i<0)i=me.deck.reduce((b,c2,k)=>CD[c2.id].Cost>CD[me.deck[b].id].Cost?k:b,0);const got=me.deck.length&&me.hand.length<HAND_MAX;if(got)me.hand.push(me.deck.splice(i,1)[0]);shuf(me.deck);if(got)gained(G,me,'tutor');break}
  case'ShuffleDeck':shuf(me.deck);break;
- case'DrawFromDiscard':for(let i=0;i<(a.Amount||1)&&me.disc.length&&me.hand.length<8;i++){me.hand.push(me.disc.pop());gained(G,me,'discard')}break;
+ case'DrawFromDiscard':for(let i=0;i<(a.Amount||1)&&me.disc.length&&me.hand.length<HAND_MAX;i++){me.hand.push(me.disc.pop());gained(G,me,'discard')}break;
  case'Reanimate':{
   const n=a.Count||1,ch=[];let ls=[0,1,2,3].filter(i=>!me.ln[i]);
   for(let k=0;k<n&&!a.Auto;k++){const w=(c.lanes||[])[c.li||0];if(w==null)break;c.li=(c.li||0)+1;if(ls.includes(w)&&!ch.includes(w))ch.push(w)}
@@ -334,7 +343,7 @@ function killUnit(G,u,lane){const p=G.p[u.o],unk=u.kw.has('Unkillable')&&!u.sil;
  if(!unk&&u.id<900)p.disc.push({uid:UID++,id:u.id,nf:u.uid,unk:u.kw.has('Unkillable')?1:0});
  fire(G,'OnDeath',u,{u});units(p).forEach(o=>fire(G,'OnFriendlyUnitDied',o,{u}));fireHand(G,'OnFriendlyUnitDied',p,{u,lane});
  if(unk){L(G,u.d.Name+' is Unkillable - back to hand');
-  if(u.id<900){const card={uid:UID++,id:u.id,nf:u.uid,unk:1,...(u.cr?{red:u.cr}:{}),...(u.cba?{ba:u.cba}:{})};if(p.hand.length<8){p.hand.push(card);gained(G,p,'unkillable')}else p.disc.push(card)}}}
+  if(u.id<900){const card={uid:UID++,id:u.id,nf:u.uid,unk:1,...(u.cr?{red:u.cr}:{}),...(u.cba?{ba:u.cba}:{})};if(p.hand.length<HAND_MAX||RULES.fullHandRework){p.hand.push(card);gained(G,p,'unkillable')}else p.disc.push(card)}}}
 function sacrifice(G,u,by){const p=G.p[u.o];p.sc++;L(G,u.d.Name+' sacrificed');
  fire(G,'OnSacrificed',u,{by:by||null});
  if(!u.gone)killUnit(G,u,u.lane);
@@ -436,7 +445,7 @@ function play(G,p,ci,ln,pk){if(!canPlay(G,p,ci,ln))return false;
   if(twice&&!G.over){
    const c2=Object.assign({},ctx);delete c2.sac;delete c2.sacd;delete c2.last;if(c2.t&&!c2.t.h&&(c2.t.gone||c2.t.hp<=0))delete c2.t;
    fire(G,'OnPlayed',{d,o:p.i,sp:1,lane:-1,uid:0},c2);resolve(G)}
-  if(s.give&&G.p[1-p.i].hand.length<8){const cc=s.giveA&&s.giveA.CostChange;G.p[1-p.i].hand.push({uid:UID++,id:c.id,...(cc?{red:(c.red||0)-cc}:{})});gained(G,G.p[1-p.i],'gift')}else p.disc.push({uid:UID++,id:c.id});
+  if(s.give&&G.p[1-p.i].hand.length<HAND_MAX){const cc=s.giveA&&s.giveA.CostChange;G.p[1-p.i].hand.push({uid:UID++,id:c.id,...(cc?{red:(c.red||0)-cc}:{})});gained(G,G.p[1-p.i],'gift')}else p.disc.push({uid:UID++,id:c.id});
   p.ln.forEach(w=>w&&fire(G,'OnFriendlyActionPlayed',w,{}));fireHand(G,'OnFriendlyActionPlayed',p,{})}
  return true}
 function botPick(G,p,k,ex,sp,f){const val=u=>u.atk*2+u.hp,ts=req(G,p,k,f||null,ex,sp);
