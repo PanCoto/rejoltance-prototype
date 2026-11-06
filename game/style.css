@@ -479,3 +479,7 @@ body[data-font=sil]{--fd:Sil,"Courier New",monospace;--fb:Sil,"Courier New",mono
 #mimg{align-self:center;max-width:100%;max-height:600px;object-fit:contain;background:#000;border:2px solid #2a2a2a;border-radius:12px}
 .dkact button[data-a=edit]{order:1}.dkact button[data-a=png]{order:2;width:140px}.dkact button[data-a=del]{order:4}
 .dkact{padding-top:40px;gap:8px}.dkact button{height:46px}
+
+.tiles.four{gap:40px}#menu .tiles.four .tile{width:420px;height:420px}#menu .tiles.four .tile b{font-size:44px}#menu .tiles.four .tile small{font-size:24px}#menu .tiles.four .tile svg{width:150px;height:150px}
+#mirmenu .panel .opt{width:330px}
+#endl{display:none;position:absolute;left:14px;top:88px;width:370px;font-family:var(--fd);font-size:25px;line-height:30px;color:#bbb;pointer-events:auto;z-index:5}#endl b{color:#e4e4e4;font-size:34px}#endl small{display:block;font-size:20px;color:#777;font-family:var(--fb)}

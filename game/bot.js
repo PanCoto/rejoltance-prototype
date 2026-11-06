@@ -3,7 +3,7 @@ function cloneUnit(u){return u&&Object.assign({},u,{kw:new Set(u.kw),ag:Object.a
 function cloneG(G){
  const cp=p=>Object.assign({},p,{hand:p.hand.map(c=>Object.assign({},c)),deck:p.deck.map(c=>Object.assign({},c)),disc:p.disc.map(c=>Object.assign({},c)),
   ln:p.ln.map(cloneUnit),gb:Object.assign({},p.gb)});
- return Object.assign({},G,{sim:1,p:G.p.map(cp),log:[],hist:[],ev:[],q:null,over:G.over?Object.assign({},G.over):null})}
+ return Object.assign({},G,{sim:1,en:G.en?Object.assign({},G.en,{mod:Object.assign({},G.en.mod),log:[]}):G.en,p:G.p.map(cp),log:[],hist:[],ev:[],q:null,over:G.over?Object.assign({},G.over):null})}
 function blindClone(G,me){const c=cloneG(G);c.p.forEach(p=>shuf(p.deck));
  if(me!=null&&c.p[1-me]){const o=c.p[1-me],pool=o.hand.concat(o.deck),ids=shuf(pool.map(x=>x.id));pool.forEach((x,i)=>x.id=ids[i])}
  return c}

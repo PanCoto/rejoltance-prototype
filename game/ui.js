@@ -1,6 +1,6 @@
 const $=id=>document.getElementById(id),sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let G,sel=null,pend=null,busy=false,flash=-1,mulSel=new Set(),castMode=false,pendRes=null,stickyZoom=false;
-let ALL=[],gid=0,NET=null;
+let ALL=[],gid=0,NET=null,MODE='bot';// MODE: 'bot' | 'mirror' | 'endless' (online games use NET)
 function fit(){const s=Math.min(innerWidth/1920,innerHeight/1080);$('stage').style.transform=`translate(-50%,-50%) scale(${s})`}
 addEventListener('resize',fit);fit();
 const show=id=>{['menu','bld','game'].forEach(k=>$(k).style.display=k==id?(k=='menu'?'flex':'block'):'none')};
@@ -122,6 +122,7 @@ let OPN='';
 function render(){
  const me=G.p[0],op=G.p[1],tg=validTargets();let h='';
  $('phase').textContent='Phase : '+(G.step>=3?'Combat':PH[G.allow]);$('round').textContent='Round : '+G.turn;
+ {const eh=$('endl');if(G.en){const e=G.en,lv=Math.floor(e.dealt/20);eh.style.display='block';eh.innerHTML=`ENDLESS<br><b>Score ${e.dealt}</b><small>Boss level ${lv} - next upgrade at ${(lv+1)*20} damage</small>`;eh.title=e.log.length?e.log.join('\n'):'No boss upgrades yet'}else eh.style.display='none'}
  $('ehp').textContent=Math.max(0,op.hp);$('php').textContent=Math.max(0,me.hp);
  $('ehp').className='hpn'+(op.hp<=7?' lo':'');$('php').className='hpn'+(me.hp<=7?' lo':'');
  $('enb').textContent=NET?(OPN||'Opponent'):'Botzacy';$('pnb').textContent=myName()||'Playerzacy';
@@ -376,7 +377,10 @@ $('pile').onclick=()=>{if(G)viewPile('Your discard pile ('+G.p[0].disc.length+')
 $('deckb').onclick=()=>{if(G)viewPile('Your deck ('+G.p[0].deck.length+') - sorted by cost',G.p[0].deck.slice().sort((a,b)=>cmpC(CD[a.id],CD[b.id])))};
 $('pile').title='Click to view your discard pile';$('deckb').title='Click to view the cards left in your deck';
 function closeMul(){viewing=false;$('mh').style.removeProperty('--cw');$('mul').style.display='none';$('mok').textContent='Confirm';$('mok').onclick=mulOK}
-function finish(){if($('ov').style.display=='flex')return;$('ovd').style.display=$('ovr').style.display=='none'?'none':'';$('ovdk').textContent=ovDeckLabel();$('ovt').textContent=G.over.left?'OPPONENT LEFT':G.over.draw?'DRAW':G.over.sur&&G.over.win==1?'SURRENDERED':G.over.win==0?'VICTORY':'DEFEAT';sfx(G.over.left||(!G.over.draw&&G.over.win==0)?'victory':'defeat',{pitch:0});$('ov').style.display='flex'}
+function finish(){if($('ov').style.display=='flex')return;$('ovd').style.display=$('ovr').style.display=='none'?'none':'';$('ovdk').textContent=ovDeckLabel();$('ovt').textContent=G.over.left?'OPPONENT LEFT':G.over.draw?'DRAW':G.over.sur&&G.over.win==1?'SURRENDERED':G.over.win==0?'VICTORY':'DEFEAT';sfx(G.over.left||(!G.over.draw&&G.over.win==0)?'victory':'defeat',{pitch:0});endHook();$('ov').style.display='flex'}
+// Endless Mode: the run ends when you die (or surrender). Score = total damage dealt to the Boss; best score is saved locally.
+function endHook(){if(G.mir||G.en)$('ovd').style.display='none';
+ if(G.en){const sc=G.en.dealt,b=Math.max(sc,+lsGet('rj_endless_best')||0);lsSet('rj_endless_best',b);$('ovt').textContent='RUN OVER';$('ovdk').textContent='Score: '+sc+'  -  Best: '+b+(sc>=b&&sc>0?'  (new record!)':'');$('ovr').textContent='New run'}}
 $('end').onclick=()=>{if(!mine())return;sfx('endTurn');sel=pend=null;castMode=false;say('');
  if(NET&&!NET.host){busy=true;netSend({t:'end'});armSync();return}
  nextStep(G);flow()};
@@ -384,7 +388,7 @@ $('sur').onclick=()=>{if(G&&!G.over)$('modal').style.display='flex'};$('mno').on
 $('myes').onclick=()=>{$('modal').style.display='none';if(!G||G.over)return;if(NET&&!NET.host){netSend({t:'sur'});return}
  G.over={win:1,sur:1};L(G,'You surrendered');pend=null;sel=null;castMode=false;say('');$('mul').style.display='none';$('hist').style.display='none';render();netPush()};
 $('ovr').onclick=()=>NET?rematch():start();
-const ovDeckLabel=()=>PKR.d0?'Your deck: Random':ALL[$('d0').value]?'Your deck: '+ALL[$('d0').value].n:'';
+const ovDeckLabel=()=>G&&G.mir?'Mirror Match UP - same deck and draw order':PKR.d0?'Your deck: Random':ALL[$('d0').value]?'Your deck: '+ALL[$('d0').value].n:'';
 let pkPrev=0;
 $('ovd').onclick=()=>{pkPrev=$('d0').selectedIndex;pkPrevR=PKR.d0;$('dkpick').style.display='flex';pkReveal('pk2')};
 $('dkok').onclick=()=>{$('dkpick').style.display='none';$('ovdk').textContent=ovDeckLabel()};
@@ -407,7 +411,8 @@ const mulOK=()=>{const ids=[...mulSel];
  mulligan(G,G.p[0],ids);botMull(G,G.p[1]);
  askOrder(v=>{decideStart(G,v,'first');startRound(G);flow()})};
 $('mok').onclick=mulOK;
-function start(){unpin();pkResolve();musicNewGame();if(NET)netLeave();$('ovr').style.display='';$('ovr').textContent='Rematch';gid++;BOTMODE=$('bot').value;G=newGame(ALL[$('d0').value].c,ALL[$('d1').value].c);busy=true;sel=pend=null;castMode=false;stickyZoom=false;
+function start(){unpin();pkResolve();musicNewGame();if(NET)netLeave();$('ovr').style.display='';$('ovr').textContent='Rematch';gid++;BOTMODE=MODE=='endless'?'smart':$('bot').value;
+ if(MODE=='mirror'){const m=mirrorDeck();G=newGame(m,m,{mir:1})}else G=newGame(ALL[$('d0').value].c,ALL[$('d1').value].c,MODE=='endless'?{endless:1}:null);busy=true;sel=pend=null;castMode=false;stickyZoom=false;
  show('game');$('ov').style.display='none';say('');render();showMul()}
 function toMenu(){unpin();$('dkpick').style.display='none';if(NET)netLeave();$('ovr').style.display='';$('ovr').textContent='Rematch';gid++;$('ov').style.display='none';$('mul').style.display='none';$('hist').style.display='none';show('menu');$('zoom').style.display='none';G=null;musicUpdate()}
 $('go').onclick=()=>{$('botmenu').style.display='none';start();musicStart()};

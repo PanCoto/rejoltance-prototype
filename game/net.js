@@ -43,7 +43,7 @@ function snap(G){
   hand:own?p.hand.map(cp):p.hand.map(hid),
   deck:own?shuf(p.deck.map(cp)):p.deck.map(hid),
   disc:p.disc.map(cp),ln:p.ln.map(uc)});
- return JSON.parse(JSON.stringify({turn:G.turn,step:G.step,allow:G.allow,act:G.act==null?null:1-G.act,start:1-G.start,
+ return JSON.parse(JSON.stringify({mir:G.mir,turn:G.turn,step:G.step,allow:G.allow,act:G.act==null?null:1-G.act,start:1-G.start,
   over:G.over?{win:G.over.draw?-1:1-G.over.win,draw:G.over.draw,sur:G.over.sur,left:G.over.left}:null,
   log:G.log.slice(-60).map(flipLog),hist:G.hist.slice(-80).map(h=>({p:1-h.p,t:h.t,id:h.id,tg:h.tg})),
   p:[side(G.p[1],1),side(G.p[0],0)]}))}
@@ -56,7 +56,8 @@ function askPre(i,opts){return new Promise(res=>{NET.pre={opts,res};netSend({t:'
  setTimeout(()=>{if(NET&&NET.pre&&NET.pre.res===res){NET.pre=null;res(opts[0])}},90000)})}
 
 function syncDecks(){syncPickers();pkReveal('pkl')}
-function lobby(title,o){o=o||{};$('frmenu').style.display='none';$('lt').textContent=title;$('lcode').textContent=o.code||'';$('lcode').style.display=o.code?'block':'none';
+let LB='frmenu';// panel that Cancel returns to
+function lobby(title,o){o=o||{};$('frmenu').style.display='none';$('mirmenu').style.display='none';$('lt').textContent=title;$('lcode').textContent=o.code||'';$('lcode').style.display=o.code?'block':'none';
  $('lin').style.display=o.join?'block':'none';$('lgo').style.display=o.join?'':'none';$('lcopy').style.display=o.code?'':'none';
  $('ldrow').style.display=o.nodeck?'none':'flex';$('ls').textContent=o.status||'';$('lobby').style.display='flex'}
 const netErr=e=>({'network':'Could not reach the matchmaking server. Check your internet connection.','server-error':'The matchmaking server returned an error. Try again in a moment.',
@@ -70,13 +71,13 @@ function wire(N,c){
  c.on('open',()=>{if(NET!==N)return;if(!N.host){clearTimeout(N.to);pkResolve();netSend({t:'hello',v:NETV,name:myName(),deck:ALL[$('d0').value].c});lobby('Connected',{status:'Waiting for the host to start the game...',nodeck:1})}});
  c.on('data',m=>{if(NET!==N||!m||!m.t)return;N.host?hostMsg(m):guestMsg(m)});
  c.on('close',()=>onClose(N));c.on('error',()=>onClose(N))}
-async function hostRoom(){
+async function hostRoom(mirror){mirror=!!mirror;
  if(!PeerC())return lobby('Online play unavailable',{nodeck:1,status:'The networking library did not load. Reload the page and try again.'});
- netLeave();syncDecks();lobby('Creating room...',{status:'Contacting the matchmaking server...'});
+ netLeave();syncDecks();lobby('Creating room...',{nodeck:mirror,status:'Contacting the matchmaking server...'});
  const tk=NETTK,PEEROPT=await peerOpt();if(tk!==NETTK)return;
  const open=n=>{const code=newCode(),peer=new(PeerC())(NETPRE+code,PEEROPT);
-  const N=NET={host:true,peer,code,conn:null,ev:[],mull:[0,0],pref:[null,null],rm:[0,0],pre:null,dead:false};
-  peer.on('open',()=>{if(NET!==N)return;const st='Waiting for your opponent... send them the code or the invite link.';lobby('Your room code',{code,status:st});
+  const N=NET={host:true,mirror,peer,code,conn:null,ev:[],mull:[0,0],pref:[null,null],rm:[0,0],pre:null,dead:false};
+  peer.on('open',()=>{if(NET!==N)return;const st='Waiting for your opponent... send them the code or the invite link.';lobby('Your room code',{code,nodeck:mirror,status:st});
    probeRelay(PEEROPT.config.iceServers).then(r=>{if(NET===N&&!N.conn&&!r.relay&&$('ls').textContent==st)$('ls').textContent=st+NORELAY})});
   peer.on('connection',c=>{if(NET!==N)return;
    if(N.conn&&N.conn.open){c.on('open',()=>{c.send({t:'full'});setTimeout(()=>c.close(),300)});return}
@@ -103,7 +104,7 @@ function onClose(N){if(NET!==N||N.dead)return;N.dead=true;clearTimeout(N.syncT);
  const inGame=G&&$('game').style.display=='block';
  if(inGame){if(!G.over){G.over={win:0,left:1};say('');$('mul').style.display='none';$('hist').style.display='none';$('modal').style.display='none';pend=sel=null;castMode=false}
   $('ovr').style.display='none';busy=false;render();finish();return}
- if(N.host){N.conn=null;N.dead=false;lobby('Your room code',{code:N.code,status:'Your opponent left. Waiting for someone to join...'})}
+ if(N.host){N.conn=null;N.dead=false;lobby('Your room code',{code:N.code,nodeck:N.mirror,status:'Your opponent left. Waiting for someone to join...'})}
  else{netLeave(1);lobby('Disconnected',{join:1,status:'The connection to the host was lost.'})}}
 const okDeck=dk=>Array.isArray(dk)&&dk.length>=10&&dk.length<=60&&dk.every(id=>CD[id]&&id<900);
 function rematch(){if(!NET||NET.dead)return;
@@ -119,7 +120,8 @@ async function hpump(){hrun=true;while(HQ.length&&NET){const m=HQ.shift();try{aw
 function hostStart(){
  pkResolve();musicNewGame();
  NET.deckH=ALL[$('d0').value].c.slice();
- gid++;G=newGame(NET.deckH,NET.deckG);busy=true;sel=pend=null;castMode=false;stickyZoom=false;
+ let go=null;if(NET.mirror){const m=mirrorDeck();NET.deckH=m.slice();NET.deckG=m.slice();go={mir:1}}
+ gid++;G=newGame(NET.deckH,NET.deckG,go);busy=true;sel=pend=null;castMode=false;stickyZoom=false;
  NET.mull=[0,0];NET.pref=[null,null];NET.rm=[0,0];NET.ev=[];NET.pre=null;
  ['lobby','ov','hist','modal'].forEach(k=>$(k).style.display='none');$('ovr').style.display='';$('ovr').textContent='Rematch';
  show('game');say('');render();showMul();netSend({t:'start',name:myName(),s:snap(G)})}
@@ -174,11 +176,11 @@ async function guestHandle(m){
  case'rm':if($('ovr').textContent=='Rematch')$('ovr').textContent='Rematch (opponent ready)';break;
  case'full':case'err':{const msg=m.t=='full'?'That room already has two players.':m.msg;netLeave(1);lobby('Could not join',{join:1,status:msg});break}}}
 
-$('mhost').onclick=()=>{startAudio();hostRoom()};
-$('mjoin').onclick=()=>joinLobby('');
+$('mhost').onclick=()=>{LB='frmenu';startAudio();hostRoom(false)};
+$('mjoin').onclick=()=>{LB='frmenu';joinLobby('')};
 $('lgo').onclick=()=>{startAudio();joinRoom($('lin').value)};
 $('lin').addEventListener('keydown',e=>{if(e.key=='Enter')$('lgo').click()});
-$('lcancel').onclick=()=>{netLeave();$('frmenu').style.display='flex'};
+$('lcancel').onclick=()=>{netLeave();$(LB).style.display='flex'};
 $('lcopy').onclick=()=>{if(!NET||!NET.code)return;const url=location.origin+location.pathname+'?room='+NET.code;
  (navigator.clipboard?navigator.clipboard.writeText(url).then(()=>{$('ls').textContent='Invite link copied. Send it to your opponent.'}).catch(()=>prompt('Copy this link:',url)):prompt('Copy this link:',url))};
 addEventListener('pagehide',()=>{try{NET&&NET.conn&&NET.conn.close()}catch(e){}});
