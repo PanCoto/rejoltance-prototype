@@ -27,13 +27,13 @@ export default {
     const cors = { 'access-control-allow-origin': env.ALLOW_ORIGIN || '*', 'access-control-allow-headers': 'authorization,content-type', 'access-control-allow-methods': 'GET,POST,OPTIONS', 'access-control-max-age': '86400' };
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
     const url = new URL(req.url);
-    if (!url.pathname.startsWith('/api/')) return new Response('RE:Joltance matchmaking server', { headers: cors });
+    if (!url.pathname.startsWith('/api/') && !url.pathname.startsWith('/auth/')) return new Response('RE:Joltance matchmaking server', { headers: cors });
     if (env.ALLOW_ORIGIN && env.ALLOW_ORIGIN !== '*' && req.headers.get('upgrade') === 'websocket') {
       const o = req.headers.get('origin'); if (o && o !== env.ALLOW_ORIGIN) return new Response('forbidden', { status: 403 });
     }
     const hub = env.HUB.get(env.HUB.idFromName('main'));
     const res = await hub.fetch(req);
-    if (res.status === 101) return res;
+    if (res.status === 101 || url.pathname.startsWith('/auth/')) return res;
     const r = new Response(res.body, res); for (const k in cors) r.headers.set(k, cors[k]); return r;
   }
 };
@@ -49,7 +49,15 @@ export class Hub extends DurableObject {
         CREATE TABLE IF NOT EXISTS matches(id TEXT PRIMARY KEY, p1 TEXT NOT NULL, p2 TEXT NOT NULL, created INTEGER NOT NULL, r1 TEXT, r2 TEXT, t1 INTEGER, t2 INTEGER,
         status TEXT NOT NULL DEFAULT 'open', d1 INTEGER, d2 INTEGER);
         CREATE INDEX IF NOT EXISTS m_status ON matches(status, created);
-        CREATE TABLE IF NOT EXISTS regs(ip TEXT, day INTEGER, n INTEGER, PRIMARY KEY(ip, day));`);
+        CREATE TABLE IF NOT EXISTS regs(ip TEXT, day INTEGER, n INTEGER, PRIMARY KEY(ip, day));
+        CREATE TABLE IF NOT EXISTS sessions(hash TEXT PRIMARY KEY, uid TEXT NOT NULL, created INTEGER NOT NULL);
+        CREATE INDEX IF NOT EXISTS sess_uid ON sessions(uid, created);
+        CREATE TABLE IF NOT EXISTS oauth(state TEXT PRIMARY KEY, uid TEXT, nh TEXT NOT NULL, created INTEGER NOT NULL);
+        CREATE TABLE IF NOT EXISTS otc(code TEXT PRIMARY KEY, uid TEXT NOT NULL, nh TEXT NOT NULL, mode TEXT NOT NULL, created INTEGER NOT NULL);`);
+      const cols = this.all('PRAGMA table_info(accounts)').map(c => c.name);
+      if (!cols.includes('discord_id')) this.sql.exec('ALTER TABLE accounts ADD COLUMN discord_id TEXT');
+      if (!cols.includes('discord_name')) this.sql.exec('ALTER TABLE accounts ADD COLUMN discord_name TEXT');
+      this.sql.exec('CREATE UNIQUE INDEX IF NOT EXISTS acc_discord ON accounts(discord_id) WHERE discord_id IS NOT NULL');
     });
   }
   one(q, ...a) { return this.sql.exec(q, ...a).toArray()[0] || null; }
@@ -58,11 +66,13 @@ export class Hub extends DurableObject {
   async auth(uid, key) {
     if (typeof uid !== 'string' || typeof key !== 'string' || uid.length > 12 || key.length > 64) return null;
     const a = this.one('SELECT * FROM accounts WHERE uid=?', uid); if (!a) return null;
-    return (await sha(key)) === a.hash ? a : null;
+    const h = await sha(key);
+    if (h === a.hash) return a;
+    return this.one('SELECT 1 x FROM sessions WHERE hash=? AND uid=?', h, uid) ? a : null;
   }
   async authHdr(req) { const m = /^Bearer ([^.]+)\.(.+)$/.exec(req.headers.get('authorization') || ''); return m ? this.auth(m[1], m[2]) : null; }
   rankOf(a) { return a.games > 0 ? 1 + this.one('SELECT COUNT(*) c FROM accounts WHERE games>0 AND rating>?', a.rating).c : null; }
-  prof(a) { return { uid: a.uid, name: a.name, rating: a.rating, games: a.games, wins: a.wins, losses: a.losses, draws: a.draws, rank: this.rankOf(a) }; }
+  prof(a) { return { uid: a.uid, name: a.name, rating: a.rating, games: a.games, wins: a.wins, losses: a.losses, draws: a.draws, rank: this.rankOf(a), discord: a.discord_name || null }; }
 
   async fetch(req) {
     const url = new URL(req.url), p = url.pathname, ip = req.headers.get('cf-connecting-ip') || 'x';
@@ -74,8 +84,11 @@ export class Hub extends DurableObject {
     }
     if (this.limited(ip, 120)) return json({ error: 'rate limited' }, 429);
     try {
-      if (p === '/api/ping') { const q = this.counts(); return json({ ok: 1, v: 1, ranked: q.ranked, casual: q.casual }); }
+      if (p === '/api/ping') { const q = this.counts(); return json({ ok: 1, v: 1, ranked: q.ranked, casual: q.casual, discord: this.dcOn(), needDiscord: this.env.REQUIRE_DISCORD === '1' }); }
       if (p === '/api/register' && req.method === 'POST') return await this.register(req, ip);
+      if (p === '/auth/discord/callback') return await this.dcCallback(url);
+      if (p === '/api/discord/begin' && req.method === 'POST') return await this.dcBegin(req, url);
+      if (p === '/api/discord/claim' && req.method === 'POST') return await this.dcClaim(req);
       if (p === '/api/leaderboard') return json(this.board(Math.min(100, Math.max(1, +url.searchParams.get('limit') || 50))));
       const a = await this.authHdr(req); if (!a) return json({ error: 'auth' }, 401);
       this.sql.exec('UPDATE accounts SET last=? WHERE uid=?', Date.now(), a.uid);
@@ -84,10 +97,80 @@ export class Hub extends DurableObject {
         const n = cleanName((await req.json()).name); if (!n) return json({ error: 'name' }, 400);
         this.sql.exec('UPDATE accounts SET name=? WHERE uid=?', n, a.uid); this.lbCache = null; return json(this.prof({ ...a, name: n }));
       }
+      if (p === '/api/delete' && req.method === 'POST') return json(this.destroyAccount(a));
       if (p === '/api/report' && req.method === 'POST') return json(this.report(a, await req.json()));
       if (p === '/api/match') return json(this.matchInfo(a, url.searchParams.get('id')));
     } catch (e) { return json({ error: 'bad request' }, 400); }
     return json({ error: 'not found' }, 404);
+  }
+
+  // ---------- Discord login (OAuth2 code flow, scope "identify") ----------
+  // begin -> browser goes to Discord -> Discord redirects to /auth/discord/callback -> we redirect to GAME_URL#dc=<one-time code> -> the game claims it.
+  // The client keeps a random nonce in its localStorage; the code can only be claimed with that nonce, so a link started by someone else is useless.
+  dcOn() { const e = this.env; return !!(e.DISCORD_CLIENT_ID && e.DISCORD_CLIENT_SECRET && e.GAME_URL); }
+  async dcBegin(req, url) {
+    if (!this.dcOn()) return json({ error: 'Discord login is not configured on the server.' }, 501);
+    const e = this.env, n = String((await req.json()).n || '');
+    if (!/^[A-Za-z0-9_-]{16,64}$/.test(n)) return json({ error: 'bad request' }, 400);
+    let uid = null;
+    if (req.headers.get('authorization')) { const a = await this.authHdr(req); if (!a) return json({ error: 'auth' }, 401); uid = a.uid; }   // signed in: LINK, otherwise: LOGIN
+    const state = rnd(32, B64), now = Date.now();
+    this.sql.exec('DELETE FROM oauth WHERE created<?', now - 600000);
+    this.sql.exec('INSERT INTO oauth(state,uid,nh,created) VALUES(?,?,?,?)', state, uid, await sha(n), now);
+    const q = new URLSearchParams({ client_id: e.DISCORD_CLIENT_ID, response_type: 'code', scope: 'identify', redirect_uri: (e.PUBLIC_URL || url.origin) + '/auth/discord/callback', state, prompt: 'none' });
+    return json({ url: (e.DISCORD_AUTH || 'https://discord.com/oauth2/authorize') + '?' + q, mode: uid ? 'link' : 'login' });
+  }
+  async dcCallback(url) {
+    const e = this.env; if (!this.dcOn()) return new Response('Discord login is not configured.', { status: 501 });
+    const back = p => new Response(null, { status: 302, headers: { location: e.GAME_URL + '#' + p, 'cache-control': 'no-store' } });
+    const state = url.searchParams.get('state') || '', code = url.searchParams.get('code');
+    const st = this.one('SELECT * FROM oauth WHERE state=?', state); this.sql.exec('DELETE FROM oauth WHERE state=?', state);
+    if (!st || Date.now() - st.created > 600000) return back('dcerr=state');
+    if (!code) return back('dcerr=denied');
+    let du, api = e.DISCORD_API || 'https://discord.com/api';
+    try {
+      const tr = await fetch(api + '/oauth2/token', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ client_id: e.DISCORD_CLIENT_ID, client_secret: e.DISCORD_CLIENT_SECRET, grant_type: 'authorization_code', code, redirect_uri: (e.PUBLIC_URL || url.origin) + '/auth/discord/callback' }) });
+      if (!tr.ok) return back('dcerr=failed');
+      const tok = (await tr.json()).access_token;
+      const ur = await fetch(api + '/users/@me', { headers: { authorization: 'Bearer ' + tok } });
+      if (!ur.ok) return back('dcerr=failed'); du = await ur.json();
+    } catch (x) { return back('dcerr=failed'); }
+    if (!du || !du.id) return back('dcerr=failed');
+    const did = String(du.id), dname = cleanName(du.global_name || du.username) || 'Player', now = Date.now();
+    const owner = this.one('SELECT uid FROM accounts WHERE discord_id=?', did); let uid = st.uid;
+    if (uid) {   // LINK this Discord account to the signed-in game account
+      if (owner && owner.uid !== uid) return back('dcerr=taken');
+      if (!this.one('SELECT 1 x FROM accounts WHERE uid=?', uid)) return back('dcerr=failed');
+      this.sql.exec('UPDATE accounts SET discord_id=?, discord_name=? WHERE uid=?', did, dname, uid);
+    } else if (owner) {   // LOGIN to the existing account
+      uid = owner.uid; this.sql.exec('UPDATE accounts SET discord_name=? WHERE uid=?', dname, uid);
+    } else {   // LOGIN, first time: create the account (its old-style key is random and unknown to everybody; devices get session keys)
+      do { uid = rnd(8, 'abcdefghjkmnpqrstuvwxyz23456789'); } while (this.one('SELECT 1 x FROM accounts WHERE uid=?', uid));
+      this.sql.exec('INSERT INTO accounts(uid,hash,name,rating,created,last,discord_id,discord_name) VALUES(?,?,?,?,?,?,?,?)', uid, await sha(rnd(40, B64)), dname, START, now, now, did, dname);
+    }
+    const otc = rnd(32, B64); this.sql.exec('DELETE FROM otc WHERE created<?', now - 120000);
+    this.sql.exec('INSERT INTO otc(code,uid,nh,mode,created) VALUES(?,?,?,?,?)', otc, uid, st.nh, st.uid ? 'link' : 'login', now);
+    this.lbCache = null;
+    return back('dc=' + otc);
+  }
+  async dcClaim(req) {
+    const b = await req.json(), code = String(b.code || ''), n = String(b.n || '');
+    const row = this.one('SELECT * FROM otc WHERE code=?', code); this.sql.exec('DELETE FROM otc WHERE code=?', code);
+    if (!row || Date.now() - row.created > 120000 || row.nh !== await sha(n)) return json({ error: 'invalid' }, 400);
+    const a = this.one('SELECT * FROM accounts WHERE uid=?', row.uid); if (!a) return json({ error: 'invalid' }, 400);
+    let key = null;
+    if (row.mode === 'login') {   // a fresh key for this device; the account's other devices keep working
+      key = rnd(32, B64); this.sql.exec('INSERT INTO sessions(hash,uid,created) VALUES(?,?,?)', await sha(key), a.uid, Date.now());
+      this.sql.exec('DELETE FROM sessions WHERE uid=? AND hash NOT IN (SELECT hash FROM sessions WHERE uid=? ORDER BY created DESC LIMIT 10)', a.uid, a.uid);
+    }
+    return json({ ...this.prof(a), key, mode: row.mode });
+  }
+  destroyAccount(a) {
+    for (const w of this.ctx.getWebSockets()) { const t = w.deserializeAttachment(); if (t && t.uid === a.uid) { try { w.close(1000, 'deleted'); } catch (e) {} } }
+    this.sql.exec("UPDATE matches SET status='void' WHERE status='open' AND (p1=? OR p2=?)", a.uid, a.uid);
+    for (const q of ['DELETE FROM sessions WHERE uid=?', 'DELETE FROM oauth WHERE uid=?', 'DELETE FROM otc WHERE uid=?', 'DELETE FROM accounts WHERE uid=?']) this.sql.exec(q, a.uid);
+    this.lbCache = null; return { ok: 1 };
   }
 
   async register(req, ip) {
@@ -118,6 +201,7 @@ export class Hub extends DurableObject {
     const mode = m.mode === 'ranked' ? 'ranked' : 'casual', v = String(m.v || '').slice(0, 24);
     const a = await this.auth(m.uid, m.key);
     if (!a) { ws.send(JSON.stringify({ t: 'err', code: 'auth', msg: 'Account not recognised.' })); return ws.close(1008, 'auth'); }
+    if (mode === 'ranked' && this.env.REQUIRE_DISCORD === '1' && !a.discord_id) { ws.send(JSON.stringify({ t: 'err', code: 'discord', msg: 'Ranked games require a linked Discord account (Ranked > Account).' })); return ws.close(1008, 'discord'); }
     for (const o of this.ctx.getWebSockets()) { const t = o.deserializeAttachment(); if (o !== ws && t && t.uid === a.uid) { try { o.send(JSON.stringify({ t: 'err', code: 'dup', msg: 'You started searching somewhere else.' })); o.close(1000, 'dup'); } catch (e) {} } }
     ws.serializeAttachment({ uid: a.uid, name: a.name, rating: a.rating, mode, v, since: Date.now() });
     ws.send(JSON.stringify({ t: 'queued', mode, rating: a.rating }));

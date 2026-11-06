@@ -16,7 +16,7 @@ async function api(path,o,a,ms){o=o||{};const ac=new AbortController(),t=setTime
   let b=null;try{b=await r.json()}catch(e){}if(!r.ok){const er=new Error((b&&b.error)||('HTTP '+r.status));er.status=r.status;throw er}return b}finally{clearTimeout(t)}}
 async function ensureAcct(){let a=getAcct();if(a)return a;
  const r=await api('/api/register',{method:'POST',body:{name:myName()||''}});a={uid:r.uid,key:r.key,name:r.name};setAcct(a);return a}
-const serverUp=async()=>{if(!cfg())return null;try{return await api('/api/ping',null,null,5000)}catch(e){return null}};
+const serverUp=async()=>{if(!cfg())return null;try{return MM.srv=await api('/api/ping',null,null,5000)}catch(e){return null}};
 
 // ---------- searching ----------
 function mmStop(){MM.tk++;clearInterval(MM.hb);clearInterval(MM.pg);const w=MM.ws;MM.ws=null;if(w){try{w.onclose=w.onerror=w.onmessage=null;w.close()}catch(e){}}}
@@ -89,15 +89,17 @@ async function rkOpen(){
  if(!up){rk('rksub').textContent='The ranking server is not reachable right now.';return}
  rk('rksub').textContent=(up.ranked||0)+' searching for a ranked game right now.';rk('rkplay').disabled=false;
  try{const a=getAcct(),[me,lb]=await Promise.all([a?api('/api/me',{method:'POST'},a):null,api('/api/leaderboard?limit=50')]);
+  MM.me=me||null;renderDc();
   if(me)rk('rkme').innerHTML='<b>'+esc(me.name)+'</b><span>Rating '+me.rating+'</span><span>'+(me.rank?'Rank #'+me.rank:'Unranked - play a game')+'</span><span>'+me.wins+'W / '+me.losses+'L'+(me.draws?' / '+me.draws+'D':'')+'</span>';
   else rk('rkme').innerHTML='<span>You get an account automatically when you play your first game.</span>';
   rk('rklist').innerHTML=lb.length?lb.map(p=>'<div class="rkr'+(me&&p.name==me.name&&p.rating==me.rating?' me':'')+'"><i>'+p.rank+'</i><b>'+esc(p.name)+'</b><span>'+p.rating+'</span><small>'+p.wins+'W '+p.losses+'L</small></div>').join(''):'<div class="rkr"><b>No ranked games have been played yet.</b></div>'}
- catch(e){if(e.status==401){setAcct(null);rk('rkme').textContent='Your saved account was not recognised by the server; a new one is created when you next play.'}else rk('rksub').textContent='Could not load the ranking: '+e.message}}
-function acctOpen(){const box=rk('rkacct'),a=getAcct();box.style.display=box.style.display=='flex'?'none':'flex';
+ catch(e){if(e.status==401){setAcct(null);MM.me=null;renderDc();rk('rkme').textContent='Your saved account was not recognised by the server; a new one is created when you next play.'}else rk('rksub').textContent='Could not load the ranking: '+e.message}}
+function acctOpen(force){const box=rk('rkacct'),a=getAcct();box.style.display=force||box.style.display!='flex'?'flex':'none';renderDc();
  rk('rkname').value=a?a.name:myName();rk('rkxfer').value=a?a.uid+'.'+a.key:'';rk('rkxfer').type='password';rk('rkshow').textContent='Show';rk('rkamsg').textContent=a?'':'No account yet - one is created automatically when you play your first Ranked or Quick Match game.'}
 rk('rkopen').onclick=rkOpen;rk('rkback').onclick=closePanels;
-rk('rkplay').onclick=()=>{LB='rkmenu';startAudio();mmSearch('ranked')};
-rk('rkacc').onclick=acctOpen;
+rk('rkplay').onclick=()=>{if(MM.srv&&MM.srv.needDiscord&&!(MM.me&&MM.me.discord)){acctOpen(true);rk('rkamsg').textContent='Ranked games require a Discord account: log in with Discord'+(MM.me?' (or link it to this account)':'')+' first.';return}
+ LB='rkmenu';startAudio();mmSearch('ranked')};
+rk('rkacc').onclick=()=>acctOpen();
 rk('rkshow').onclick=()=>{const x=rk('rkxfer'),s=x.type=='password';x.type=s?'text':'password';rk('rkshow').textContent=s?'Hide':'Show'};
 rk('rkcopy').onclick=()=>{const v=rk('rkxfer').value;if(!v)return;try{navigator.clipboard.writeText(v).then(()=>rk('rkamsg').textContent='Transfer code copied.',()=>{rk('rkxfer').type='text';rk('rkxfer').select()})}catch(e){rk('rkxfer').type='text';rk('rkxfer').select()}};
 rk('rksave').onclick=async()=>{const a=getAcct(),n=cleanName(rk('rkname').value).trim();if(!n)return;lsSet('rj_name',n);$('pname').value=n;
@@ -106,6 +108,37 @@ rk('rksave').onclick=async()=>{const a=getAcct(),n=cleanName(rk('rkname').value)
 rk('rkimp').onclick=async()=>{const v=rk('rkimpin').value.trim(),m=/^([a-z0-9]{6,12})\.([A-Za-z0-9_-]{20,64})$/.exec(v);if(!m){rk('rkamsg').textContent='That is not a valid transfer code.';return}
  try{const a={uid:m[1],key:m[2]},p=await api('/api/me',{method:'POST'},a);a.name=p.name;setAcct(a);lsSet('rj_name',p.name);$('pname').value=p.name;rk('rkimpin').value='';rkOpen();rk('rkamsg').textContent='Account imported: '+p.name}
  catch(e){rk('rkamsg').textContent='Import failed: '+(e.status==401?'code not recognised.':e.message)}};
+
+// ---------- Discord login / link ----------
+// Flow: begin (server builds the Discord URL) -> this page navigates to Discord -> Discord -> server callback -> back to GAME_URL#dc=<one-time code> -> claim().
+// A random nonce kept in localStorage must accompany the claim, so a login link started by somebody else cannot be completed in your browser.
+const rn=n=>{const a=new Uint8Array(n);crypto.getRandomValues(a);return Array.from(a,x=>'abcdefghijklmnopqrstuvwxyz0123456789'[x%36]).join('')};
+function renderDc(){const s=MM.srv,me=MM.me,on=!!(s&&s.discord);rk('rkdcrow').style.display=on?'':'none';if(!on)return;
+ rk('rkdc').textContent=me&&me.discord?'Linked: '+me.discord:'Not linked'+(s.needDiscord?' (required for Ranked)':'');
+ rk('rkdclink').style.display=me&&!me.discord?'':'none';rk('rkdclogin').style.display=me&&me.discord?'none':'';
+ rk('rkdclogin').textContent=me?'Log in with another Discord account':'Log in with Discord'}
+async function dcStart(mode){const a=getAcct(),n=rn(32);rk('rkamsg').textContent='Opening Discord...';
+ try{const r=await api('/api/discord/begin',{method:'POST',body:{n}},mode=='link'?a:null);lsSet('rj_dcn',n);location.href=r.url}
+ catch(e){rk('rkamsg').textContent='Could not start the Discord login: '+e.message}}
+rk('rkdclink').onclick=()=>{if(getAcct())dcStart('link')};
+rk('rkdclogin').onclick=()=>{const me=MM.me;
+ if(getAcct()&&me&&!me.discord&&me.games>0&&!confirm('This browser\'s account ('+me.name+', rating '+me.rating+') is not linked to Discord. Logging in with Discord will switch to a different account and you will lose access to this one unless you saved its transfer code. Continue?'))return;
+ dcStart('login')};
+rk('rkdel').onclick=async()=>{const a=getAcct();if(!a)return;
+ if(!confirm('Delete this account for good? Its rating, stats and Discord link are removed from the server and cannot be restored.'))return;
+ try{await api('/api/delete',{method:'POST'},a);setAcct(null);MM.me=null;await rkOpen();acctOpen(true);rk('rkamsg').textContent='Account deleted.'}catch(e){rk('rkamsg').textContent='Could not delete: '+e.message}};
+const DCERR={state:'The Discord login expired. Please try again.',denied:'Discord login was cancelled.',failed:'Discord login failed. Please try again later.',taken:'That Discord account is already linked to another game account. Use "Log in with Discord" to switch to it instead.'};
+async function dcReturn(){const h=location.hash;if(!/^#(dc|dcerr)=/.test(h))return;
+ const p=new URLSearchParams(h.slice(1));try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
+ const done=async m=>{await rkOpen();acctOpen(true);rk('rkamsg').textContent=m};
+ if(p.get('dcerr'))return done(DCERR[p.get('dcerr')]||'Discord login failed.');
+ const code=p.get('dc'),n=lsGet('rj_dcn');lsSet('rj_dcn','');
+ if(!code||!n)return done(DCERR.state);
+ try{const r=await api('/api/discord/claim',{method:'POST',body:{code,n}});
+  if(r.key){setAcct({uid:r.uid,key:r.key,name:r.name});lsSet('rj_name',r.name);$('pname').value=r.name;await done('Logged in as '+r.name+' (Discord: '+r.discord+').')}
+  else await done('Discord linked: '+r.discord+'. You can now log in with it on any device.')}
+ catch(e){await done(DCERR.state)}}
+dcReturn();
 
 // ---------- Quick Match button (friend menu) ----------
 $('mquick').onclick=async()=>{LB='frmenu';startAudio();window.QMNOTE='';if(!cfg())return quickMatch();mmSearch('casual')};

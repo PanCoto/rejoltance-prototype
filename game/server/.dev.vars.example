@@ -1,0 +1,7 @@
+# Copy to .dev.vars for `npx wrangler dev --local` (never commit .dev.vars). Used by test-discord.mjs together with mock-discord.mjs.
+DISCORD_CLIENT_ID=testid
+DISCORD_CLIENT_SECRET=testsecret
+DISCORD_API=http://localhost:9999/api
+DISCORD_AUTH=http://localhost:9999/authorize
+GAME_URL=http://localhost:8080/game/
+REQUIRE_DISCORD=0

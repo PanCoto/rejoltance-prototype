@@ -516,3 +516,4 @@ body.hn .hc[data-n]::before{content:attr(data-n);position:absolute;left:50%;top:
 #rkacct .srow{grid-template-columns:240px 1fr max-content}#rkacct .srow input{grid-column:2;width:100%;font-size:28px}#rkacct button{height:56px;font-size:26px;padding:0 22px}.rkbt{display:flex;gap:10px}
 #rkamsg{min-height:30px;font-size:24px;color:#ff4a50}.rkwarn{font-size:20px;color:#777;line-height:1.25}
 #ovmm{font-size:44px;color:#ff4a50;letter-spacing:2px;min-height:52px;font-family:var(--fd)}#ovmm:empty{display:none}
+#rkdc{font-size:28px;color:#ccc;text-align:left}#rkdcrow .rkbt{grid-column:3}#rkdel{border-color:#5a1a1d;color:#ff4a50}
