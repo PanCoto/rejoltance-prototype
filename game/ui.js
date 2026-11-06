@@ -3,7 +3,9 @@ let G,sel=null,pend=null,busy=false,flash=-1,mulSel=new Set(),castMode=false,pen
 let ALL=[],gid=0,NET=null,MODE='bot';// MODE: 'bot' | 'mirror' | 'endless' (online games use NET)
 function fit(){const s=Math.min(innerWidth/1920,innerHeight/1080);$('stage').style.transform=`translate(-50%,-50%) scale(${s})`}
 addEventListener('resize',fit);fit();
-const show=id=>{['menu','bld','game'].forEach(k=>$(k).style.display=k==id?(k=='menu'?'flex':'block'):'none')};
+const show=id=>{['menu','bld','game'].forEach(k=>$(k).style.display=k==id?(k=='menu'?'flex':'block'):'none');
+ ['frmenu','mirmenu','rkmenu','botmenu','achmenu','acctmenu','avpick','fdmenu','lobby','dkpick'].forEach(k=>{const e=$(k);if(e)e.style.display='none'});
+ if(id!='game'){const e=$('setmenu');if(e)e.style.display='none'}};
 document.querySelectorAll('.ring').forEach(c=>{const x=c.getContext('2d');for(let i=0;i<60;i++)for(let j=0;j<60;j++){const r=Math.hypot(i-29.5,j-29.5);
  if(r<=29.6&&r>=25.6){x.fillStyle=r>=27.4?'#2c2c2c':'#222';x.fillRect(i,j,1,1)}}});
 const loadC=()=>{try{return JSON.parse(localStorage.getItem('rj_decks')||'[]')}catch(e){return[]}};
@@ -710,10 +712,9 @@ addEventListener('keydown',e=>{if($('bld').style.display!='block')return;
  if(e.key=='Escape'){if(mOpen)closeModal();else if(popOpen)popOpen(false);else if(bview=='edit')leaveEdit();return}
  if(e.key=='/'&&!/INPUT|TEXTAREA/.test((document.activeElement||{}).tagName||'')&&!mOpen&&bview!='decks'){e.preventDefault();(bview=='edit'?FE:FC).q.focus()}});
 })();
-const FONTFACE={jer:['400 20px Jer'],pxd:['400 20px Pxd','700 20px Pxd'],dys:['400 20px Dys','700 20px Dys']};
-const setFont=f=>{document.body.dataset.font=f;try{localStorage.setItem('rj_font',f)}catch(e){}
- if(document.fonts)Promise.all((FONTFACE[f]||[]).map(x=>document.fonts.load(x))).then(refitAll,refitAll);refitAll()};
-try{const f=localStorage.getItem('rj_font');if(f&&[...$('fnt').options].some(o=>o.value==f))$('fnt').value=f}catch(e){}
+// Jersey 15 is the only font.
+document.body.dataset.font='jer';try{localStorage.removeItem('rj_font')}catch(e){}
+const setFont=()=>{if(document.fonts)Promise.all(['400 20px Jer'].map(x=>document.fonts.load(x))).then(refitAll,refitAll);refitAll()};
 // Fit card text into its boxes: name plate, subtype line and description all shrink (never overflow), whatever font is active.
 const fitKey=c=>document.body.dataset.font+'|'+c.clientWidth+'|'+c.textContent.length+'|'+c.innerHTML.length;
 function fitShrink(el,apply,over){apply(1);if(!over())return;let lo=.3,hi=1;
@@ -737,7 +738,7 @@ const refitAll=()=>{document.querySelectorAll('.card').forEach(c=>delete c.__fk)
 new MutationObserver(()=>{if(!fitQ)fitQ=requestAnimationFrame(fitAll)}).observe(document.body,{childList:true,subtree:true,characterData:true});
 addEventListener('resize',refitAll);
 if(document.fonts){document.fonts.ready.then(refitAll);document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',refitAll)}
-setFont($('fnt').value);$('fnt').onchange=()=>setFont($('fnt').value);
+setFont();
 const PRELOAD=[];[['img/CardFront.png'],['img/back.webp'],['img/missing_texture.webp'],...CARDS.map(c=>[artFile(c.Id),c.Id])].forEach(([u,id])=>{const i=new Image();i.decoding='async';
  if(id!=null)i.onerror=()=>MISSING.add(+id);i.src=u;PRELOAD.push(i);if(i.decode)i.decode().catch(()=>{})});
 show('menu');

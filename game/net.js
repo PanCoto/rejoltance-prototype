@@ -57,7 +57,7 @@ function askPre(i,opts){return new Promise(res=>{NET.pre={opts,res};netSend({t:'
 
 function syncDecks(){syncPickers();pkReveal('pkl')}
 let LB='frmenu';// panel that Cancel returns to
-function lobby(title,o){o=o||{};$('frmenu').style.display='none';$('mirmenu').style.display='none';$('lt').textContent=title;$('lcode').textContent=o.code||'';$('lcode').style.display=o.code?'block':'none';
+function lobby(title,o){o=o||{};['frmenu','mirmenu','rkmenu','botmenu','setmenu','achmenu','acctmenu','avpick','fdmenu'].forEach(k=>{const e=$(k);if(e)e.style.display='none'});$('lt').textContent=title;$('lcode').textContent=o.code||'';$('lcode').style.display=o.code?'block':'none';
  $('lin').style.display=o.join?'block':'none';$('lgo').style.display=o.join?'':'none';$('lcopy').style.display=o.code?'':'none';
  $('ldrow').style.display=o.nodeck?'none':'flex';$('ls').textContent=o.status||'';$('lobby').style.display='flex'}
 const netErr=e=>({'network':'Could not reach the matchmaking server. Check your internet connection.','server-error':'The matchmaking server returned an error. Try again in a moment.',

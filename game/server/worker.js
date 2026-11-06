@@ -11,6 +11,11 @@
 //   POST /api/report {id, r, turns}     -> { st, delta, rating }              (auth; r = win | loss | draw | abort)
 //   GET  /api/match?id=                 -> { st, delta, rating }              (auth; poll after reporting)
 //   WS   /api/queue                     -> first message {t:'join',uid,key,mode:'ranked'|'casual',v}; server answers {t:'match',...}
+//   POST /api/avatar {avatar}           -> profile                             (auth; avatar = card id, 0 = none)
+//   GET  /api/player?pid=               -> public profile (+ friend relation when signed in)
+//   GET  /api/search?q=                 -> [{ pid, name, rating, avatar, games }]  (players by name, max 10)
+//   POST /api/friends                   -> { friends, incoming, outgoing }     (auth)
+//   POST /api/friends/request|accept|remove {pid} -> { rel }                   (auth; rel = none|friends|pending_out|pending_in)
 // Auth = "Authorization: Bearer <uid>.<key>" (HTTP) or uid/key inside the join message (WebSocket).
 import { DurableObject } from 'cloudflare:workers';
 
@@ -58,8 +63,15 @@ export class Hub extends DurableObject {
       if (!cols.includes('discord_id')) this.sql.exec('ALTER TABLE accounts ADD COLUMN discord_id TEXT');
       if (!cols.includes('discord_name')) this.sql.exec('ALTER TABLE accounts ADD COLUMN discord_name TEXT');
       this.sql.exec('CREATE UNIQUE INDEX IF NOT EXISTS acc_discord ON accounts(discord_id) WHERE discord_id IS NOT NULL');
+      if (!cols.includes('avatar')) this.sql.exec('ALTER TABLE accounts ADD COLUMN avatar INTEGER NOT NULL DEFAULT 0');
+      if (!cols.includes('pid')) this.sql.exec('ALTER TABLE accounts ADD COLUMN pid TEXT');   // public id: used in profile links and friends, never works as a login
+      for (const r of this.all('SELECT uid FROM accounts WHERE pid IS NULL')) this.sql.exec('UPDATE accounts SET pid=? WHERE uid=?', this.newPid(), r.uid);
+      this.sql.exec('CREATE UNIQUE INDEX IF NOT EXISTS acc_pid ON accounts(pid)');
+      this.sql.exec(`CREATE TABLE IF NOT EXISTS friends(a TEXT NOT NULL, b TEXT NOT NULL, status TEXT NOT NULL, created INTEGER NOT NULL, PRIMARY KEY(a,b));
+        CREATE INDEX IF NOT EXISTS fr_b ON friends(b);`);
     });
   }
+  newPid() { let p; do { p = rnd(10, 'abcdefghjkmnpqrstuvwxyz23456789'); } while (this.one('SELECT 1 x FROM accounts WHERE pid=?', p)); return p; }
   one(q, ...a) { return this.sql.exec(q, ...a).toArray()[0] || null; }
   all(q, ...a) { return this.sql.exec(q, ...a).toArray(); }
   limited(ip, max) { const m = Math.floor(Date.now() / 60000), e = this.rate.get(ip); if (!e || e.m !== m) { this.rate.set(ip, { m, n: 1 }); if (this.rate.size > 5000) this.rate.clear(); return false; } return ++e.n > max; }
@@ -72,7 +84,7 @@ export class Hub extends DurableObject {
   }
   async authHdr(req) { const m = /^Bearer ([^.]+)\.(.+)$/.exec(req.headers.get('authorization') || ''); return m ? this.auth(m[1], m[2]) : null; }
   rankOf(a) { return a.games > 0 ? 1 + this.one('SELECT COUNT(*) c FROM accounts WHERE games>0 AND rating>?', a.rating).c : null; }
-  prof(a) { return { uid: a.uid, name: a.name, rating: a.rating, games: a.games, wins: a.wins, losses: a.losses, draws: a.draws, rank: this.rankOf(a), discord: a.discord_name || null }; }
+  prof(a) { return { uid: a.uid, pid: a.pid, avatar: a.avatar || 0, name: a.name, rating: a.rating, games: a.games, wins: a.wins, losses: a.losses, draws: a.draws, rank: this.rankOf(a), discord: a.discord_name || null }; }
 
   async fetch(req) {
     const url = new URL(req.url), p = url.pathname, ip = req.headers.get('cf-connecting-ip') || 'x';
@@ -89,6 +101,8 @@ export class Hub extends DurableObject {
       if (p === '/auth/discord/callback') return await this.dcCallback(url);
       if (p === '/api/discord/begin' && req.method === 'POST') return await this.dcBegin(req, url);
       if (p === '/api/discord/claim' && req.method === 'POST') return await this.dcClaim(req);
+      if (p === '/api/player') return json(await this.player(req, url.searchParams.get('pid')));
+      if (p === '/api/search') return json(this.search(url.searchParams.get('q')));
       if (p === '/api/leaderboard') return json(this.board(Math.min(100, Math.max(1, +url.searchParams.get('limit') || 50))));
       const a = await this.authHdr(req); if (!a) return json({ error: 'auth' }, 401);
       this.sql.exec('UPDATE accounts SET last=? WHERE uid=?', Date.now(), a.uid);
@@ -97,6 +111,12 @@ export class Hub extends DurableObject {
         const n = cleanName((await req.json()).name); if (!n) return json({ error: 'name' }, 400);
         this.sql.exec('UPDATE accounts SET name=? WHERE uid=?', n, a.uid); this.lbCache = null; return json(this.prof({ ...a, name: n }));
       }
+      if (p === '/api/avatar' && req.method === 'POST') {
+        const v = Math.floor(+(await req.json()).avatar); if (!(v >= 0 && v <= 5000)) return json({ error: 'avatar' }, 400);
+        this.sql.exec('UPDATE accounts SET avatar=? WHERE uid=?', v, a.uid); this.lbCache = null; return json(this.prof({ ...a, avatar: v }));
+      }
+      if (p === '/api/friends') return json(this.friendList(a));
+      if (p.startsWith('/api/friends/') && req.method === 'POST') return json(this.friendAct(a, p.slice(13), String((await req.json()).pid || '')));
       if (p === '/api/delete' && req.method === 'POST') return json(this.destroyAccount(a));
       if (p === '/api/report' && req.method === 'POST') return json(this.report(a, await req.json()));
       if (p === '/api/match') return json(this.matchInfo(a, url.searchParams.get('id')));
@@ -147,7 +167,7 @@ export class Hub extends DurableObject {
       uid = owner.uid; this.sql.exec('UPDATE accounts SET discord_name=? WHERE uid=?', dname, uid);
     } else {   // LOGIN, first time: create the account (its old-style key is random and unknown to everybody; devices get session keys)
       do { uid = rnd(8, 'abcdefghjkmnpqrstuvwxyz23456789'); } while (this.one('SELECT 1 x FROM accounts WHERE uid=?', uid));
-      this.sql.exec('INSERT INTO accounts(uid,hash,name,rating,created,last,discord_id,discord_name) VALUES(?,?,?,?,?,?,?,?)', uid, await sha(rnd(40, B64)), dname, START, now, now, did, dname);
+      this.sql.exec('INSERT INTO accounts(uid,hash,name,rating,created,last,discord_id,discord_name,pid) VALUES(?,?,?,?,?,?,?,?,?)', uid, await sha(rnd(40, B64)), dname, START, now, now, did, dname, this.newPid());
     }
     const otc = rnd(32, B64); this.sql.exec('DELETE FROM otc WHERE created<?', now - 120000);
     this.sql.exec('INSERT INTO otc(code,uid,nh,mode,created) VALUES(?,?,?,?,?)', otc, uid, st.nh, st.uid ? 'link' : 'login', now);
@@ -170,6 +190,7 @@ export class Hub extends DurableObject {
     for (const w of this.ctx.getWebSockets()) { const t = w.deserializeAttachment(); if (t && t.uid === a.uid) { try { w.close(1000, 'deleted'); } catch (e) {} } }
     this.sql.exec("UPDATE matches SET status='void' WHERE status='open' AND (p1=? OR p2=?)", a.uid, a.uid);
     for (const q of ['DELETE FROM sessions WHERE uid=?', 'DELETE FROM oauth WHERE uid=?', 'DELETE FROM otc WHERE uid=?', 'DELETE FROM accounts WHERE uid=?']) this.sql.exec(q, a.uid);
+    this.sql.exec('DELETE FROM friends WHERE a=? OR b=?', a.uid, a.uid);
     this.lbCache = null; return { ok: 1 };
   }
 
@@ -179,17 +200,58 @@ export class Hub extends DurableObject {
     const name = cleanName((await req.json()).name) || 'Player' + rnd(4, '0123456789');
     let uid; do { uid = rnd(8, 'abcdefghjkmnpqrstuvwxyz23456789'); } while (this.one('SELECT 1 x FROM accounts WHERE uid=?', uid));
     const key = rnd(32, B64), now = Date.now();
-    this.sql.exec('INSERT INTO accounts(uid,hash,name,rating,created,last) VALUES(?,?,?,?,?,?)', uid, await sha(key), name, START, now, now);
+    this.sql.exec('INSERT INTO accounts(uid,hash,name,rating,created,last,pid) VALUES(?,?,?,?,?,?,?)', uid, await sha(key), name, START, now, now, this.newPid());
     this.sql.exec('INSERT INTO regs(ip,day,n) VALUES(?,?,1) ON CONFLICT(ip,day) DO UPDATE SET n=n+1', ip, day);
     this.sql.exec('DELETE FROM regs WHERE day<?', day - 2);
     return json({ uid, key, name, rating: START });
   }
   board(limit) {
     if (!this.lbCache || Date.now() - this.lbCache.t > 20000) {
-      const rows = this.all('SELECT name,rating,games,wins,losses FROM accounts WHERE games>0 ORDER BY rating DESC, games DESC LIMIT 100');
+      const rows = this.all('SELECT pid,name,avatar,rating,games,wins,losses FROM accounts WHERE games>0 ORDER BY rating DESC, games DESC LIMIT 100');
       this.lbCache = { t: Date.now(), rows: rows.map((r, i) => ({ ...r, rank: i + 1 })) };
     }
     return this.lbCache.rows.slice(0, limit);
+  }
+
+  // ---------- public profiles, search, friends ----------
+  rel(uid, other) {
+    const r = this.one('SELECT * FROM friends WHERE (a=? AND b=?) OR (a=? AND b=?)', uid, other, other, uid);
+    return !r ? 'none' : r.status === 'accepted' ? 'friends' : r.a === uid ? 'pending_out' : 'pending_in';
+  }
+  pub(x) { return { pid: x.pid, name: x.name, avatar: x.avatar || 0, rating: x.rating, games: x.games, wins: x.wins, losses: x.losses, draws: x.draws, rank: this.rankOf(x), created: x.created, last: x.last }; }
+  async player(req, pid) {
+    const x = this.one('SELECT * FROM accounts WHERE pid=?', String(pid || '').slice(0, 12)); if (!x) return { error: 'not found' };
+    const me = req.headers.get('authorization') ? await this.authHdr(req) : null;
+    return { ...this.pub(x), self: !!me && me.uid === x.uid, rel: me && me.uid !== x.uid ? this.rel(me.uid, x.uid) : null };
+  }
+  search(q) {
+    q = String(q || '').replace(/[%_\\]/g, '').trim().slice(0, 16); if (q.length < 2) return [];
+    return this.all('SELECT pid,name,avatar,rating,games FROM accounts WHERE name LIKE ? ORDER BY games DESC, rating DESC LIMIT 10', q + '%');
+  }
+  friendList(a) {
+    const rows = this.all('SELECT f.a fa, f.status st, x.* FROM friends f JOIN accounts x ON x.uid = CASE WHEN f.a=? THEN f.b ELSE f.a END WHERE f.a=? OR f.b=? ORDER BY x.last DESC', a.uid, a.uid, a.uid);
+    const out = { friends: [], incoming: [], outgoing: [] };
+    for (const r of rows) {
+      const o = { pid: r.pid, name: r.name, avatar: r.avatar || 0, rating: r.rating, games: r.games, last: r.last };
+      if (r.st === 'accepted') out.friends.push(o); else if (r.fa === a.uid) out.outgoing.push(o); else out.incoming.push(o);
+    }
+    return out;
+  }
+  friendAct(a, act, pid) {
+    const x = this.one('SELECT uid FROM accounts WHERE pid=?', pid.slice(0, 12)); if (!x || x.uid === a.uid) return { error: 'not found' };
+    const rel = this.rel(a.uid, x.uid), now = Date.now();
+    if (act === 'request') {
+      if (rel === 'pending_in') act = 'accept';
+      else if (rel !== 'none') return { rel };
+      else {
+        if (this.one("SELECT COUNT(*) c FROM friends WHERE a=? AND status='pending'", a.uid).c >= 30) return { error: 'Too many pending requests.', rel };
+        if (this.one("SELECT COUNT(*) c FROM friends WHERE (a=? OR b=?) AND status='accepted'", a.uid, a.uid).c >= 100) return { error: 'Your friends list is full.', rel };
+        this.sql.exec("INSERT INTO friends(a,b,status,created) VALUES(?,?,'pending',?)", a.uid, x.uid, now); return { rel: 'pending_out' };
+      }
+    }
+    if (act === 'accept') { if (rel !== 'pending_in') return { rel }; this.sql.exec("UPDATE friends SET status='accepted' WHERE a=? AND b=?", x.uid, a.uid); return { rel: 'friends' }; }
+    if (act === 'remove') { this.sql.exec('DELETE FROM friends WHERE (a=? AND b=?) OR (a=? AND b=?)', a.uid, x.uid, x.uid, a.uid); return { rel: 'none' }; }   // unfriend / decline / cancel
+    return { error: 'bad request' };
   }
 
   // ---------- queue (WebSocket, hibernation API) ----------
@@ -201,7 +263,7 @@ export class Hub extends DurableObject {
     const mode = m.mode === 'ranked' ? 'ranked' : 'casual', v = String(m.v || '').slice(0, 24);
     const a = await this.auth(m.uid, m.key);
     if (!a) { ws.send(JSON.stringify({ t: 'err', code: 'auth', msg: 'Account not recognised.' })); return ws.close(1008, 'auth'); }
-    if (mode === 'ranked' && this.env.REQUIRE_DISCORD === '1' && !a.discord_id) { ws.send(JSON.stringify({ t: 'err', code: 'discord', msg: 'Ranked games require a linked Discord account (Ranked > Account).' })); return ws.close(1008, 'discord'); }
+    if (mode === 'ranked' && this.env.REQUIRE_DISCORD === '1' && !a.discord_id) { ws.send(JSON.stringify({ t: 'err', code: 'discord', msg: 'Ranked games require a linked Discord account (main menu > Profile).' })); return ws.close(1008, 'discord'); }
     for (const o of this.ctx.getWebSockets()) { const t = o.deserializeAttachment(); if (o !== ws && t && t.uid === a.uid) { try { o.send(JSON.stringify({ t: 'err', code: 'dup', msg: 'You started searching somewhere else.' })); o.close(1000, 'dup'); } catch (e) {} } }
     ws.serializeAttachment({ uid: a.uid, name: a.name, rating: a.rating, mode, v, since: Date.now() });
     ws.send(JSON.stringify({ t: 'queued', mode, rating: a.rating }));

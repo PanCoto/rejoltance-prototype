@@ -22,4 +22,4 @@ DISCORD_CLIENT_ID = "1568393456676503694"
 # FULL address of the game page (with its path), where players are sent back after logging in, e.g. "https://pancoto.github.io/rejoltance-prototype/".
 GAME_URL = "https://pancoto.github.io/rejoltance-prototype/"
 # "1" = Ranked games need a Discord-linked account (guests can still play Quick Match). "0" = guests may play Ranked too.
-REQUIRE_DISCORD = "0"
+REQUIRE_DISCORD = "1"

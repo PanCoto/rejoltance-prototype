@@ -7,14 +7,19 @@
 </head><body>
 <div id="stage">
  <div class="scr" id="menu">
-  <div class="thead"><h1>RE<span>:</span>Joltance</h1><button id="achopen" title="Achievements"><span class="aico"></span>Achievements <b id="achcnt"></b></button></div>
-  <div class="tiles four">
-   <button class="tile" id="tfriend"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M2 2h4v4H2zM1 6h6v4H1zM1 10h2v4H1zM5 10h2v4H5zM10 2h4v4h-4zM9 6h6v4H9zM9 10h2v4H9zM13 10h2v4h-2z"/><path fill="#c4161c" d="M7 7h2v2H7z"/></svg><b>Play with a friend</b><small>1 vs 1 online</small></button>
-   <button class="tile" id="tbot"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M7 0h2v2H7zM3 2h10v8H3zM1 4h2v4H1zM13 4h2v4h-2zM4 11h8v4H4z"/><path fill="#050505" d="M5 5h2v2H5zM9 5h2v2H9zM5 8h6v1H5z"/></svg><b>Play with the bot</b><small>Solo practice</small></button>
-   <button class="tile" id="tmirror"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M1 3h5v10H1zM10 3h5v10h-5z"/><path fill="#c4161c" d="M7 2h2v12H7z"/><path fill="#050505" d="M2 5h3v2H2zM11 5h3v2h-3zM2 9h3v1H2zM11 9h3v1h-3z"/></svg><b>Mirror Match UP</b><small>Same deck, same draws</small></button>
-   <button class="tile" id="tendless"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M2 5h4v2H4v2h2v2H2zM10 5h4v2h-2v2h2v2h-4z"/><path fill="#c4161c" d="M6 7h4v2H6z"/></svg><b>Endless Mode</b><small>Bot Boss - high score</small></button>
+  <div class="mtop"><h1>RE<span>:</span>Joltance</h1>
+   <div class="mutil"><button id="pchip" title="Your profile"><span class="av" id="pchipav"></span><span class="pi"><b id="pchipn"></b><small id="pchips"></small></span></button><button id="fdopen" title="Friends">Friends <b id="fdcnt"></b></button><button id="achopen" title="Achievements"><span class="aico"></span>Achievements <b id="achcnt"></b></button><button id="sopen" title="Settings"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M7 0h2v2.2l1.7.7 1.6-1.5 1.4 1.4-1.5 1.6.7 1.7H15v2h-2.2l-.7 1.7 1.5 1.6-1.4 1.4-1.6-1.5-1.7.7V16H7v-2.2l-1.7-.7-1.6 1.5-1.4-1.4 1.5-1.6-.7-1.7H1V7h2.2l.7-1.7-1.5-1.6 1.4-1.4 1.6 1.5 1.7-.7z"/><circle cx="8" cy="8" r="2.4" fill="#000"/></svg>Settings</button></div></div>
+  <div class="mgrid">
+   <section class="mgrp"><h3>Play online</h3>
+    <button class="tile feat" id="rkopen"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M3 1h10v5h-1v2h-1v1H9v2h3v3H4v-3h3V9H5V8H4V6H3z"/><path fill="#c4161c" d="M0 2h3v3H1v2h2v1H1V6H0zM13 2h3v4h-1v2h-2V7h2V5h-2z"/><path fill="#050505" d="M6 3h4v2H6z"/></svg><span class="tt"><b>Ranked</b><small>Climb the leaderboard</small></span></button>
+    <button class="tile" id="tfriend"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M2 2h4v4H2zM1 6h6v4H1zM1 10h2v4H1zM5 10h2v4H5zM10 2h4v4h-4zM9 6h6v4H9zM9 10h2v4H9zM13 10h2v4h-2z"/><path fill="#c4161c" d="M7 7h2v2H7z"/></svg><span class="tt"><b>Play with a friend</b><small>Quick match, host or join a room</small></span></button></section>
+   <section class="mgrp"><h3>Play solo</h3>
+    <button class="tile" id="tbot"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M7 0h2v2H7zM3 2h10v8H3zM1 4h2v4H1zM13 4h2v4h-2zM4 11h8v4H4z"/><path fill="#050505" d="M5 5h2v2H5zM9 5h2v2H9zM5 8h6v1H5z"/></svg><span class="tt"><b>Play with the bot</b><small>Practice against the AI</small></span></button>
+    <button class="tile" id="tendless"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M2 5h4v2H4v2h2v2H2zM10 5h4v2h-2v2h2v2h-4z"/><path fill="#c4161c" d="M6 7h4v2H6z"/></svg><span class="tt"><b>Endless Mode</b><small>Bot Boss - beat your high score</small></span></button></section>
+   <section class="mgrp"><h3>Special &amp; decks</h3>
+    <button class="tile" id="tmirror"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M1 3h5v10H1zM10 3h5v10h-5z"/><path fill="#c4161c" d="M7 2h2v12H7z"/><path fill="#050505" d="M2 5h3v2H2zM11 5h3v2h-3zM2 9h3v1H2zM11 9h3v1h-3z"/></svg><span class="tt"><b>Mirror Match UP</b><small>Same deck, same draws - vs bot or online</small></span></button>
+    <button class="tile" id="bopen"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M1 4h8v10H1zM7 2h8v10H7z"/><path fill="#050505" d="M8 3h6v8H8z"/><path fill="#c4161c" d="M9 5h4v2H9zM9 8h3v1H9z"/></svg><span class="tt"><b>Card Collection</b><small>Browse cards and build decks</small></span></button></section>
   </div>
-  <div class="mprow"><button id="rkopen">Ranked</button><button id="bopen">Card Collection</button><button id="sopen">Settings</button></div>
   <p>Each round: the starting player plays Units, then the other player plays Units and Actions, then the starter plays Actions. After that all four lanes fight. Click a card in your hand, then a glowing lane, target, or (for spells without a target) anywhere on the board.</p>
  </div>
  <div class="scr" id="bld">
@@ -78,16 +83,24 @@
  <div class="ovl bk" id="achmenu"><div class="panel wide"><h2>Achievements</h2><div class="sub" id="achsum"></div><div id="achbar"><i></i></div><div id="achlist"></div><div class="btns"><button id="achback">Back</button></div></div></div>
  <div class="ovl bk" id="rkmenu"><div class="panel wide"><h2>Ranked</h2><div class="sub" id="rksub"></div><div id="rkme"></div>
   <div id="rklist"></div>
-  <div id="rkacct"><div class="srow"><label>Display name</label><input type="text" id="rkname" maxlength="16" autocomplete="off" spellcheck="false"><button id="rksave">Save</button></div>
-   <div class="srow"><label>Transfer code</label><input type="password" id="rkxfer" readonly autocomplete="off" spellcheck="false"><span class="rkbt"><button id="rkshow">Show</button><button id="rkcopy">Copy</button></span></div>
-   <div class="srow"><label>Import code</label><input type="text" id="rkimpin" placeholder="paste a transfer code" autocomplete="off" spellcheck="false"><button id="rkimp">Import</button></div>
-   <div class="srow" id="rkdcrow"><label>Discord</label><span id="rkdc"></span><span class="rkbt"><button id="rkdclink">Link Discord</button><button id="rkdclogin">Log in with Discord</button></span></div>
-   <div id="rkamsg"></div><div class="rkbt"><button id="rkdel">Delete account</button></div><div class="rkwarn">Your account is a secret code stored in this browser. Anyone who has it can play as you; if you clear your browser data without saving it, the account and its rating are lost.</div></div>
-  <div class="btns"><button id="rkplay">Play Ranked</button><button id="rkacc">Account</button><button id="rkback">Back</button></div></div></div>
- <div class="ovl bk" id="setmenu"><div class="panel"><h2>Settings</h2><div id="fprev"><small>Font preview</small><div id="fpc"></div></div>
-  <div class="srow" id="prow"><label>Display name</label><input type="text" id="pname" maxlength="16" placeholder="Playerzacy" autocomplete="off" spellcheck="false"></div>
-  <div class="srow"><label>Font</label><select id="fnt"><option value="jer">Jersey 15 (pixel)</option><option value="pxd">Pixeloid Sans (pixel)</option><option value="dys">OpenDyslexic (dyslexia friendly)</option></select></div>
-  <div class="srow chk"><label for="rndprem">Random includes Premade decks</label><input type="checkbox" id="rndprem" checked title="When on, the Random button can pick premade decks too. When off, it only picks your own decks (premade ones are used only if you have none)."></div>
+  <div class="btns"><button id="rkplay">Play Ranked</button><button id="rkback">Back</button></div></div></div>
+ <div class="ovl bk" id="acctmenu"><div class="panel prof"><h2 id="pft">Profile</h2><div class="sub" id="pfsub"></div>
+  <div class="pfbody">
+   <div class="pfl"><button id="pfav" class="pfav" title="Change profile picture"></button><button id="pfchg">Change picture</button>
+    <div class="pfnm"><label for="pfname">Display name</label><input type="text" id="pfname" maxlength="16" placeholder="Playerzacy" autocomplete="off" spellcheck="false"><button id="pfsave">Save</button></div></div>
+   <div class="pfr"><div id="pfstats"></div>
+    <div id="pfdcrow"><label>Discord</label><span id="pfdc"></span><span class="rkbt"><button id="pfdclink">Link Discord</button><button id="pfdclogin">Log in with Discord</button></span></div></div>
+  </div>
+  <div id="pfmsg"></div>
+  <div class="btns"><button id="pffr" hidden></button><button id="pfdel">Delete account</button><button id="pfback">Back</button></div></div></div>
+ <div class="ovl bk" id="fdmenu"><div class="panel prof"><h2>Friends</h2><div class="sub" id="fdsub"></div>
+  <div class="fdsearch"><input type="text" id="fdq" placeholder="Find a player by name..." maxlength="16" autocomplete="off" spellcheck="false"><button id="fdgo">Search</button></div>
+  <div id="fdres"></div><div id="fdlist"></div>
+  <div class="btns"><button id="fdback">Back</button></div></div></div>
+ <div class="ovl bk" id="avpick"><div class="panel wide"><h2>Profile picture</h2><div class="sub">Pick any card - it is shown next to your name on the leaderboard</div>
+  <input type="text" id="avq" placeholder="Search cards..." autocomplete="off" spellcheck="false"><div id="avgrid"></div>
+  <div class="btns"><button id="avclear">Use initial instead</button><button id="avback">Back</button></div></div></div>
+ <div class="ovl bk" id="setmenu"><div class="panel"><h2>Settings</h2>  <div class="srow chk"><label for="rndprem">Random includes Premade decks</label><input type="checkbox" id="rndprem" checked title="When on, the Random button can pick premade decks too. When off, it only picks your own decks (premade ones are used only if you have none)."></div>
   <div class="srow chk"><label for="hotnum">Show card numbers (hotkeys 1-8)</label><input type="checkbox" id="hotnum" title="Shows a small number above each card in your hand. Press that number on the keyboard to select the card."></div>
   <div class="srow"><label>Sound effects</label><input type="range" id="sfxv" min="0" max="100" step="5"><b id="sfxn"></b></div>
   <div class="srow"><label>Music</label><input type="range" id="musv" min="0" max="100" step="5"><b id="musn"></b></div>
