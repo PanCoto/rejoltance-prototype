@@ -122,7 +122,7 @@ let OPN='';
 function render(){
  const me=G.p[0],op=G.p[1],tg=validTargets();let h='';
  $('phase').textContent='Phase : '+(G.step>=3?'Combat':PH[G.allow]);$('round').textContent='Round : '+G.turn;
- {const eh=$('endl');if(G.en){const e=G.en,lv=Math.floor(e.dealt/20);eh.style.display='block';eh.innerHTML=`ENDLESS<br><b>Score ${e.dealt}</b><small>Boss level ${lv} - next upgrade at ${(lv+1)*20} damage</small>`;eh.title=e.log.length?e.log.join('\n'):'No boss upgrades yet'}else eh.style.display='none'}
+ {const eh=$('endl');if(G.en){const e=G.en,lv=Math.floor(e.dealt/20);eh.style.display='block';eh.innerHTML=`ENDLESS<br><b>Score ${e.dealt}</b> <span class="ebst">Best ${Math.max(e.dealt,+lsGet('rj_endless_best')||0)}</span><small>Boss level ${lv} - next upgrade at ${(lv+1)*20} damage</small>`;eh.title=e.log.length?e.log.join('\n'):'No boss upgrades yet'}else eh.style.display='none'}
  $('ehp').textContent=Math.max(0,op.hp);$('php').textContent=Math.max(0,me.hp);
  $('ehp').className='hpn'+(op.hp<=7?' lo':'');$('php').className='hpn'+(me.hp<=7?' lo':'');
  $('enb').textContent=NET?(OPN||'Opponent'):'Botzacy';$('pnb').textContent=myName()||'Playerzacy';
@@ -694,7 +694,7 @@ window.pkResolve=pkResolve;window.PKR=PKR;window.renderPickers=renderPickers;win
 // Random is a mode, not a preview: the deck is only drawn when the game starts (pkResolve), so it can't be rerolled until you like it.
 function pkRandom(sid){PKR[sid]=true;syncPickers()}
 // Random draws from every deck, or - with Settings > Random deck > "My decks only" - from your own decks (premade ones only if you have none).
-function pkResolve(){const mineOnly=$('rndpool')&&$('rndpool').value=='mine';
+function pkResolve(){const mineOnly=$('rndprem')&&!$('rndprem').checked;
  ['d0','d1'].forEach(sid=>{if(!PKR[sid]||!ALL.length)return;
   let pool=ALL.map((d,i)=>i);if(mineOnly){const mine=pool.filter(i=>ALL[i].custom);if(mine.length)pool=mine}
   const cur=$(sid).selectedIndex;let i=pool[Math.floor(Math.random()*pool.length)];
@@ -710,20 +710,34 @@ addEventListener('keydown',e=>{if($('bld').style.display!='block')return;
  if(e.key=='Escape'){if(mOpen)closeModal();else if(popOpen)popOpen(false);else if(bview=='edit')leaveEdit();return}
  if(e.key=='/'&&!/INPUT|TEXTAREA/.test((document.activeElement||{}).tagName||'')&&!mOpen&&bview!='decks'){e.preventDefault();(bview=='edit'?FE:FC).q.focus()}});
 })();
-const setFont=f=>{document.body.dataset.font=f;try{localStorage.setItem('rj_font',f)}catch(e){}};
+const FONTFACE={jer:['400 20px Jer'],pxd:['400 20px Pxd','700 20px Pxd'],dys:['400 20px Dys','700 20px Dys']};
+const setFont=f=>{document.body.dataset.font=f;try{localStorage.setItem('rj_font',f)}catch(e){}
+ if(document.fonts)Promise.all((FONTFACE[f]||[]).map(x=>document.fonts.load(x))).then(refitAll,refitAll);refitAll()};
 try{const f=localStorage.getItem('rj_font');if(f&&[...$('fnt').options].some(o=>o.value==f))$('fnt').value=f}catch(e){}
-setFont($('fnt').value);$('fnt').onchange=()=>setFont($('fnt').value);
-function fitTx(el){const sig=el.innerHTML.length+'|'+el.clientWidth;if(el.dataset.f===sig||!el.clientHeight)return;
- const kw=el.querySelector('.kwl');el.style.fontSize='';if(kw)kw.style.fontSize='';
- const b=parseFloat(getComputedStyle(el).fontSize),bk=kw?parseFloat(getComputedStyle(kw).fontSize):0,cs=getComputedStyle(el);
+// Fit card text into its boxes: name plate, subtype line and description all shrink (never overflow), whatever font is active.
+const fitKey=c=>document.body.dataset.font+'|'+c.clientWidth+'|'+c.textContent.length+'|'+c.innerHTML.length;
+function fitShrink(el,apply,over){apply(1);if(!over())return;let lo=.3,hi=1;
+ for(let i=0;i<7;i++){const m=(lo+hi)/2;apply(m);if(over())hi=m;else lo=m}apply(lo)}
+function fitTx(el){const card=el.closest('.card');if(!card)return;
+ if(!card.clientWidth||!el.clientHeight)return;
+ const key=fitKey(card);if(card.__fk===key)return;
+ const nm=card.querySelector('.nm'),st=card.querySelector('.st'),kw=el.querySelector('.kwl');
+ if(nm){nm.style.fontSize='';const b=parseFloat(getComputedStyle(nm).fontSize);
+  fitShrink(nm,s=>nm.style.fontSize=(b*s)+'px',()=>nm.scrollWidth>nm.clientWidth+.5)}
+ if(st){st.style.fontSize='';const b=parseFloat(getComputedStyle(st).fontSize);
+  fitShrink(st,s=>st.style.fontSize=(b*s)+'px',()=>st.scrollWidth>st.clientWidth+.5||st.offsetWidth>=st.parentElement.clientWidth*.6)}
+ el.style.fontSize='';if(kw)kw.style.fontSize='';
+ const cs=getComputedStyle(el),b=parseFloat(cs.fontSize),bk=kw?parseFloat(getComputedStyle(kw).fontSize):0;
  const pad=parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom);
- const need=()=>[...el.children].reduce((a,c)=>a+c.offsetHeight,0)+pad;let s=1;
- while(need()>el.clientHeight+1&&s>.4){s-=.04;el.style.fontSize=(b*s)+'px';if(kw)kw.style.fontSize=(bk*s)+'px'}
- el.dataset.f=el.innerHTML.length+'|'+el.clientWidth}
+ const over=()=>[...el.children].reduce((a,c)=>a+c.offsetHeight,0)+pad>el.clientHeight-1||el.scrollHeight>el.clientHeight||el.scrollWidth>el.clientWidth+.5;
+ fitShrink(el,s=>{el.style.fontSize=(b*s)+'px';if(kw)kw.style.fontSize=(bk*s)+'px'},over);
+ card.__fk=key}
 let fitQ=0;const fitAll=()=>{fitQ=0;document.querySelectorAll('.card .tx').forEach(fitTx)};
+const refitAll=()=>{document.querySelectorAll('.card').forEach(c=>delete c.__fk);fitAll()};
 new MutationObserver(()=>{if(!fitQ)fitQ=requestAnimationFrame(fitAll)}).observe(document.body,{childList:true,subtree:true,characterData:true});
-addEventListener('resize',()=>{document.querySelectorAll('.card .tx').forEach(e=>delete e.dataset.f);fitAll()});
-document.fonts&&document.fonts.ready.then(()=>{document.querySelectorAll('.card .tx').forEach(e=>delete e.dataset.f);fitAll()});
+addEventListener('resize',refitAll);
+if(document.fonts){document.fonts.ready.then(refitAll);document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',refitAll)}
+setFont($('fnt').value);$('fnt').onchange=()=>setFont($('fnt').value);
 const PRELOAD=[];[['img/CardFront.png'],['img/back.webp'],['img/missing_texture.webp'],...CARDS.map(c=>[artFile(c.Id),c.Id])].forEach(([u,id])=>{const i=new Image();i.decoding='async';
  if(id!=null)i.onerror=()=>MISSING.add(+id);i.src=u;PRELOAD.push(i);if(i.decode)i.decode().catch(()=>{})});
 show('menu');

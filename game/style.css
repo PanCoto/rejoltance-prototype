@@ -1,14 +1,9 @@
-@font-face{font-family:Pix;src:url(fonts/pixelify-sans-latin-400-normal.woff2) format("woff2");font-weight:400}
-@font-face{font-family:Pix;src:url(fonts/pixelify-sans-latin-700-normal.woff2) format("woff2");font-weight:700}
-@font-face{font-family:Dot;src:url(fonts/dotgothic16-latin-400-normal.woff2) format("woff2");font-weight:400 700}
 @font-face{font-family:Jer;src:url(fonts/jersey-15-latin-400-normal.woff2) format("woff2");font-weight:400 700}
-@font-face{font-family:Sil;src:url(fonts/silkscreen-latin-400-normal.woff2) format("woff2");font-weight:400}
-@font-face{font-family:Sil;src:url(fonts/silkscreen-latin-700-normal.woff2) format("woff2");font-weight:700}
-@font-face{font-family:Cin;src:url(fonts/cinzel-latin-400-normal.woff2) format("woff2");font-weight:400;font-display:swap}
-@font-face{font-family:Cin;src:url(fonts/cinzel-latin-700-normal.woff2) format("woff2");font-weight:700;font-display:swap}
-@font-face{font-family:Ale;src:url(fonts/alegreya-sans-latin-400-normal.woff2) format("woff2");font-weight:400;font-display:swap}
-@font-face{font-family:Ale;src:url(fonts/alegreya-sans-latin-700-normal.woff2) format("woff2");font-weight:700;font-display:swap}
-:root{--fd:Pix,"Courier New",monospace;--fb:Pix,"Courier New",monospace;--fw:1;--tx:5.5cqw;--kw:6.4cqw;--st:4.6cqw;--bg:#050505;--ln:#2a2a2a;--tx:#8d8d8d;--hi:#cfcfcf;--red:#c4161c;--dim:#3a3a3a}
+@font-face{font-family:Pxd;src:url(fonts/pixeloid-sans-400.woff2) format("woff2");font-weight:400}
+@font-face{font-family:Pxd;src:url(fonts/pixeloid-sans-700.woff2) format("woff2");font-weight:700}
+@font-face{font-family:Dys;src:url(fonts/opendyslexic-400.woff2) format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:Dys;src:url(fonts/opendyslexic-700.woff2) format("woff2");font-weight:700;font-display:swap}
+:root{--fd:Jer,"Courier New",monospace;--fb:Jer,"Courier New",monospace;--fw:1.25;--txs:7cqw;--kw:8cqw;--st:5.6cqw;--bg:#050505;--ln:#2a2a2a;--tx:#8d8d8d;--hi:#cfcfcf;--red:#c4161c;--dim:#3a3a3a}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
 html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:var(--fb);color:var(--tx)}
 #stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:center;background:var(--bg);overflow:clip}
@@ -75,14 +70,14 @@ select,input{font-family:inherit;font-size:28px;background:#000;color:var(--hi);
 .card .fr{display:none}
 .card::before{content:'';position:absolute;inset:0;z-index:1;background:url(img/CardFront.png) center/100% 100% no-repeat;pointer-events:none}
 .card .nm,.card .st,.card .co,.card .tx{z-index:2}
-.card .nm{position:absolute;left:8cqw;width:53cqw;text-align:right;top:3.4cqw;color:#fff;font-size:calc(6.6cqw*var(--nf,1)*var(--fw));font-weight:700;letter-spacing:.3cqw;text-transform:uppercase;white-space:nowrap;line-height:1.2}
-.card .st{position:absolute;left:8cqw;top:12.8cqw;font-size:var(--st);color:#bbb;white-space:nowrap}
+.card .nm{position:absolute;left:8cqw;width:53cqw;overflow:hidden;text-align:right;top:3.4cqw;color:#fff;font-size:calc(6.6cqw*var(--nf,1)*var(--fw));font-weight:700;letter-spacing:.3cqw;text-transform:uppercase;white-space:nowrap;line-height:1.2}
+.card .st{position:absolute;left:8cqw;top:12.8cqw;max-width:60cqw;overflow:hidden;font-size:var(--st);color:#bbb;white-space:nowrap}
 .card .co{position:absolute;right:3cqw;top:.5cqw;font-size:12.5cqw;font-weight:700;color:var(--red);line-height:1.15}
 .card .co.cd{color:#08842c}.card .co.cu{color:#ff5a00}
 .card .bx{color:#000;position:absolute;right:2.2cqw;width:15cqw;height:15cqw;background:#fff;border:.9cqw solid #000;font-size:10.5cqw;font-weight:700;text-align:center;line-height:13.4cqw;z-index:2}
 .card .bx.a{top:14%}.card .bx.h{top:29%}
 .card .bx.up{background:#000;color:#fff;border-color:#fff}.card .bx.dn{color:var(--red)}
-.card .tx{position:absolute;left:0;right:0;bottom:0;height:25%;background:none;color:#f2f2f2;padding:3cqw 5cqw 1.2cqw;display:flex;flex-direction:column;justify-content:center;text-align:center;font-size:var(--tx);line-height:1.16;overflow:hidden}
+.card .tx{position:absolute;left:0;right:0;bottom:0;height:25%;background:none;color:#f2f2f2;padding:2.4cqw 5cqw 3.2cqw;display:flex;flex-direction:column;justify-content:center;text-align:center;font-size:var(--txs);line-height:1.16;overflow:hidden;overflow-wrap:anywhere;hyphens:auto}
 .card .kwl{font-weight:700;font-size:var(--kw)}
 .card .kwl i{font-style:normal}.card .kwl i.r,.card .tx .k{color:#e3242b}.card .tx .k.u{text-decoration:underline}
 .card.tgt{outline:5px solid #ff2b2b;box-shadow:0 0 24px #ff2b2b;z-index:3}
@@ -261,19 +256,16 @@ button.ghost{border-color:#2e2e2e;color:#aaa}
 h1,h2,h3,button,.nm,.co,.bx,.hpn,#phase,#round,.nbar,.cnt,.pn,#ovt,.slot .num,#bc,#castlbl,.dots,#gedit .bc u,.mbox h3,.cvh b{font-family:var(--fd)}
 #msg,.hb,#strip div,#bd span,#bi,.cn,select,input,#gl{font-family:var(--fb)}
 #gl b{font-family:var(--fd)}
-body[data-font=cin]{--fd:Cin,Georgia,"Times New Roman",serif;--fb:Ale,"Trebuchet MS",Arial,sans-serif;--tx:6.3cqw;--kw:7cqw;--st:5.2cqw}
-body[data-font=cin] .card .nm{letter-spacing:.1cqw}
-body[data-font=cin] .card .st{font-style:italic}
-body[data-font=cin] .card .tx,body[data-font=cin] .card .kwl{line-height:1.1}
-body[data-font=cin] #gl{font-size:21px;line-height:1.25}
-#gl.sm,body[data-font=cin] #gl.sm{font-size:16px;line-height:1.22;padding:6px 10px}
-#gl.sm b{font-size:1em}
-body[data-font=cin] #msg{font-size:31px}
-body[data-font=cin] .hpn{font-size:104px}
-body[data-font=dot]{--fd:Dot,"Courier New",monospace;--fb:Dot,"Courier New",monospace;--fw:.95;--tx:5.6cqw;--kw:6.4cqw}
-body[data-font=jer]{--fd:Jer,"Courier New",monospace;--fb:Jer,"Courier New",monospace;--fw:1.25;--tx:7cqw;--kw:8cqw;--st:5.6cqw}
 body[data-font=jer] .card .tx{line-height:1.05}
-body[data-font=sil]{--fd:Sil,"Courier New",monospace;--fb:Sil,"Courier New",monospace;--fw:.75;--tx:4.8cqw;--kw:5.4cqw;--st:4cqw}
+body[data-font=pxd]{--fd:Pxd,"Courier New",monospace;--fb:Pxd,"Courier New",monospace;--fw:.8;--txs:5cqw;--kw:5.8cqw;--st:4.2cqw}
+body[data-font=dys]{--fd:Dys,Verdana,Arial,sans-serif;--fb:Dys,Verdana,Arial,sans-serif;--fw:.72;--txs:4.6cqw;--kw:5.4cqw;--st:3.9cqw}
+body[data-font=dys] .card .tx,body[data-font=dys] .card .kwl{line-height:1.12}
+body[data-font=dys] .card .nm{letter-spacing:0}
+body[data-font=dys] #gl{font-size:16px;line-height:1.25}
+body[data-font=dys] #msg{font-size:24px}
+body[data-font=dys] .panel .opt small{font-size:20px}
+#gl.sm{font-size:16px;line-height:1.22;padding:6px 10px}
+#gl.sm b{font-size:1em}
 #zoom{z-index:90}
 #zoom.zr{left:1545px}
 #pile,#deckb{cursor:pointer}
@@ -318,7 +310,7 @@ body[data-font=sil]{--fd:Sil,"Courier New",monospace;--fb:Sil,"Courier New",mono
 .panel .opt b{font-size:50px;color:#ddd}
 .panel .opt small{font-size:24px;color:#777;font-weight:400;line-height:1.25}
 .panel .opt:hover:not(:disabled){border-color:var(--red);box-shadow:0 0 0 2px #c4161c55}
-.srow{display:grid;grid-template-columns:300px 1fr 70px;align-items:center;gap:22px;width:100%;text-align:left}
+.srow{display:grid;grid-template-columns:300px 1fr minmax(70px,max-content);align-items:center;gap:22px;width:100%;text-align:left}
 .srow label{font-size:30px;color:#999}
 .srow select{grid-column:2/4;width:100%}
 .srow b{font-size:28px;color:#ccc;text-align:right}
@@ -498,3 +490,14 @@ body[data-font=sil]{--fd:Sil,"Courier New",monospace;--fb:Sil,"Courier New",mono
 #apop{position:absolute;left:1380px;top:930px;width:520px;z-index:95;pointer-events:none;display:flex;gap:18px;align-items:center;background:#000;border:4px solid var(--red);border-radius:18px;padding:14px 18px;opacity:0;box-shadow:0 0 36px #c4161c66}
 #apop .ic{width:80px;height:80px}#apop .tx{display:flex;flex-direction:column;gap:2px;text-align:left;min-width:0}#apop small{font-family:var(--fd);font-size:18px;color:#ff4a50;letter-spacing:2px}#apop b{font-family:var(--fd);font-size:30px;color:#fff}#apop span{font-family:var(--fb);font-size:18px;color:#aaa;line-height:1.15}
 #apop.show{animation:apop 4.2s ease both}@keyframes apop{0%{opacity:0;transform:translateX(40px)}8%,90%{opacity:1;transform:none}100%{opacity:0;transform:translateX(40px)}}
+/* endless: single deck column -> keep deck cards the same size/shape as on the 2-column bot menu */
+#botmenu.endless .pkgrid{grid-template-columns:repeat(6,minmax(0,1fr))}
+#ebest{display:none;font-size:30px;color:#e4e4e4;letter-spacing:2px;margin-top:-4px}#ebest:not(:empty){display:block}
+#ebest:empty{display:none}
+#endl .ebst{font-size:24px;color:#ff4a50;margin-left:8px}
+.srow.chk{grid-template-columns:1fr 44px}.srow.chk label{cursor:pointer}.srow input[type=checkbox]{width:40px;height:40px;padding:0;margin:0;accent-color:#c4161c;cursor:pointer;justify-self:end}
+
+#setmenu .panel{position:relative}
+#fprev{position:absolute;left:calc(100% + 40px);top:50%;transform:translateY(-50%);width:270px;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+#fprev small{font-size:20px;white-space:nowrap;color:#777;letter-spacing:1px;text-transform:uppercase;text-align:center}
+#fpc{width:100%}

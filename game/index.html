@@ -67,7 +67,7 @@
  <div class="ovl bk" id="mirmenu"><div class="panel"><h2>Mirror Match UP</h2><div class="sub">Both players get the same random deck in the same draw order - the better player wins.</div>
   <div class="btns"><button class="opt" id="mirbot"><b>Play vs Bot</b><small>Bot uses the same deck</small></button><button class="opt" id="mirhost"><b>Host Online</b><small>Create a room and share the code</small></button><button class="opt" id="mirjoin"><b>Join Online</b><small>Enter your friend's room code</small></button></div>
   <div class="btns"><button id="mirback">Back</button></div></div></div>
- <div class="ovl bk" id="botmenu"><div class="panel wide"><h2 id="bott">Play with the bot</h2><div class="sub" id="botdiff"></div>
+ <div class="ovl bk" id="botmenu"><div class="panel wide"><h2 id="bott">Play with the bot</h2><div class="sub" id="botdiff"></div><div id="ebest"></div>
   <select id="d0" hidden></select><select id="d1" hidden></select>
   <div class="pkcols">
    <section class="pkcol"><div class="pkh"><label>Your deck</label><span class="pkcur" id="pkn0"></span></div><div class="pkgrid" id="pk0"></div></section>
@@ -76,10 +76,10 @@
   <div class="pkhint">Tip: set a default deck in Card Collection &rsaquo; Decks and it is pre-selected here.</div>
   <div class="btns"><button id="go">Start</button><button id="botback">Back</button></div></div></div>
  <div class="ovl bk" id="achmenu"><div class="panel wide"><h2>Achievements</h2><div class="sub" id="achsum"></div><div id="achbar"><i></i></div><div id="achlist"></div><div class="btns"><button id="achback">Back</button></div></div></div>
- <div class="ovl bk" id="setmenu"><div class="panel"><h2>Settings</h2>
+ <div class="ovl bk" id="setmenu"><div class="panel"><h2>Settings</h2><div id="fprev"><small>Font preview</small><div id="fpc"></div></div>
   <div class="srow" id="prow"><label>Display name</label><input type="text" id="pname" maxlength="16" placeholder="Playerzacy" autocomplete="off" spellcheck="false"></div>
-  <div class="srow"><label>Random deck</label><select id="rndpool" title="What the Random button picks from. With &quot;My decks (if any)&quot; it only picks your own decks; premade decks are used only when you have none."><option value="all">Any deck</option><option value="mine">My decks (if any)</option></select></div>
-  <div class="srow"><label>Font</label><select id="fnt"><option value="pix">Pixelify Sans (pixel)</option><option value="dot">DotGothic16 (pixel)</option><option value="jer">Jersey 15 (pixel)</option><option value="sil">Silkscreen (pixel)</option><option value="cin">Cinzel + Alegreya (serif)</option></select></div>
+  <div class="srow"><label>Font</label><select id="fnt"><option value="jer">Jersey 15 (pixel)</option><option value="pxd">Pixeloid Sans (pixel)</option><option value="dys">OpenDyslexic (dyslexia friendly)</option></select></div>
+  <div class="srow chk"><label for="rndprem">Random includes Premade decks</label><input type="checkbox" id="rndprem" checked title="When on, the Random button can pick premade decks too. When off, it only picks your own decks (premade ones are used only if you have none)."></div>
   <div class="srow"><label>Sound effects</label><input type="range" id="sfxv" min="0" max="100" step="5"><b id="sfxn"></b></div>
   <div class="srow"><label>Music</label><input type="range" id="musv" min="0" max="100" step="5"><b id="musn"></b></div>
   <div class="btns"><button id="setclose">Close</button></div></div></div>
