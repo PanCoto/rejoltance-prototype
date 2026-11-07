@@ -21,10 +21,13 @@ const MTRACKS=[
  {dir:'audio/stems3',mix:'audio/music3.mp3',kind:'fast',loop:1924224/44100,lead:.5,bars:24},
  {dir:'audio/stems7',mix:'audio/music7.mp3',kind:'fast',loop:2058112/44100,lead:.5,bars:28},
  {dir:'audio/stems8',mix:'audio/music8.mp3',kind:'fast',loop:2170880/44100,lead:.5,bars:32},
- {dir:'audio/stems9',mix:'audio/music9.mp3',kind:'fast',loop:1840512/44100,lead:.5,bars:24}];
+ {dir:'audio/stems9',mix:'audio/music9.mp3',kind:'fast',loop:1840512/44100,lead:.5,bars:24},
+ // EASTER EGG: only ever played from eggCheck() below (kind:'egg' is in neither the slow nor the fast pool). 32 bars @ 126 BPM = 2688000 samples.
+ {dir:'audio/stems_egg',mix:'audio/music_egg.mp3',kind:'egg',loop:2688000/44100,lead:.5,bars:32}];
+const EGG_AT=1000,EGG_TRACK=MTRACKS.findIndex(t=>t.kind=='egg');   // Endless Mode: total damage dealt to the Boss that unlocks the secret track
 const MPOOL=k=>MTRACKS.map((t,i)=>i).filter(i=>MTRACKS[i].kind==k);
 const mpick=k=>{const p=MPOOL(k);return p[Math.floor(Math.random()*p.length)]};   // uniform: every track in the pool is equally likely
-const MUS={vol:1,mode:'',started:false,ready:false,ctx:null,master:null,g:{},src:[],last:{},force:null,want:null,track:0,cur:null,buf:{},fast:false};
+const MUS={vol:1,mode:'',started:false,ready:false,ctx:null,master:null,g:{},src:[],last:{},force:null,want:null,track:0,cur:null,buf:{},fast:false,egg:false};
 try{const v=localStorage.getItem('rj_mus');if(v!==null&&v!==''&&!isNaN(+v))MUS.vol=Math.max(0,Math.min(1,+v/100))}catch(e){}
 const mclamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 function musicSetVol(pct){MUS.vol=mclamp(pct/100,0,1);const a=document.getElementById('au');if(a)a.volume=MUS.vol;
@@ -60,7 +63,7 @@ function musicSwitch(i){MUS.want=i;
  if(MUS.mode=='web'&&MUS.ready){if(i!==MUS.track)musicPlay(i,true).catch(()=>{MUS.want=MUS.track})}
  else if(MUS.mode=='html'&&i!==htmlTrack)htmlSet(i)}
 // New game: start again on a random slow track.
-function musicNewGame(){MUS.fast=false;musicSwitch(mpick('slow'))}
+function musicNewGame(){MUS.fast=false;MUS.egg=false;musicSwitch(mpick('slow'))}
 // Late game / low health (either hero) -> latch over to a random fast track for the rest of the game.
 function musicLate(){if(MUS.force||typeof G==='undefined'||!G||G.over||document.getElementById('game').style.display!='block')return false;
  return G.p[0].hp<=8||G.p[1].hp<=6||G.turn>=9}
@@ -80,6 +83,7 @@ function musicTargets(){
  if(MUS.force){hp=MUS.force.hp==null?20:MUS.force.hp;ehp=MUS.force.ehp==null?20:MUS.force.ehp;turn=MUS.force.turn||1}
  else if(inG){hp=G.p[0].hp;ehp=G.p[1].hp;turn=G.turn;over=G.over}
  else return{base:0,arp:0,mel:0,drm:0,str:0,war:0,tns:0};   // main menu: no music
+ if(!over&&MTRACKS[MUS.track]&&MTRACKS[MUS.track].kind=='egg')return{base:1,arp:1,mel:1,drm:1,str:0,war:1,tns:1};
  if(over)return over.win===0?{base:1,arp:1,mel:1,drm:.4,str:0,war:0,tns:0}:{base:.9,arp:.25,mel:0,drm:0,str:0,war:0,tns:0};
  const danger=mclamp((14-hp)/12,0,1),late=mclamp((turn-6)/10,0,1),win=mclamp((7-ehp)/5,0,1);
  return{base:1,
@@ -89,7 +93,13 @@ function musicTargets(){
   str:Math.max(mclamp((danger-.2)/.35,0,1),late*.5,win*.5),
   war:Math.max(mclamp((danger-.45)/.3,0,1),win*.85),
   tns:Math.max(mclamp((danger-.6)/.3,0,1),late*.25)}}
+// Easter egg: at EGG_AT damage dealt to the Endless Boss the music crossfades into the secret track and stays on it for the rest of the run. Its stems are pre-loaded 300 damage early.
+function eggCheck(){
+ if(MUS.egg||EGG_TRACK<0||!MUS.started||MUS.force||typeof G==='undefined'||!G||!G.en||G.over)return;
+ if(G.en.dealt>=EGG_AT-300&&MUS.mode=='web'&&MUS.ctx)musicLoad(EGG_TRACK).catch(()=>{});
+ if(G.en.dealt>=EGG_AT){MUS.egg=true;MUS.fast=true;musicSwitch(EGG_TRACK)}}
 function musicUpdate(now){
+ eggCheck();
  if(!MUS.fast&&MUS.started&&musicLate()){MUS.fast=true;musicSwitch(musicTwin())}
  if(MUS.mode=='html'){const a=document.getElementById('au');if(inGameNow())a.play().catch(()=>{});else a.pause();return}
  if(MUS.mode!='web'||!MUS.ready)return;const t=musicTargets(),ct=MUS.ctx.currentTime;

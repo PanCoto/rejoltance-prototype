@@ -28,7 +28,7 @@ function acu(G,p,id){if(G.sim||!p.ac)return;if(!p.ac.un.includes(id))p.ac.un.pus
 function acn(G,p,k,n,lim,id){if(G.sim||!p.ac)return;p.ac[k]=(p.ac[k]||0)+n;if(lim&&p.ac[k]>=lim)acu(G,p,id)}
 function acHand(G,p){if(G.sim)return;if(p.hand.length>=12)acu(G,p,'hoard');const m={};for(const c of p.hand){m[c.id]=(m[c.id]||0)+1;if(m[c.id]>=4){acu(G,p,'quads');break}}}
 // Mirror Match UP: a random, playable 30-card deck (max 3 copies, sane curve), returned in a random order. Both players get this exact list in this exact order.
-function mirrorDeck(){const pool=CARDS.filter(c=>c.Id<900&&(c.Type=='Unit'||c.Type=='Spell'||c.Type=='Action'));let best=null;
+function mirrorDeck(ban){const pool=CARDS.filter(c=>c.Id<900&&(c.Type=='Unit'||c.Type=='Spell'||c.Type=='Action')&&!(ban&&ban.includes(c.Id)));let best=null;
  for(let t=0;t<300;t++){const cnt={},dk=[];while(dk.length<30){const c=pool[R(pool.length)];if((cnt[c.Id]||0)>=3)continue;cnt[c.Id]=(cnt[c.Id]||0)+1;dk.push(c)}
   const cheap=dk.filter(c=>c.Cost<=2).length,big=dk.filter(c=>c.Cost>=6).length,un=dk.filter(c=>c.Type=='Unit').length;best=dk;
   if(cheap>=9&&big<=4&&un>=16&&un<=26)break}
@@ -85,13 +85,22 @@ const kwp=(u,k,df)=>((u.d.KeywordParams||{})[k])||df||1;
 const burnN=u=>u&&u.kw&&u.kw.has('Burning')?Math.max(1,u.bn||0):0; // Burning stacks: N stacks = N damage at end of round
 const sgN=u=>u&&u.kw&&u.kw.has('SoulGuard')?Math.max(1,u.sgn||0):0; // SoulGuard stacks: each one saves the unit from a lethal hit (it survives at 1 HP)
 function mk(id,o){const d=CD[id];return{uid:UID++,id,d,o,atk:d.Attack||0,hp:d.Health||0,mx:d.Health||0,kw:new Set(d.Keywords||[]),lane:-1}}
+// FAIR HAND: the opening hand is 4 cards. The game first draws 3 at random. If at least one of them costs FAIR_MAXCOST or less, the 4th card is a normal random draw.
+// If none does, the 4th card is pulled from the deck's cheap cards instead (when the deck has one). Applies to BOTH players. Mulligans are NOT affected (a mulligan can lose the cheap card).
+// Not used in Mirror Match UP (both players must draw the identical order). Online games are fine: only the host builds the game, the guest receives a snapshot.
+const FAIR_HAND=true,FAIR_MAXCOST=1;
+function fairOpen(G,p){
+ for(let k=0;k<3;k++)draw(G,p,1);
+ const cheap=c=>CD[c.id].Cost<=FAIR_MAXCOST;
+ if(!p.hand.some(cheap)){const i=p.deck.findIndex(cheap);if(i>=0){draw(G,p,1,i);return}}
+ draw(G,p,1)}
 // opts.mir    = Mirror Match UP: both decks are used in EXACTLY the given order (no shuffle), so both players draw the same cards.
 // opts.endless = Endless Mode: player 1 is the Boss (see ENDLESS below).
 function newGame(a,b,opts){opts=opts||{};
  const G={turn:0,over:null,log:[],hist:[],ev:[],step:0,act:0,allow:'U',start:0,fp:R(2),mir:opts.mir?1:0,p:[a,b].map((dk,i)=>({i,hp:20,mb:0,b:0,hand:[],disc:[],ln:[null,null,null,null],gb:{a:0,h:0},mk:0,sp:0,sc:0,ac:acNew(),
   deck:opts.mir?dk.map(id=>({uid:UID++,id})):shuf(dk.map(id=>({uid:UID++,id})))}))};
  if(opts.endless)G.en={dealt:0,tier:0,mod:{conj:0,draw:0,stat:0,mana:0,pulse:0},log:[]};
- G.p.forEach(p=>{for(let k=0;k<4;k++)draw(G,p,1)});return G}
+ G.p.forEach(p=>{if(opts.mir||!FAIR_HAND)for(let k=0;k<4;k++)draw(G,p,1);else fairOpen(G,p)});return G}
 function decideStart(G,pa,pb){let f;if(pa!=pb)f=pa=='first'?0:1;else f=R(2);G.fp=f;
  L(G,(f?'Enemy goes':'You go')+' first'+(pa==pb?' (both chose '+pa+' - decided randomly)':''));return f}
 function setStep(G){const s=G.start,o=1-s;[G.act,G.allow]=G.step==0?[s,'U']:G.step==1?[o,'B']:[s,'A']}
@@ -104,7 +113,7 @@ function startRound(G){G.turn++;G.start=(G.turn%2?0:1)^(G.fp|0);G.step=0;setStep
   if(p.dl&&p.dl.length){const q=p.dl;p.dl=[];L(G,(p.i?'Enemy':'You')+' draw'+(p.i?'s':'')+' '+q.length+' extra card'+(q.length>1?'s':'')+' (Expectancy)');
    q.forEach(src=>{if(src=='Discard'){if(p.disc.length&&p.hand.length<HAND_MAX){p.hand.push(p.disc.pop());gained(G,p,'discard')}}else draw(G,p)})}});L(G,'— Round '+G.turn+' —');if(G.en)bossRound(G);roundTrig(G,'OnStartOfRound')}
 function draw(G,p,quiet,idx){
- if(G.en&&p.i==1&&!p.deck.length){p.deck=mirrorDeck().map(id=>({uid:UID++,id}));L(G,'Boss draws a brand new deck');EV(G,{k:'boss',h:'NEW DECK',t:'The Boss is out of cards - he gets a brand new deck!'})}
+ if(G.en&&p.i==1&&!p.deck.length){p.deck=mirrorDeck(BOSS_BAN).map(id=>({uid:UID++,id}));L(G,'Boss draws a brand new deck');EV(G,{k:'boss',h:'NEW DECK',t:'The Boss is out of cards - he gets a brand new deck!'})}
  if(RULES.fullHandRework&&p.hand.length>=HAND_MAX){L(G,(p.i?'Enemy hand':'Your hand')+' is full - draw cancelled');return}
  if(!p.deck.length){p.fat=(p.fat||0)+1;L(G,(p.i?'Enemy':'You')+' ha'+(p.i?'s':'ve')+' no cards - fatigue '+p.fat);EV(G,{k:'snd',n:'cardDrawn',o:p.i});dmg(G,H(p.i),p.fat,null,2);if(!G.sim&&p.ac&&p.hp<=0)p.ac.fk=1;return}
  const c=idx!=null?p.deck.splice(idx,1)[0]:p.deck.shift();
@@ -144,6 +153,7 @@ function chk(G){if(G.en&&G.p[1].hp<=0)G.p[1].hp+=20*Math.ceil((1-G.p[1].hp)/20);
 // Boss deck never runs out: when it is empty he gets a completely NEW random deck (see draw()). His starting deck is random too (see start() in ui.js).
 const BOSS_TIERS=['conj','draw','stat','mana','pulse','conj'],BOSS_CYCLE=['stat','draw','pulse','conj','mana','stat'];
 const BOSS_MANA_CAP=3;
+const BOSS_BAN=[31]; // card Ids the Endless Boss can never have in his deck or conjure: 31 = Silence (add 57 The Pale / 82 Librarian here to ban those too)
 const bossTierKind=n=>n<=BOSS_TIERS.length?BOSS_TIERS[n-1]:BOSS_CYCLE[(n-BOSS_TIERS.length-1)%BOSS_CYCLE.length];
 const BOSS_TXT={conj:'conjures an extra random card every round',draw:'draws an extra card every round',stat:'units enter with +1/+1',mana:'gains +1 mana',pulse:'pulses 1 more damage at the start of each round'};
 const bossNext=G=>(G.en.tier+1)*20;
@@ -151,7 +161,7 @@ function bossRound(G){const e=G.en,b=G.p[1],want=Math.floor(e.dealt/20);e.rd=0;
  while(e.tier<want){e.tier++;let k=bossTierKind(e.tier);if(k=='mana'&&e.mod.mana>=BOSS_MANA_CAP)k='stat';e.mod[k]++;
   const t='Boss upgrade '+e.tier+': '+BOSS_TXT[k];e.log.push(t);L(G,t);EV(G,{k:'snd',n:'buff'});EV(G,{k:'boss',h:'BOSS UPGRADE '+e.tier,t:'The Boss '+BOSS_TXT[k]})}
  b.mb=Math.min(10,G.turn)+e.mod.mana;b.b=b.mb;
- const pool=CARDS.filter(c=>c.Id<900&&!CARDS_NOCONJ(c));
+ const pool=CARDS.filter(c=>c.Id<900&&!CARDS_NOCONJ(c)&&!BOSS_BAN.includes(c.Id));
  for(let i=0;i<e.mod.conj;i++){if(b.hand.length>=HAND_MAX)break;const d=pool[R(pool.length)];b.hand.push({uid:UID++,id:d.Id,tok:1});L(G,'Boss conjures '+d.Name);gained(G,b,'add')}
  if(e.mod.pulse){const us=units(G.p[0]).filter(u=>u.hp>0&&!u.gone);const t=us.length?us[R(us.length)]:H(0);L(G,'Boss pulse: '+e.mod.pulse+' damage');dmg(G,t,e.mod.pulse,null,2);resolve(G)}}
 const CARDS_NOCONJ=c=>c.Type!='Unit'&&c.Type!='Spell'&&c.Type!='Action';

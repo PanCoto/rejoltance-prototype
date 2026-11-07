@@ -423,7 +423,7 @@ const mulOK=()=>{const ids=[...mulSel];
  askOrder(v=>{decideStart(G,v,'first');startRound(G);flow()})};
 $('mok').onclick=mulOK;
 function start(){unpin();bpClear();pkResolve();musicNewGame();if(NET)netLeave();$('ovr').style.display='';$('ovr').textContent='Rematch';gid++;
- if(MODE=='mirror'){const m=mirrorDeck();G=newGame(m,m,{mir:1})}else if(MODE=='endless')G=newGame(ALL[$('d0').value].c,mirrorDeck(),{endless:1}); // the Boss always plays a random deck - it can't be rigged
+ if(MODE=='mirror'){const m=mirrorDeck();G=newGame(m,m,{mir:1})}else if(MODE=='endless')G=newGame(ALL[$('d0').value].c,mirrorDeck(BOSS_BAN),{endless:1}); // the Boss always plays a random deck - it can't be rigged
  else G=newGame(ALL[$('d0').value].c,ALL[$('d1').value].c);busy=true;sel=pend=null;castMode=false;stickyZoom=false;
  show('game');$('ov').style.display='none';say('');render();showMul()}
 function toMenu(){unpin();bpClear();$('dkpick').style.display='none';if(NET)netLeave();$('ovr').style.display='';$('ovr').textContent='Rematch';gid++;$('ov').style.display='none';$('mul').style.display='none';$('hist').style.display='none';show('menu');$('zoom').style.display='none';G=null;musicUpdate()}
