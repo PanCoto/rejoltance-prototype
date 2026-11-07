@@ -153,7 +153,7 @@ function chk(G){if(G.en&&G.p[1].hp<=0)G.p[1].hp+=20*Math.ceil((1-G.p[1].hp)/20);
 // Boss deck never runs out: when it is empty he gets a completely NEW random deck (see draw()). His starting deck is random too (see start() in ui.js).
 const BOSS_TIERS=['conj','draw','stat','mana','pulse','conj'],BOSS_CYCLE=['stat','draw','pulse','conj','mana','stat'];
 const BOSS_MANA_CAP=3;
-const BOSS_BAN=[31]; // card Ids the Endless Boss can never have in his deck or conjure: 31 = Silence (add 57 The Pale / 82 Librarian here to ban those too)
+const BOSS_BAN=[31,57,82]; // card Ids the Endless Boss can never have in his deck or conjure: 31 = Silence (add 57 The Pale / 82 Librarian here to ban those too)
 const bossTierKind=n=>n<=BOSS_TIERS.length?BOSS_TIERS[n-1]:BOSS_CYCLE[(n-BOSS_TIERS.length-1)%BOSS_CYCLE.length];
 const BOSS_TXT={conj:'conjures an extra random card every round',draw:'draws an extra card every round',stat:'units enter with +1/+1',mana:'gains +1 mana',pulse:'pulses 1 more damage at the start of each round'};
 const bossNext=G=>(G.en.tier+1)*20;
