@@ -570,10 +570,10 @@ body[data-font=dys] #menu .tile b{font-size:36px}body[data-font=dys] #menu .tile
 #fdres,#fdlist{width:100%;max-height:360px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:8px;text-align:left}
 #fdres:empty{display:none}#fdlist{max-height:430px}
 #fdmenu h4{margin:10px 0 2px;font-size:26px;color:#777;letter-spacing:4px;text-transform:uppercase;font-family:var(--fd)}
-.frow{display:grid;grid-template-columns:64px 1fr max-content;align-items:center;gap:18px;border:3px solid #2e2e2e;border-radius:14px;padding:8px 16px;background:#050505}
-.frow .av{width:56px;height:56px;border-radius:12px}.frow .av i{font-size:34px}
-.frow .fi{display:flex;flex-direction:column;gap:2px;min-width:0;cursor:pointer}.frow .fi b{font-size:32px;color:#e4e4e4;font-family:var(--fd);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.frow .fi small{font-size:22px;color:#777;font-weight:400}
-.frow button{height:50px;font-size:24px;padding:0 20px}.frow button[data-a=remove]{border-color:#5a1a1d;color:#ff4a50}
+.fdrow{display:grid;grid-template-columns:64px 1fr max-content;align-items:center;gap:18px;border:3px solid #2e2e2e;border-radius:14px;padding:8px 16px;background:#050505}
+.fdrow .av{width:56px;height:56px;border-radius:12px}.fdrow .av i{font-size:34px}
+.fdrow .fi{display:flex;flex-direction:column;gap:2px;min-width:0;cursor:pointer}.fdrow .fi b{font-size:32px;color:#e4e4e4;font-family:var(--fd);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fdrow .fi small{font-size:22px;color:#777;font-weight:400}
+.fdrow button{height:50px;font-size:24px;padding:0 20px}.fdrow button[data-a=remove]{border-color:#5a1a1d;color:#ff4a50}
 .fdempty{font-size:26px;color:#777;padding:14px 4px;text-align:center}
 #pffr{border-color:var(--red)}
 /* header: five items must fit in 1760px */
@@ -583,6 +583,11 @@ body[data-font=dys] #menu .tile b{font-size:36px}body[data-font=dys] #menu .tile
 #menu #pchip{padding:0 22px 0 6px}#pchip .av{width:54px;height:54px}#pchip b{font-size:28px;max-width:170px}#pchip small{font-size:18px}
 
 /* profile pictures are circles */
-.av,.rkr em.av,.frow .av,#pchip .av{border-radius:50%}
+.av,.rkr em.av,.fdrow .av,#pchip .av{border-radius:50%}
 .pfav,#acctmenu .pfav{border-radius:50%}
 .pfav i{font-size:150px}
+.fdrow button[data-a=challenge]{border-color:var(--red);color:#fff;background:var(--red)}.fdrow button[data-a=challenge]:hover:not(:disabled){background:#e0242b;border-color:#e0242b}
+#chpop{position:absolute;top:84px;right:40px;z-index:95;display:none;align-items:center;gap:20px;background:#050505;border:4px solid var(--red);border-radius:18px;padding:14px 22px;box-shadow:0 0 40px #000;max-width:900px}
+#chpop .av{width:64px;height:64px;border-radius:50%;flex:none}#chpop .av i{font-size:38px}
+#chpop .ct{display:flex;flex-direction:column;gap:2px;min-width:0;text-align:left}#chpop .ct b{font-size:32px;color:#e4e4e4;font-family:var(--fd);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#chpop .ct small{font-size:22px;color:#777;font-weight:400}
+#chpop button{height:56px;font-size:26px;padding:0 24px}#chpop .chn{border-color:#5a1a1d;color:#ff4a50}

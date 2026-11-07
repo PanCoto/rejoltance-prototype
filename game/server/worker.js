@@ -16,12 +16,15 @@
 //   GET  /api/search?q=                 -> [{ pid, name, rating, avatar, games }]  (players by name, max 10)
 //   POST /api/friends                   -> { friends, incoming, outgoing }     (auth)
 //   POST /api/friends/request|accept|remove {pid} -> { rel }                   (auth; rel = none|friends|pending_out|pending_in)
+//   POST /api/challenge {act:'send',pid}  -> { id, code }                      (auth; friends only; the sender hosts the room `code`)
+//   POST /api/challenge {act:'poll',id?}  -> { incoming:[{id,pid,name,avatar,rating}], out:{st} }  (auth; st = pending|accepted|declined|gone)
+//   POST /api/challenge {act:'accept'|'decline',id} -> { code, opp } | { ok }  (auth; decline also cancels your own challenge)
 // Auth = "Authorization: Bearer <uid>.<key>" (HTTP) or uid/key inside the join message (WebSocket).
 import { DurableObject } from 'cloudflare:workers';
 
 const ALPH = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
-const START = 1000, WAIT_ABORT = 100000, SINGLE_REPORT_MS = 120000, EXPIRE_MS = 900000, PAIR_LIMIT = 3;
+const CH_MS = 35000, START = 1000, WAIT_ABORT = 100000, SINGLE_REPORT_MS = 120000, EXPIRE_MS = 900000, PAIR_LIMIT = 3;
 const rnd = (n, set) => { const a = new Uint8Array(n); crypto.getRandomValues(a); return Array.from(a, x => set[x % set.length]).join(''); };
 const sha = async s => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s))), b => b.toString(16).padStart(2, '0')).join('');
 const cleanName = s => String(s || '').replace(/[^\p{L}\p{N} _.\-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 16);
@@ -68,7 +71,9 @@ export class Hub extends DurableObject {
       for (const r of this.all('SELECT uid FROM accounts WHERE pid IS NULL')) this.sql.exec('UPDATE accounts SET pid=? WHERE uid=?', this.newPid(), r.uid);
       this.sql.exec('CREATE UNIQUE INDEX IF NOT EXISTS acc_pid ON accounts(pid)');
       this.sql.exec(`CREATE TABLE IF NOT EXISTS friends(a TEXT NOT NULL, b TEXT NOT NULL, status TEXT NOT NULL, created INTEGER NOT NULL, PRIMARY KEY(a,b));
-        CREATE INDEX IF NOT EXISTS fr_b ON friends(b);`);
+        CREATE INDEX IF NOT EXISTS fr_b ON friends(b);
+        CREATE TABLE IF NOT EXISTS challenges(id TEXT PRIMARY KEY, a TEXT NOT NULL, b TEXT NOT NULL, code TEXT NOT NULL, status TEXT NOT NULL, created INTEGER NOT NULL);
+        CREATE INDEX IF NOT EXISTS ch_b ON challenges(b, status);`);
     });
   }
   newPid() { let p; do { p = rnd(10, 'abcdefghjkmnpqrstuvwxyz23456789'); } while (this.one('SELECT 1 x FROM accounts WHERE pid=?', p)); return p; }
@@ -117,6 +122,7 @@ export class Hub extends DurableObject {
       }
       if (p === '/api/friends') return json(this.friendList(a));
       if (p.startsWith('/api/friends/') && req.method === 'POST') return json(this.friendAct(a, p.slice(13), String((await req.json()).pid || '')));
+      if (p === '/api/challenge' && req.method === 'POST') return json(this.challengeAct(a, await req.json()));
       if (p === '/api/delete' && req.method === 'POST') return json(this.destroyAccount(a));
       if (p === '/api/report' && req.method === 'POST') return json(this.report(a, await req.json()));
       if (p === '/api/match') return json(this.matchInfo(a, url.searchParams.get('id')));
@@ -191,6 +197,7 @@ export class Hub extends DurableObject {
     this.sql.exec("UPDATE matches SET status='void' WHERE status='open' AND (p1=? OR p2=?)", a.uid, a.uid);
     for (const q of ['DELETE FROM sessions WHERE uid=?', 'DELETE FROM oauth WHERE uid=?', 'DELETE FROM otc WHERE uid=?', 'DELETE FROM accounts WHERE uid=?']) this.sql.exec(q, a.uid);
     this.sql.exec('DELETE FROM friends WHERE a=? OR b=?', a.uid, a.uid);
+    this.sql.exec('DELETE FROM challenges WHERE a=? OR b=?', a.uid, a.uid);
     this.lbCache = null; return { ok: 1 };
   }
 
@@ -251,6 +258,44 @@ export class Hub extends DurableObject {
     }
     if (act === 'accept') { if (rel !== 'pending_in') return { rel }; this.sql.exec("UPDATE friends SET status='accepted' WHERE a=? AND b=?", x.uid, a.uid); return { rel: 'friends' }; }
     if (act === 'remove') { this.sql.exec('DELETE FROM friends WHERE (a=? AND b=?) OR (a=? AND b=?)', a.uid, x.uid, x.uid, a.uid); return { rel: 'none' }; }   // unfriend / decline / cancel
+    return { error: 'bad request' };
+  }
+
+  // ---------- friend challenges (HTTP polling; the game itself is still peer-to-peer, the sender hosts the room code) ----------
+  challengeAct(a, m) {
+    const now = Date.now(), act = String(m.act || ''), id = String(m.id || '').slice(0, 16);
+    this.sql.exec('DELETE FROM challenges WHERE created<?', now - 120000);
+    if (act === 'send') {
+      const x = this.one('SELECT * FROM accounts WHERE pid=?', String(m.pid || '').slice(0, 12));
+      if (!x || x.uid === a.uid) return { error: 'Player not found.' };
+      if (this.rel(a.uid, x.uid) !== 'friends') return { error: 'You can only challenge friends.' };
+      if (this.one('SELECT COUNT(*) c FROM challenges WHERE a=? AND created>?', a.uid, now - 60000).c >= 6) return { error: 'Too many challenges - wait a moment.' };
+      this.sql.exec('DELETE FROM challenges WHERE a=?', a.uid);
+      const cid = rnd(10, B64), code = rnd(5, ALPH);
+      this.sql.exec("INSERT INTO challenges(id,a,b,code,status,created) VALUES(?,?,?,?,'pending',?)", cid, a.uid, x.uid, code, now);
+      return { id: cid, code };
+    }
+    if (act === 'poll') {
+      const incoming = this.all("SELECT c.id id, x.pid pid, x.name name, x.avatar avatar, x.rating rating FROM challenges c JOIN accounts x ON x.uid=c.a WHERE c.b=? AND c.status='pending' AND c.created>? ORDER BY c.created DESC LIMIT 5", a.uid, now - CH_MS);
+      let out = null;
+      if (id) {
+        const r = this.one('SELECT status, created FROM challenges WHERE id=? AND a=?', id, a.uid);
+        out = { st: !r ? 'gone' : r.status === 'pending' && r.created < now - CH_MS ? 'gone' : r.status };
+      }
+      return { incoming, out };
+    }
+    if (act === 'accept') {
+      const r = this.one("SELECT c.*, x.name xn, x.rating xr FROM challenges c JOIN accounts x ON x.uid=c.a WHERE c.id=? AND c.b=? AND c.status='pending' AND c.created>?", id, a.uid, now - CH_MS);
+      if (!r) return { error: 'This challenge has expired.' };
+      this.sql.exec("UPDATE challenges SET status='accepted' WHERE id=?", id);
+      return { code: r.code, opp: { name: r.xn, rating: r.xr } };
+    }
+    if (act === 'decline') {
+      const r = this.one('SELECT a, b FROM challenges WHERE id=?', id);
+      if (r && r.a === a.uid) this.sql.exec('DELETE FROM challenges WHERE id=?', id);
+      else if (r && r.b === a.uid) this.sql.exec("UPDATE challenges SET status='declined' WHERE id=?", id);
+      return { ok: 1 };
+    }
     return { error: 'bad request' };
   }
 

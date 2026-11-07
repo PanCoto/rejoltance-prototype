@@ -20,8 +20,8 @@ async function ensureAcct(){let a=getAcct();if(a)return a;
 const serverUp=async()=>{if(!cfg())return null;try{return MM.srv=await api('/api/ping',null,null,5000)}catch(e){return null}};
 
 // ---------- searching ----------
-function mmStop(){MM.tk++;clearInterval(MM.hb);clearInterval(MM.pg);const w=MM.ws;MM.ws=null;if(w){try{w.onclose=w.onerror=w.onmessage=null;w.close()}catch(e){}}}
-const title=m=>m=='ranked'?'Ranked Match':'Quick Match';
+function mmStop(){MM.tk++;clearInterval(MM.hb);clearInterval(MM.pg);clearInterval(MM.chp);const w=MM.ws;MM.ws=null;if(w){try{w.onclose=w.onerror=w.onmessage=null;w.close()}catch(e){}}}
+const title=m=>m=='ranked'?'Ranked Match':m=='friend'?'Friend Challenge':'Quick Match';
 async function mmSearch(mode){
  mmStop();netLeave();syncDecks();MM.cur=null;const tk=MM.tk,T=title(mode);window.QMNOTE='';
  const bail=msg=>{if(mode=='casual'){window.QMNOTE='  (Matchmaking server unavailable - searching peer-to-peer instead.)';quickMatch()}else lobby(T,{nodeck:1,status:msg})};
@@ -46,7 +46,7 @@ function startMatch(m,tk){
  lobby(T,{nodeck:1,status:'Opponent found: '+m.opp.name+(m.mode=='ranked'?' ('+m.opp.rating+')':'')+' - connecting...'});
  (m.role=='host'?mmHost:mmGuest)(m.code,tk)}
 const PID=code=>NETPRE+'M'+code;
-function mmFail(msg){const c=MM.cur;MM.cur=null;if(c&&c.mode=='ranked'&&c.id){const a=getAcct();if(a)api('/api/report',{method:'POST',body:{id:c.id,r:'abort'}},a).catch(()=>{})}
+function mmFail(msg){const c=MM.cur;MM.cur=null;clearInterval(MM.chp);MM.chid=null;if(c&&c.mode=='ranked'&&c.id){const a=getAcct();if(a)api('/api/report',{method:'POST',body:{id:c.id,r:'abort'}},a).catch(()=>{})}
  netLeave(1);lobby(c?title(c.mode):'Match',{nodeck:1,status:msg+' Press Cancel to go back.'})}
 async function mmHost(code,tk){
  const PEEROPT=await peerOpt();if(tk!==MM.tk)return;
@@ -174,12 +174,12 @@ rk('avq').oninput=avRender;rk('avgrid').onclick=e=>{const b=e.target.closest('.a
 rk('avclear').onclick=()=>avSet(0);rk('avback').onclick=()=>profOpen();
 
 // ---------- Friends ----------
-function fdRow(p,btns){return '<div class="frow" data-pid="'+esc(p.pid)+'"><em class="av">'+avHTML(p.avatar,p.name)+'</em><div class="fi"><b>'+esc(p.name)+'</b><small>'+['Rating '+p.rating,p.last?ago(p.last):''].filter(Boolean).join('  -  ')+'</small></div><span class="rkbt">'+btns+'</span></div>'}
+function fdRow(p,btns){return '<div class="fdrow" data-pid="'+esc(p.pid)+'"><em class="av">'+avHTML(p.avatar,p.name)+'</em><div class="fi"><b>'+esc(p.name)+'</b><small>'+['Rating '+p.rating,p.last?ago(p.last):''].filter(Boolean).join('  -  ')+'</small></div><span class="rkbt">'+btns+'</span></div>'}
 const fdBtn=(a,t)=>'<button data-a="'+a+'">'+t+'</button>';
 function fdRender(){const f=MM.fr;if(!f){rk('fdlist').innerHTML='';return}
  const sec=(t,rows)=>rows?'<h4>'+t+'</h4>'+rows:'';
  const h=sec('Requests ('+f.incoming.length+')',f.incoming.map(p=>fdRow(p,fdBtn('accept','Accept')+fdBtn('remove','Decline'))).join(''))
-  +sec('Friends ('+f.friends.length+')',f.friends.map(p=>fdRow(p,fdBtn('view','Profile')+fdBtn('remove','Remove'))).join(''))
+  +sec('Friends ('+f.friends.length+')',f.friends.map(p=>fdRow(p,fdBtn('challenge','Challenge')+fdBtn('view','Profile')+fdBtn('remove','Remove'))).join(''))
   +sec('Sent requests ('+f.outgoing.length+')',f.outgoing.map(p=>fdRow(p,fdBtn('remove','Cancel'))).join(''));
  rk('fdlist').innerHTML=h||'<div class="fdempty">No friends yet - search for a player above, or open a profile from the leaderboard and press Add friend.</div>'}
 function fdBadge(){const n=MM.fr?MM.fr.incoming.length:0;rk('fdcnt').textContent=n?String(n):''}
@@ -198,12 +198,48 @@ async function fdSearch(){const q=rk('fdq').value.trim();if(q.length<2){rk('fdre
  catch(e){rk('fdres').innerHTML='<div class="fdempty">Search failed: '+esc(e.message)+'</div>'}}
 async function fdAct(act,pid){const a=getAcct();
  try{const r=await api('/api/friends/'+act,{method:'POST',body:{pid}},a);if(r.error)throw new Error(r.error);await friendsLoad();fdRender();
-  if(act=='request'){rk('fdsub').textContent='Friend request sent.';rk('fdres').querySelectorAll('.frow[data-pid="'+pid+'"] button[data-a=request]').forEach(b=>b.remove())}}
+  if(act=='request'){rk('fdsub').textContent='Friend request sent.';rk('fdres').querySelectorAll('.fdrow[data-pid="'+pid+'"] button[data-a=request]').forEach(b=>b.remove())}}
  catch(e){rk('fdsub').textContent='Could not do that: '+e.message}}
 rk('fdopen').onclick=()=>fdOpen();rk('fdgo').onclick=fdSearch;rk('fdq').onkeydown=e=>{if(e.key=='Enter')fdSearch()};
-rk('fdmenu').addEventListener('click',e=>{const b=e.target.closest('button[data-a]'),r=e.target.closest('.frow');if(!r)return;const pid=r.dataset.pid;
+rk('fdmenu').addEventListener('click',e=>{const b=e.target.closest('button[data-a]'),r=e.target.closest('.fdrow');if(!r)return;const pid=r.dataset.pid;
  if(!b){profView(pid,()=>fdOpen());return}
- if(b.dataset.a=='view')profView(pid,()=>fdOpen());else fdAct(b.dataset.a,pid)});
+ if(b.dataset.a=='challenge')chSend(pid,r);else if(b.dataset.a=='view')profView(pid,()=>fdOpen());else fdAct(b.dataset.a,pid)});
+
+// ---------- Friend challenges ----------
+// Sender: server creates a room code, the sender hosts it (same peer-to-peer path as Quick Match) and polls until the friend answers.
+// Receiver: polls the server (slowly on the menu, faster while the Friends panel is open); a popup offers Accept / Decline.
+// Accepting returns the room code and the receiver joins as guest. Challenges expire after 35 s. Casual game: no rating change.
+const chBusy=()=>$('game').style.display=='block'||$('lobby').style.display=='flex'||$('mul').style.display=='flex'||$('ov').style.display=='flex';
+async function chSend(pid,row){const a=getAcct();if(!a){rk('fdsub').textContent='Friends need an account.';return}
+ const f=MM.fr&&MM.fr.friends.find(x=>x.pid==pid),nm=f?f.name:'your friend';
+ try{const r=await api('/api/challenge',{method:'POST',body:{act:'send',pid}},a);if(r.error)throw new Error(r.error);
+  mmStop();netLeave();syncDecks();MM.cur={id:'',mode:'friend',opp:{name:nm}};LB='fdmenu';startAudio();const tk=MM.tk,id=r.id;MM.chid=id;
+  lobby('Friend Challenge',{status:'Challenge sent. Waiting for '+nm+' to accept...  Pick your deck while you wait.'});
+  mmHost(r.code,tk);
+  const end=msg=>{if(MM.tk!==tk)return;MM.chid=null;mmStop();MM.cur=null;netLeave(1);lobby('Friend Challenge',{nodeck:1,status:msg+' Press Cancel to go back.'})};
+  MM.chp=setInterval(async()=>{if(MM.tk!==tk)return;
+   try{const p=await api('/api/challenge',{method:'POST',body:{act:'poll',id}},a);if(MM.tk!==tk||!p.out)return;
+    if(p.out.st=='declined')end(nm+' declined the challenge.');
+    else if(p.out.st=='gone')end(nm+' did not answer in time.');
+    else if(p.out.st=='accepted'){clearInterval(MM.chp);MM.chid=null;$('ls').textContent=nm+' accepted - connecting...'}}catch(e){}},2000)}
+ catch(e){rk('fdsub').textContent='Could not send the challenge: '+e.message}}
+let CHSHOWN=null;const CHSEEN=new Set();
+function chHide(){CHSHOWN=null;rk('chpop').style.display='none'}
+function chShow(c){CHSHOWN=c;CHSEEN.add(c.id);rk('chav').innerHTML=avHTML(c.avatar,c.name);rk('chname').textContent=c.name;rk('chpop').style.display='flex';
+ try{sfx('unitPlayed',{pitch:0})}catch(e){}
+ clearTimeout(MM.cht);MM.cht=setTimeout(()=>{if(CHSHOWN&&CHSHOWN.id==c.id)chHide()},34000)}
+async function chPoll(){const a=getAcct();if(!a||!cfg()||document.hidden)return;
+ if(chBusy()){if(CHSHOWN)chHide();return}
+ try{const p=await api('/api/challenge',{method:'POST',body:{act:'poll'}},a),c=(p.incoming||[]).find(x=>!CHSEEN.has(x.id));
+  if(CHSHOWN&&!(p.incoming||[]).some(x=>x.id==CHSHOWN.id))chHide();
+  if(c&&!chBusy())chShow(c)}catch(e){}}
+rk('chno').onclick=()=>{const c=CHSHOWN;chHide();const a=getAcct();if(c&&a)api('/api/challenge',{method:'POST',body:{act:'decline',id:c.id}},a).catch(()=>{})};
+rk('chyes').onclick=async()=>{const c=CHSHOWN,a=getAcct();if(!c||!a)return;chHide();
+ try{const r=await api('/api/challenge',{method:'POST',body:{act:'accept',id:c.id}},a);if(r.error)throw new Error(r.error);
+  mmStop();netLeave();syncDecks();LB='fdmenu';startAudio();MM.cur={id:'',mode:'friend',opp:r.opp};const tk=MM.tk;
+  lobby('Friend Challenge',{nodeck:1,status:'Connecting to '+c.name+'...'});mmGuest(r.code,tk)}
+ catch(e){openPanel('fdmenu');fdOpen(e.message=='This challenge has expired.'?e.message:'Could not accept: '+e.message)}};
+{let last=0;setInterval(()=>{const fo=rk('fdmenu').style.display=='flex';if(Date.now()-last<(fo?4000:12000)-500)return;last=Date.now();chPoll()},2000)}
 
 // ---------- Discord login / link ----------
 // Flow: begin (server builds the Discord URL) -> this page navigates to Discord -> Discord -> server callback -> back to GAME_URL#dc=<one-time code> -> claim().
@@ -242,5 +278,6 @@ chipRefresh();serverUp().then(up=>{if(up)return meLoad().then(()=>{chipRefresh()
 // ---------- Quick Match button (friend menu) ----------
 $('mquick').onclick=async()=>{LB='frmenu';startAudio();window.QMNOTE='';if(!cfg())return quickMatch();mmSearch('casual')};
 // Cancel: also stop the server search
-{const oc=$('lcancel').onclick;$('lcancel').onclick=()=>{mmStop();MM.cur=null;window.QMNOTE='';oc()}}
+{const oc=$('lcancel').onclick;$('lcancel').onclick=()=>{const cid=MM.chid,a=getAcct();MM.chid=null;if(cid&&a)api('/api/challenge',{method:'POST',body:{act:'decline',id:cid}},a).catch(()=>{});
+ mmStop();MM.cur=null;window.QMNOTE='';const fr=LB=='fdmenu';oc();if(fr)fdOpen()}}
 })();
