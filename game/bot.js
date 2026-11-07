@@ -20,11 +20,11 @@ function unitVal(u){
  if(k.has('Taunt'))v+=K*2;
  if(k.has('Deadly'))v+=K*(2+0.5*u.atk);
  if(k.has('Evolving'))v+=K*3;
- if(k.has('SoulGuard'))v+=K*1.5;
+ if(k.has('SoulGuard'))v+=K*1.5*Math.max(1,u.sgn||1);
  if(k.has('SplashDamage'))v+=K*(0.7*kwp(u,'SplashDamage'));
  if(k.has('BurnSource'))v+=K*1;
  if(k.has('Breakthrough'))v+=K*(0.5*u.atk);
- if(k.has('Burning'))v-=BW.neg*1.5;
+ if(k.has('Burning'))v-=BW.neg*1.5*Math.max(1,u.bn||1);
  if(k.has('Marked'))v-=BW.neg*2;
  if(k.has('Stunned'))v-=BW.neg*1.5;
  if(!u.sil&&u.d.Effects&&u.d.Effects.length)v+=BW.eff;

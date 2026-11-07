@@ -82,6 +82,8 @@ const H=(p)=>({h:1,p});
 const SELF=['OnKill','OnDamagedEnemyUnit','OnDamagedEnemyHero'];
 const EV=(G,o)=>G.ev.push(o);
 const kwp=(u,k,df)=>((u.d.KeywordParams||{})[k])||df||1;
+const burnN=u=>u&&u.kw&&u.kw.has('Burning')?Math.max(1,u.bn||0):0; // Burning stacks: N stacks = N damage at end of round
+const sgN=u=>u&&u.kw&&u.kw.has('SoulGuard')?Math.max(1,u.sgn||0):0; // SoulGuard stacks: each one saves the unit from a lethal hit (it survives at 1 HP)
 function mk(id,o){const d=CD[id];return{uid:UID++,id,d,o,atk:d.Attack||0,hp:d.Health||0,mx:d.Health||0,kw:new Set(d.Keywords||[]),lane:-1}}
 // opts.mir    = Mirror Match UP: both decks are used in EXACTLY the given order (no shuffle), so both players draw the same cards.
 // opts.endless = Endless Mode: player 1 is the Boss (see ENDLESS below).
@@ -98,7 +100,9 @@ function mulligan(G,p,ids){const out=p.hand.filter(c=>ids.includes(c.uid));p.han
  for(let i=0;i<out.length&&p.deck.length;i++)p.hand.push(p.deck.shift());p.deck.push(...out);if(!G.mir)shuf(p.deck)}
 function roundTrig(G,trig){if(G.over)return;
  [G.start,1-G.start].forEach(i=>G.p[i].ln.slice().forEach(u=>{if(u&&!u.gone&&u.hp>0&&!G.over)fire(G,trig,u,{u})}));resolve(G)}
-function startRound(G){G.turn++;G.start=(G.turn%2?0:1)^(G.fp|0);G.step=0;setStep(G);G.p.forEach(p=>{if(p.ac)Object.assign(p.ac,{spent:0,drawn:0,sac:0,unk:0,bnc:0});p.mb=Math.min(10,G.turn)+(G.en&&p.i==1?G.en.mod.mana:0);p.b=p.mb;if(G.turn>1){draw(G,p);if(G.en&&p.i==1)for(let k=0;k<G.en.mod.draw;k++)draw(G,p)}});L(G,'— Round '+G.turn+' —');if(G.en)bossRound(G);roundTrig(G,'OnStartOfRound')}
+function startRound(G){G.turn++;G.start=(G.turn%2?0:1)^(G.fp|0);G.step=0;setStep(G);G.p.forEach(p=>{if(p.ac)Object.assign(p.ac,{spent:0,drawn:0,sac:0,unk:0,bnc:0});p.mb=Math.min(10,G.turn)+(G.en&&p.i==1?G.en.mod.mana:0);p.b=p.mb;if(G.turn>1){draw(G,p);if(G.en&&p.i==1)for(let k=0;k<G.en.mod.draw;k++)draw(G,p)}
+  if(p.dl&&p.dl.length){const q=p.dl;p.dl=[];L(G,(p.i?'Enemy':'You')+' draw'+(p.i?'s':'')+' '+q.length+' extra card'+(q.length>1?'s':'')+' (Expectancy)');
+   q.forEach(src=>{if(src=='Discard'){if(p.disc.length&&p.hand.length<HAND_MAX){p.hand.push(p.disc.pop());gained(G,p,'discard')}}else draw(G,p)})}});L(G,'— Round '+G.turn+' —');if(G.en)bossRound(G);roundTrig(G,'OnStartOfRound')}
 function draw(G,p,quiet,idx){
  if(G.en&&p.i==1&&!p.deck.length){p.deck=mirrorDeck().map(id=>({uid:UID++,id}));L(G,'Boss draws a brand new deck');EV(G,{k:'boss',h:'NEW DECK',t:'The Boss is out of cards - he gets a brand new deck!'})}
  if(RULES.fullHandRework&&p.hand.length>=HAND_MAX){L(G,(p.i?'Enemy hand':'Your hand')+' is full - draw cancelled');return}
@@ -187,14 +191,18 @@ function auraTargets(G,src,a){const me=G.p[src.o],op=G.p[1-src.o];
   case'AllEnemyUnits':return units(op);case'AllUnitsOnBoard':return[...units(me),...units(op)];case'AllOtherUnitsOnBoard':return[...units(me),...units(op)].filter(u=>u!==src)}
  return[]}
 function aura(G){
- const want=new Map();
+ const want=new Map(),sgw=new Map(),sgs=new Map();
  G.p.forEach(q=>units(q).forEach(src=>{if(src.sil||src.gone||src.hp<=0)return;(src.d.Effects||[]).forEach(e=>{if(e.Trigger!='Passive')return;e.Actions.forEach(a=>{
   if(a.Type!='GrantKeyword'&&a.Type!='ApplyStatus')return;const k=a.Keyword||a.StatusKeyword;if(!k)return;
   auraTargets(G,src,a).forEach(t=>{if(t.sil||t.gone||!unitOK(t,a.Where)||!cond(e.Condition,src,{u:t},G))return;
+   if(k=='SoulGuard'){sgw.set(t.uid,(sgw.get(t.uid)||0)+1);sgs.set(t.uid,src.uid);return}
    if(!want.has(t.uid))want.set(t.uid,new Map());want.get(t.uid).set(k,src.uid)})})})}));
  G.p.forEach(p=>units(p).forEach(u=>{u.ag=u.ag||{};const w=want.get(u.uid)||new Map();
-  w.forEach((srcUid,k)=>{if(u.sil||u.kw.has(k)||(u.agc&&u.agc[k]))return;u.kw.add(k);u.ag[k]=1;if(k=='SoulGuard')u.sga=1;EV(G,{k:'trig',u:srcUid})});
-  Object.keys(u.ag).forEach(k=>{if(!w.has(k)){if(!(u.agc&&u.agc[k]))u.kw.delete(k);delete u.ag[k];if(k=='SoulGuard')u.sga=0}})}));
+  w.forEach((srcUid,k)=>{if(u.sil||u.kw.has(k)||(u.agc&&u.agc[k]))return;u.kw.add(k);u.ag[k]=1;EV(G,{k:'trig',u:srcUid})});
+  Object.keys(u.ag).forEach(k=>{if(!w.has(k)){if(!(u.agc&&u.agc[k]))u.kw.delete(k);if(k=='Burning')u.bn=0;delete u.ag[k]}});
+  // SoulGuard from auras stacks: every aura source gives 1, minus the aura stacks this unit has already used up (u.sgd)
+  {const tgt=u.sil?0:Math.max(0,(sgw.get(u.uid)||0)-(u.sgd||0)),dl=tgt-(u.agn||0);
+   if(dl){const had=sgN(u);u.agn=tgt;u.sgn=Math.max(0,had+dl);if(u.sgn>0)u.kw.add('SoulGuard');else u.kw.delete('SoulGuard');if(dl>0&&sgs.has(u.uid))EV(G,{k:'trig',u:sgs.get(u.uid)})}}}));
  const bonus=new Map();
  G.p.forEach(q=>units(q).forEach(src=>{if(src.sil||src.gone||src.hp<=0)return;(src.d.Effects||[]).forEach(e=>{if(e.Trigger!='Passive')return;e.Actions.forEach(a=>{
   if(a.Type!='AuraBuff'||!a.BuffAtk)return;
@@ -254,7 +262,7 @@ function dmg(G,t,n,s,melee){
  if(n>0&&s&&s.uid&&!s.sp&&s.o!=t.o&&s.kw&&s.kw.has('Deadly')&&!s.sil)n=Math.max(n,t.hp);
  t.hp-=n;EV(G,{k:'dmg',u:t.uid,n});lifesteal(G,s,n);
  if(s&&s.uid&&!s.sp&&n>0&&s.o!=t.o)later(G,()=>G.p[t.o].ln.slice().forEach(w=>w&&fire(G,'OnFriendlyUnitDamaged',w,{u:t,t:s})));
- if(s&&s.uid&&!s.sp&&n>0){if(s.kw.has('BurnSource')&&!s.sil)t.kw.add('Burning');if(melee===1)later(G,()=>fire(G,'OnDamagedEnemyUnit',s,{u:s,t}))}
+ if(s&&s.uid&&!s.sp&&n>0){if(s.kw.has('BurnSource')&&!s.sil&&!t.h){t.bn=burnN(t)+1;t.kw.add('Burning')}if(melee===1)later(G,()=>fire(G,'OnDamagedEnemyUnit',s,{u:s,t}))}
  if(t.hp<=0&&s&&s.uid&&!s.sp&&!t.k&&melee===1&&(RULES.onKillUnkillable||!t.kw.has('Unkillable'))&&(RULES.onKillSoulGuard||!t.kw.has('SoulGuard'))){t.k=1;later(G,()=>{fire(G,'OnKill',s,{u:s,t});killAbsorb(G,s,t)})}}
 function killAbsorb(G,s,t){if(!s||s.gone||s.hp<=0||!t||G.over)return;
  const n=G.p[s.o].ln.filter(w=>w&&!w.sil&&!w.gone&&w.hp>0).reduce((sum,src)=>sum+(src.d.Effects||[]).reduce((m,e)=>m+(e.Trigger=='Passive'?e.Actions.filter(a=>a.Type=='AbsorbAttackOnKill'&&unitOK(s,a.Where)).length:0),0),0);
@@ -262,7 +270,7 @@ function killAbsorb(G,s,t){if(!s||s.gone||s.hp<=0||!t||G.over)return;
  L(G,s.d.Name+' absorbs '+t.atk*n+' ATK from '+t.d.Name)}
 function thru(G,x,n){G.bk=1;try{dmg(G,H(1-x.o),n,x,1)}finally{G.bk=0}}
 function status(G,t,k,s){if(t.h)return;
- if(k=='Marked'&&t.kw.has('Marked')){if(s&&s.o!=null&&G.p[s.o]&&G.p[s.o].mk&&t.hp>0){L(G,t.d.Name+' was marked twice and is destroyed');t.hp=0}return}t.kw.add(k);EV(G,{k:'trig',u:t.uid});if(!G.sim)EV(G,{k:'fx',t:'st',s:k,u:t.uid});EV(G,{k:'snd',n:k=='Marked'?'mark':k=='Stunned'?'stun':k=='Burning'?'burn':'buff'});
+ if(k=='Marked'&&t.kw.has('Marked')){if(s&&s.o!=null&&G.p[s.o]&&G.p[s.o].mk&&t.hp>0){L(G,t.d.Name+' was marked twice and is destroyed');t.hp=0}return}if(k=='Burning')t.bn=burnN(t)+1;if(k=='SoulGuard')t.sgn=sgN(t)+1;t.kw.add(k);EV(G,{k:'trig',u:t.uid});if(!G.sim)EV(G,{k:'fx',t:'st',s:k,u:t.uid});EV(G,{k:'snd',n:k=='Marked'?'mark':k=='Stunned'?'stun':k=='Burning'?'burn':'buff'});
  G.p.forEach(p=>p.ln.slice().forEach(u=>u&&u!==t&&fire(G,'OnStatusApplied',u,{t,u:t,st:k})))}
 function act(G,a,s,c){
  c=c||{};a=ra(G,a,s,c); if(a.Condition&&!cond(a.Condition,s,{},G))return;
@@ -284,11 +292,11 @@ function act(G,a,s,c){
  case'HealToFull':if(unitsOnly.length)EV(G,{k:'snd',n:'heal'});unitsOnly.forEach(t=>t.hp=t.mx);break;
  case'DrawCard':{if((a.OnlyIfNoSacrifice&&c.sacd)||(a.OnlyIfSacrificed&&!c.sacd))break;
   const one=pl=>{if(!a.Filter){draw(G,pl);return}const ix=pl.deck.findIndex(x=>cardOK(CD[x.id],a.Filter)&&!(a.Filter.NotOnBoard&&pl.ln.some(u=>u&&u.id==x.id)));if(ix>=0)draw(G,pl,0,ix)};
-  ts.forEach(t=>{for(let i=0;i<(a.Amount||1);i++)one(G.p[t.p!=null?t.p:s.o])});if(!ts.length)one(me);break}
+  ts.forEach(t=>{for(let i=0;i<(a.Amount||1);i++)one(G.p[t.p!=null?t.p:s.o])});if(!ts.length)one(me);if(a.Later)me.dl=(me.dl||[]).concat('Deck');break}
  case'BuffStats':if(a.Amount!=null)break;if(unitsOnly.length)EV(G,{k:'snd',n:(a.BuffAtk||0)<0||(a.BuffHp||0)<0?'debuff':'buff'});unitsOnly.forEach(t=>{t.atk+=a.BuffAtk||0;t.hp+=a.BuffHp||0;t.mx+=a.BuffHp||0;if(t.atk<0)t.atk=0});break;
  case'ApplyStatus':unitsOnly.forEach(t=>status(G,t,a.StatusKeyword,s));break;
  case'DestroyUnit':unitsOnly.forEach(t=>{t.hp=0});break;
- case'Silence':if(unitsOnly.length)EV(G,{k:'snd',n:'silence'});unitsOnly.forEach(t=>{t.sil=1;t.sga=0;t.aurA=0;t.ag={};t.kw=new Set();t.atk=t.d.Attack||0;t.mx=t.d.Health||0;t.hp=Math.min(t.hp,t.mx||1)});break;
+ case'Silence':if(unitsOnly.length)EV(G,{k:'snd',n:'silence'});unitsOnly.forEach(t=>{t.sil=1;t.sgn=0;t.agn=0;t.aurA=0;t.ag={};t.bn=0;t.kw=new Set();t.atk=t.d.Attack||0;t.mx=t.d.Health||0;t.hp=Math.min(t.hp,t.mx||1)});break;
  case'SacrificeUnit':{const cand=units(me).filter(u=>u!=s);const v=c.sac||(a.Target=='SelectedTarget'&&c.t&&!c.t.h&&c.t)||cand.sort((x,y)=>(x.atk+x.hp+CD[x.id].Cost)-(y.atk+y.hp+CD[y.id].Cost))[0];
   if(v&&!v.gone&&!c.nosac){c.last=v;c.sacd=1;sacrifice(G,v,s.uid?s:null)}break}
  case'AbsorbStats':{const v=c.sac||c.last;if(v){s.atk+=v.atk;s.hp+=v.hp;s.mx+=v.hp}break}
@@ -316,7 +324,7 @@ case'LoseHealth':ts.forEach(t=>{if(t.h)dmg(G,t,a.Amount||1,null,2);else{t.hp-=a.
  case'BonusAttack':unitsOnly.forEach(t=>strike(G,t));break;
  case'TutorCard':{let i=c.tut?me.deck.findIndex(x=>x.uid==c.tut.uid):-1;if(i<0)i=me.deck.reduce((b,c2,k)=>CD[c2.id].Cost>CD[me.deck[b].id].Cost?k:b,0);const got=me.deck.length&&me.hand.length<HAND_MAX;if(got)me.hand.push(me.deck.splice(i,1)[0]);shuf(me.deck);if(got)gained(G,me,'tutor');break}
  case'ShuffleDeck':shuf(me.deck);break;
- case'DrawFromDiscard':for(let i=0;i<(a.Amount||1)&&me.disc.length&&me.hand.length<HAND_MAX;i++){me.hand.push(me.disc.pop());gained(G,me,'discard')}break;
+ case'DrawFromDiscard':for(let i=0;i<(a.Amount||1)&&me.disc.length&&me.hand.length<HAND_MAX;i++){me.hand.push(me.disc.pop());gained(G,me,'discard')}if(a.Later)me.dl=(me.dl||[]).concat('Discard');break;
  case'Reanimate':{
   const n=a.Count||1,ch=[];let ls=[0,1,2,3].filter(i=>!me.ln[i]);
   for(let k=0;k<n&&!a.Auto;k++){const w=(c.lanes||[])[c.li||0];if(w==null)break;c.li=(c.li||0)+1;if(ls.includes(w)&&!ch.includes(w))ch.push(w)}
@@ -363,7 +371,7 @@ case'LoseHealth':ts.forEach(t=>{if(t.h)dmg(G,t,a.Amount||1,null,2);else{t.hp-=a.
  resolve(G)}
 function lastPlayed(G,pi,f,exceptUid){for(let i=G.hist.length-1;i>=0;i--){const e=G.hist[i];if(e.p!=pi||e.uid===exceptUid||!CD[e.id])continue;if(CD[e.id].Type=='Unit'&&cardOK(CD[e.id],f))return e}return null}
 function transformUnit(G,u,id){const d=CD[id],p=G.p[u.o],from=u.id,oa=u.atk,oh=u.hp;
- u.id=id;u.d=d;u.atk=(d.Attack||0)+p.gb.a;u.hp=u.mx=(d.Health||0)+p.gb.h;u.kw=new Set(d.Keywords||[]);u.sil=0;u.sga=0;u.sgd=0;u.red=0;u.paid=null;u.cr=0;u.cba=0;u.aurA=0;u.ag={};u.agc={};u.lh=u.hp;
+ u.id=id;u.d=d;u.atk=(d.Attack||0)+p.gb.a;u.hp=u.mx=(d.Health||0)+p.gb.h;u.kw=new Set(d.Keywords||[]);u.bn=0;u.sil=0;u.sgn=0;u.agn=0;u.sgd=0;u.red=0;u.paid=null;u.cr=0;u.cba=0;u.aurA=0;u.ag={};u.agc={};u.lh=u.hp;
  EV(G,{k:'tf',u:u.uid,o:u.o,l:u.lane,from,to:id,atk:oa,hp:oh})}
 function place(G,p,u,i){EV(G,{k:'in',u:u.uid});u.lane=i;u.o=p.i;u.gone=0;p.ln[i]=u;if(!u.placed){u.placed=1;u.atk+=p.gb.a;u.hp+=p.gb.h;u.mx+=p.gb.h;u.lh=u.hp;
   if(G.en&&p.i==1&&G.en.mod.stat){u.atk+=G.en.mod.stat;u.hp+=G.en.mod.stat;u.mx+=G.en.mod.stat;u.lh=u.hp}}
@@ -390,7 +398,7 @@ function sacrifice(G,u,by){const p=G.p[u.o];p.sc++;u.sacF=1;acn(G,p,'sac',1,5,'f
 function resolve(G){aura(G);
  for(let n=0;n<30&&!G.over;n++){let ch=0;
   for(const p of G.p)for(let i=0;i<4;i++){const u=p.ln[i];if(!u||u.hp>0)continue;ch=1;
-   if(u.kw.has('SoulGuard')){u.kw.delete('SoulGuard');u.sgd=1;(u.agc=u.agc||{}).SoulGuard=1;u.hp=1;u.lh=1;L(G,u.d.Name+' soul guard breaks');hpOne(G,u);continue}
+   if(u.kw.has('SoulGuard')){const n=sgN(u);if(u.agn>0){u.agn--;u.sgd=(u.sgd||0)+1}u.sgn=n-1;if(u.sgn<=0){u.sgn=0;u.kw.delete('SoulGuard')}u.hp=1;u.lh=1;L(G,u.d.Name+' soul guard breaks');hpOne(G,u);continue}
    killUnit(G,u,i);if(!u.kw.has('Unkillable'))L(G,u.d.Name+' destroyed')}
   if(!ch)break}
  // HP-reaches-1 detection: a unit that was above 1 HP at the last check and sits at exactly 1 now.
@@ -421,7 +429,7 @@ function lane(G,i,pre){pre=pre||{};
   later(G,()=>{if(!G.over)fire(G,'OnAttackDone',x,{u:x})})};
  G.q=[];hit(A,B,aa,sa);hit(B,A,ba,sb);const q=G.q;G.q=null;q.forEach(f=>f());resolve(G);
  G.pc=1;[0,1].forEach(o=>{const u=G.p[o].ln[i];if(u&&!u.gone&&!G.over)fire(G,'OnPostCombatLine',u,{})});G.pc=0;resolve(G)}
-function endRound(G){G.p.forEach(p=>{if(!G.sim&&p.ln.every(Boolean)&&!p.hand.length)acu(G,p,'empty')});if(G.p.some(p=>units(p).some(u=>u.kw.has('Burning'))))EV(G,{k:'snd',n:'burn'});G.p.forEach(p=>units(p).forEach(u=>{if(u.kw.has('Burning')){const ar=u.kw.has('Armored')?kwp(u,'Armored'):u.kw.has('Armor2')?2:0,n=Math.max(0,1-ar);u.hp-=n;EV(G,{k:'dmg',u:u.uid,n,bt:1})}}));G.bt=1;resolve(G);G.bt=0;roundTrig(G,'OnEndOfRound');evolveAll(G)}
+function endRound(G){G.p.forEach(p=>{if(!G.sim&&p.ln.every(Boolean)&&!p.hand.length)acu(G,p,'empty')});if(G.p.some(p=>units(p).some(u=>u.kw.has('Burning'))))EV(G,{k:'snd',n:'burn'});G.p.forEach(p=>units(p).forEach(u=>{if(u.kw.has('Burning')){const ar=u.kw.has('Armored')?kwp(u,'Armored'):u.kw.has('Armor2')?2:0,n=Math.max(0,burnN(u)-ar);u.hp-=n;EV(G,{k:'dmg',u:u.uid,n,bt:1})}}));G.bt=1;resolve(G);G.bt=0;roundTrig(G,'OnEndOfRound');evolveAll(G)}
 function evolve(G,u){const c=(CD[u.id].Cost||0)+1,pool=poolOf({Type:'Unit',Cost:c}).filter(d=>!hasSub(d,'Piece'));if(!pool.length)return;
  const d=pool[R(pool.length)];L(G,u.d.Name+' evolves into '+d.Name);transformUnit(G,u,d.Id);u.kw.add('Evolving');EV(G,{k:'snd',n:'buff'})}
 function evolveAll(G){if(G.over)return;[G.start,1-G.start].forEach(i=>G.p[i].ln.slice().forEach(u=>{if(u&&!u.gone&&u.hp>0&&!u.sil&&u.kw.has('Evolving')&&!G.over)evolve(G,u)}));resolve(G)}

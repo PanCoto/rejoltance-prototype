@@ -62,7 +62,7 @@
     });
     // keywords + description, centred in the bottom 25% (shrinks a little if a text is long)
     const areaTop = iy + ih * .75 + 3 * cq, areaH = ih * .25 - 4.2 * cq, maxW = iw - 10 * cq;
-    const kws = [...(d.Keywords || [])].map(k => [kwLabel(d, k), BAD.has(k)]);
+    const kws = (d.Keywords || []).filter(k => k != 'BurnSource').map(k => [kwLabel(d, k), BAD.has(k)]);
     const chunks = chunksOf(d.Description);
     let fs = 6.3 * cq, lines, kfs, total;
     for (;;) {
@@ -162,5 +162,5 @@
 
     return new Promise((res, rej) => cv.toBlob(b => b ? res(b) : rej(new Error('toBlob failed')), 'image/png'));
   }
-  window.RJShare = { render };
+  window.RJShare = { render, drawCard, ensureArt, artOf, frameImg, CW, CH }; // drawCard & co. are also used by export-cards.html
 })();
