@@ -387,7 +387,7 @@ function hpOne(G,u){if(!RULES.hpOneTrigger||G.over||!u||u.gone)return;
 function killUnit(G,u,lane){const p=G.p[u.o],unk=u.kw.has('Unkillable')&&!u.sil;if(!G.sim&&!u.sacF&&p.ac)p.ac.lost++;
  EV(G,{k:'die',id:u.id,atk:u.atk,hp:Math.max(u.hp,0),o:p.i,lane,uid:u.uid,bt:G.bt?1:0});
  p.ln[lane]=null;u.gone=1;
- if(!unk&&u.id<900)p.disc.push({uid:UID++,id:u.id,nf:u.uid,unk:u.kw.has('Unkillable')?1:0});
+ if(!unk&&u.id<900)p.disc.push({uid:UID++,id:u.id,nf:u.uid,unk:u.kw.has('Unkillable')?1:0,...(u.cr?{red:u.cr}:{}),...(u.cba?{ba:u.cba}:{})}); // keep what the card had grown before it was played (Thor's ATK, The Creature's / Rustler's cost)
  fire(G,'OnDeath',u,{u});units(p).forEach(o=>fire(G,'OnFriendlyUnitDied',o,{u}));fireHand(G,'OnFriendlyUnitDied',p,{u,lane});
  if(unk){L(G,u.d.Name+' is Unkillable - back to hand');
   if(u.id<900||RULES.tokensReturnToHand){const card={uid:UID++,id:u.id,nf:u.uid,unk:1,...(u.cr?{red:u.cr}:{}),...(u.cba?{ba:u.cba}:{})};if(p.hand.length<HAND_MAX||RULES.fullHandRework){p.hand.push(card);gained(G,p,'unkillable');acn(G,p,'unk',1,3,'deathsticks')}else if(u.id<900)p.disc.push(card)}}}
