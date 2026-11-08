@@ -80,3 +80,16 @@ python3 tools/make_music_stems.py                       # render the seven dynam
 - **Deck validation** matters because search picks decks on the same games it measures them on, so its win rates are optimistic.
 
 Deck files accepted by every tool's `--decks` option: a `.json` array of `{"n": "name", "c": [30 ids]}`, or a text file with one deck per line (`Name: CODE` or just the code). Codes use the same format as the in-game Import and Export.
+
+
+## Reliable workflow (see METHOD.md for the evidence)
+
+```bash
+node tools/card_effects.js all --games 30000 --out results/ce1                 # diagnose card power
+node tools/calibrate.js --rounds 3 --out results/cal1                          # find + verify stat edits (~15 min on 2 cores)
+node tools/calibrate.js --levers atk,hp,amt --out results/cal_nocost           # same, never touching mana costs
+node tools/meta_psro.js --iters 40 --live results/cal1/patch_final.json --check-pilot classic --out results/meta1
+node tools/meta_psro.js --decks sim_out/1.0.0/proposed_premade_decks.json --iters 0 --out results/meta_old   # score an existing deck set
+node tools/benchmark_reliability.js --games 20000                              # test the tests
+```
+`sim.js --mode swap` and `delta_seen` are kept but should not be used for balancing. `--bot basic` now really uses the basic bot.

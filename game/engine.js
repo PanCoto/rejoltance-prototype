@@ -375,10 +375,19 @@ case'LoseHealth':ts.forEach(t=>{if(t.h)dmg(G,t,a.Amount||1,null,2);else{t.hp-=a.
     acts.forEach(a2=>{if(!SKIP.includes(a2.Type)&&!a2.OnlyIfSacrificed)act(G,a2,s,{rp:1,tf:1,nosac:1,sm:1})})})});break}
  case'Transform':{
   if(a.Partner!=null){const pt=units(me).find(u=>u!==s&&u.id==a.Partner&&u.hp>0&&!u.gone);if(!pt||s.hp<=0||s.gone)break;
-   const n1=CD[s.id].Name,n2=CD[pt.id].Name;transformUnit(G,s,a.Into);transformUnit(G,pt,a.PartnerInto);L(G,n1+' and '+n2+' found each other');if(a.FirePlayed!==false&&!c.tf)fire(G,'OnPlayed',s,{tf:1,nosac:1,sm:c.sm})}
+   const n1=CD[s.id].Name,n2=CD[pt.id].Name;transformUnit(G,s,a.Into);transformUnit(G,pt,a.PartnerInto);L(G,n1+' and '+n2+' found each other');if(a.FirePlayed!==false){transPlay(G,s,c,1);transPlay(G,pt,c,0)}}
   else unitsOnly.forEach(t=>{let into=a.Into;if(a.IntoFrom=='LastPlayed'){const e=lastPlayed(G,t.o,a.Filter,t.uid);if(!e)return;into=e.id}
-   if(into==null||!CD[into])return;transformUnit(G,t,into);if(a.FirePlayed!==false&&!c.tf)fire(G,'OnPlayed',t,{tf:1,nosac:1,sm:c.sm})});break}}
+   if(into==null||!CD[into])return;transformUnit(G,t,into);if(a.FirePlayed!==false)transPlay(G,t,c,t===s)});break}}
  resolve(G)}
+// A unit has just TRANSFORMED into another card (Transform action, Evolving...). It now counts as a card that was played:
+//  1) it is logged in G.hist (so Echo Chamber / Shapeshifter see the new form),
+//  2) the new form's "When Played" effects fire (not when chained from another transform: c.tf stops endless loops),
+//  3) everyone who listens for "a unit is played" is notified (Adaptive Unit, Quickdraw Gun Man...). Skipped when `self` is set, because the unit is in the middle of
+//     being played/summoned right now and play()/summon announces it afterwards with its new form.
+function transPlay(G,u,c,self){if(!u||u.gone||u.hp<=0||G.over)return;c=c||{};
+ G.hist.push({p:u.o,t:G.turn,id:u.id,tg:'',uid:u.uid,tf:1});
+ if(!c.tf)fire(G,'OnPlayed',u,{tf:1,nosac:1,sm:c.sm});
+ if(!self&&!G.over&&!u.gone)announce(G,u)}
 function lastPlayed(G,pi,f,exceptUid){for(let i=G.hist.length-1;i>=0;i--){const e=G.hist[i];if(e.p!=pi||e.uid===exceptUid||!CD[e.id])continue;if(CD[e.id].Type=='Unit'&&cardOK(CD[e.id],f))return e}return null}
 function transformUnit(G,u,id){const d=CD[id],p=G.p[u.o],from=u.id,oa=u.atk,oh=u.hp;
  u.id=id;u.d=d;u.atk=(d.Attack||0)+p.gb.a;u.hp=u.mx=(d.Health||0)+p.gb.h;u.kw=new Set(d.Keywords||[]);u.bn=0;u.sil=0;u.sgn=0;u.agn=0;u.sgd=0;u.red=0;u.paid=null;u.cr=0;u.cba=0;u.aurA=0;u.ag={};u.agc={};u.lh=u.hp;
@@ -441,7 +450,7 @@ function lane(G,i,pre){pre=pre||{};
  G.pc=1;[0,1].forEach(o=>{const u=G.p[o].ln[i];if(u&&!u.gone&&!G.over)fire(G,'OnPostCombatLine',u,{})});G.pc=0;resolve(G)}
 function endRound(G){G.p.forEach(p=>{if(!G.sim&&p.ln.every(Boolean)&&!p.hand.length)acu(G,p,'empty')});if(G.p.some(p=>units(p).some(u=>u.kw.has('Burning'))))EV(G,{k:'snd',n:'burn'});G.p.forEach(p=>units(p).forEach(u=>{if(u.kw.has('Burning')){const ar=u.kw.has('Armored')?kwp(u,'Armored'):u.kw.has('Armor2')?2:0,n=Math.max(0,burnN(u)-ar);u.hp-=n;EV(G,{k:'dmg',u:u.uid,n,bt:1})}}));G.bt=1;resolve(G);G.bt=0;roundTrig(G,'OnEndOfRound');evolveAll(G)}
 function evolve(G,u){const c=(CD[u.id].Cost||0)+1,pool=poolOf({Type:'Unit',Cost:c}).filter(d=>!hasSub(d,'Piece'));if(!pool.length)return;
- const d=pool[R(pool.length)];L(G,u.d.Name+' evolves into '+d.Name);transformUnit(G,u,d.Id);u.kw.add('Evolving');EV(G,{k:'snd',n:'buff'})}
+ const d=pool[R(pool.length)];L(G,u.d.Name+' evolves into '+d.Name);transformUnit(G,u,d.Id);u.kw.add('Evolving');EV(G,{k:'snd',n:'buff'});transPlay(G,u,{sm:1},0);resolve(G)}
 function evolveAll(G){if(G.over)return;[G.start,1-G.start].forEach(i=>G.p[i].ln.slice().forEach(u=>{if(u&&!u.gone&&u.hp>0&&!u.sil&&u.kw.has('Evolving')&&!G.over)evolve(G,u)}));resolve(G)}
 const SELKIND={TargetEnemyUnit:'e',TargetFriendlyUnit:'f',TargetAnyUnit:'a',TargetEnemyUnitOrHero:'eh'};
 const DEBUFF_ST=['Marked','Burning','Stunned'];

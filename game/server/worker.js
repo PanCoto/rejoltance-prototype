@@ -24,7 +24,7 @@ import { DurableObject } from 'cloudflare:workers';
 
 const ALPH = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
-const CH_MS = 35000, START = 1000, WAIT_ABORT = 100000, SINGLE_REPORT_MS = 120000, EXPIRE_MS = 900000, PAIR_LIMIT = 3;
+const CH_MS = 35000, START = 1000, WAIT_ABORT = 100000, SINGLE_REPORT_MS = 120000, EXPIRE_MS = 900000, PAIR_LIMIT = 100;
 const rnd = (n, set) => { const a = new Uint8Array(n); crypto.getRandomValues(a); return Array.from(a, x => set[x % set.length]).join(''); };
 const sha = async s => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s))), b => b.toString(16).padStart(2, '0')).join('');
 const cleanName = s => String(s || '').replace(/[^\p{L}\p{N} _.\-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 16);

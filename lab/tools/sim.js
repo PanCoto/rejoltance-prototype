@@ -90,7 +90,7 @@ function playGame(da,db,C){
  while(!G.over&&guard++<500){
   if(G.step>=3){for(let i=0;i<4&&!G.over;i++)lane(G,i,{});if(G.over)break;endRound(G);startRound(G);continue}
   const i=G.act;if(i!==0&&i!==1){nextStep(G);continue}
-  let n=0;while(n++<20&&!G.over){const m=botPlan(G,G.p[i]);if(!m)break;play(G,G.p[i],m.ci,m.ln,m.pk)}
+  let n=0;while(n++<20&&!G.over){const m=(BOT=='basic'?botPlanBasic:botPlanSmart)(G,G.p[i]);if(!m)break;play(G,G.p[i],m.ci,m.ln,m.pk)}
   nextStep(G)}
  const win=G.over?G.over.win:-1,first=G.fp,res={win,rounds:G.turn,hp:[G.p[0].hp,G.p[1].hp],first};
  if(!T)return res;

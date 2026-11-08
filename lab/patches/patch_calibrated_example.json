@@ -1,0 +1,92 @@
+{
+ "_note": "calibrate.js 2026-11-08T15:50:31.904Z | pilot basic | 23 cards | use: node tools/<tool>.js --live <this file>",
+ "cards": {
+  "11": {
+   "Cost": 7
+  },
+  "13": {
+   "Cost": 0
+  },
+  "15": {
+   "Cost": 1
+  },
+  "16": {
+   "Effects": [
+    {
+     "Trigger": "OnPlayed",
+     "Actions": [
+      {
+       "Type": "ApplyStatus",
+       "Target": "AllUnitsOnBoard",
+       "StatusKeyword": "Burning"
+      },
+      {
+       "Type": "DealDamage",
+       "Target": "AllUnitsOnBoard",
+       "Amount": 3
+      }
+     ]
+    }
+   ],
+   "Description": "Deal 3 damage and apply Burning to all Units."
+  },
+  "17": {
+   "Health": 2
+  },
+  "20": {
+   "Cost": 5
+  },
+  "21": {
+   "Cost": 5
+  },
+  "23": {
+   "Attack": 3
+  },
+  "24": {
+   "Health": 6
+  },
+  "31": {
+   "Cost": 0
+  },
+  "36": {
+   "Attack": 2
+  },
+  "41": {
+   "Attack": 2
+  },
+  "46": {
+   "Cost": 2
+  },
+  "51": {
+   "Attack": 1
+  },
+  "54": {
+   "Attack": 1,
+   "Cost": 2
+  },
+  "56": {
+   "Cost": 8
+  },
+  "57": {
+   "Cost": 0
+  },
+  "78": {
+   "Cost": 0
+  },
+  "81": {
+   "Attack": 1
+  },
+  "83": {
+   "Cost": 1
+  },
+  "90": {
+   "Cost": 1
+  },
+  "93": {
+   "Cost": 0
+  },
+  "96": {
+   "Attack": 3
+  }
+ }
+}

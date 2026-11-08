@@ -8,3 +8,4 @@ lab/sim_out/
 game/turn-secret.js
 node_modules/
 .wrangler/
+results/
