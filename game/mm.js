@@ -94,7 +94,7 @@ window.mmEnd=async()=>{
  $('ovr').style.display='none';$('ovd').style.display='none';   // no rematch in ranked: each game is its own match
  const box=$('ovmm'),say=t=>{if(box)box.textContent=t},a=getAcct(),o=G.over,r=o.draw?'draw':o.win==0?'win':'loss';
  if(!a)return;say('Submitting result...');
- try{let st=await api('/api/report',{method:'POST',body:{id:c.id,r}},a);
+ try{let st=await api('/api/report',{method:'POST',body:{id:c.id,r,dk:c.deck||''}},a);
   for(let i=0;i<40&&st.st=='open';i++){say('Waiting for your opponent\'s report...');await new Promise(x=>setTimeout(x,4000));st=await api('/api/match?id='+encodeURIComponent(c.id),null,a)}
   if(st.st=='done'){const t0=tierOf(c.rt0!=null?c.rt0:st.rating-st.delta),t1=tierOf(st.rating);
   say('Rating: '+st.rating+'  ('+(st.delta>=0?'+':'')+st.delta+')'+(t1.n!=t0.n?'  -  '+(st.rating>=(c.rt0!=null?c.rt0:st.rating-st.delta)?'Promoted to ':'Dropped to ')+t1.n:''));
@@ -112,8 +112,11 @@ const setMyName=n=>{lsSet('rj_name',n)};
 function chipRefresh(){const me=MM.me,n=dispName();rk('pchipn').textContent=n||'Playerzacy';
  rk('pchips').textContent=me&&me.rating!=null?'Rating '+me.rating+(me.rank?'  -  #'+me.rank:''):'Your profile';
  rk('pchipav').innerHTML=avHTML(MM.me&&MM.me.avatar&&CD[MM.me.avatar]?MM.me.avatar:avId(),n)}
+function statsPush(me){if(!me||!cfg())return;const a=getAcct();if(!a)return;
+ const ach=typeof achCount=='function'?achCount():me.ach||0,en=+lsGet('rj_endless_best')||0;
+ if(me.ach===ach&&me.endless===en)return;me.ach=ach;me.endless=en;api('/api/stats',{method:'POST',body:{ach,endless:en}},a).catch(()=>{})}
 async function meLoad(){const a=getAcct();if(!a||!cfg())return null;
- try{const me=await api('/api/me',{method:'POST'},a);if(me&&me.avatar&&CD[me.avatar])lsSet('rj_avatar',String(me.avatar));MM.me=me;return me}
+ try{const me=await api('/api/me',{method:'POST'},a);if(me&&me.avatar&&CD[me.avatar])lsSet('rj_avatar',String(me.avatar));MM.me=me;statsPush(me);return me}
  catch(e){if(e.status==401){setAcct(null);MM.me=null}return null}}
 const needDc=()=>!!(MM.srv&&MM.srv.needDiscord);   // the server decides (REQUIRE_DISCORD) and enforces it too
 const ago=t=>{if(!t)return 'a while ago';const s=(Date.now()-t)/1000;return s<180?'Active now':s<3600?Math.floor(s/60)+' min ago':s<86400?Math.floor(s/3600)+' h ago':Math.floor(s/86400)+' d ago'};
@@ -172,28 +175,38 @@ rk('rkplay').onclick=()=>{if(needDc()&&!(MM.me&&MM.me.discord)){profOpen('Ranked
 
 // ---------- Profile (own account, or another player's card opened from the leaderboard) ----------
 const stat=(l,v)=>'<div class="pst"><small>'+l+'</small><b>'+v+'</b></div>';
+const WLD={W:'win',L:'loss',D:'draw'};
 function profFill(me,mine){
  const n=mine?dispName():(me&&me.name)||'',hs=mine?hstats(me):null;
  rk('pfav').innerHTML=avHTML(mine?(avId()||(me&&me.avatar)):(me&&me.avatar),n);
- const t=[],g=me?(me.games!=null?me.games:me.wins+me.losses+(me.draws||0)):0;
- // rating card + tier emblem
  rk('pfrate').innerHTML=me?tierBox(me.rating,true):'';rk('pfrate').style.display=me?'':'none';
  const ti=me?tierOf(me.rating):null;rk('pftier').innerHTML=ti?'<span class="tem" style="color:'+ti.c+';border-color:'+ti.c+'">'+ti.n+'</span>':'';
+ const t=[],fm=rk('pfform'),hh=rk('pfhist');hh.innerHTML='';
+ if(!me&&!mine){rk('pfstats').innerHTML='';fm.innerHTML='';rk('pfdel').hidden=true;renderDc();return}
+ // values come from the server (so every viewer sees the same); your own profile also merges what this browser remembers
+ const g=me?(me.games!=null?me.games:me.wins+me.losses+(me.draws||0)):0;
+ const peak=Math.max(me?me.peak||0:0,me?me.rating:0,mine?hs.peak:0);
+ const sk=mine&&hs.n?(hs.ct=='win'?hs.cur:hs.ct=='loss'?-hs.cur:0):(me?me.streak||0:0);
+ const skT=sk>0?'W'+sk:sk<0?'L'+(-sk):'-';
+ const best=Math.max(me?me.best||0:0,mine?hs.best:0);
+ const ach=mine?(typeof achCount=='function'?achCount():0):(me?me.ach||0:0),en=mine?(+lsGet('rj_endless_best')||0):(me?me.endless||0:0);
+ const total=typeof ACH!='undefined'?ACH.length:0;
  if(me){
-  t.push(stat('Rank',me.rank?'#'+me.rank:'Unranked'));
-  if(mine)t.push(stat('Peak rating',hs.peak||me.rating));
-  t.push(stat('Games',g),stat('Win rate',pct(me.wins,g)),stat('Wins',me.wins),stat('Losses',me.losses),stat('Draws',me.draws||0));
-  if(mine)t.push(stat('Streak',hs.n?(hs.ct=='win'?'W':hs.ct=='loss'?'L':'D')+hs.cur:'-'),stat('Best win streak',hs.best||'-'));
-  if(me.created||mine)t.push(stat('Member since',fmtDate(me.created||(mine&&+lsGet('rj_first'))||0)))}
- if(mine){t.push(stat('Achievements',typeof achCount=='function'?achCount()+'/'+ACH.length:'-'),stat('Endless best',+lsGet('rj_endless_best')||0));
-  }
+  t.push(stat('Rank',me.rank?'#'+me.rank:'Unranked'),stat('Peak rating',peak),stat('Games',g),stat('Win rate',pct(me.wins,g)),
+   stat('Wins',me.wins),stat('Losses',me.losses),stat('Draws',me.draws||0),stat('Streak',g?skT:'-'),
+   stat('Best win streak',best||'-'),stat('Member since',fmtDate(me.created||(mine&&+lsGet('rj_first'))||0)),stat('Achievements',total?ach+'/'+total:ach),stat('Endless best',en))}
+ else t.push(stat('Achievements',total?ach+'/'+total:ach),stat('Endless best',en));
  rk('pfstats').innerHTML=t.join('');
- // form: last results + rating trend (own profile only - kept in this browser)
- const fm=rk('pfform'),hh=rk('pfhist');
- if(mine&&me){const h=hs.h;
-  fm.innerHTML=h.length?'<div class="frm"><small>Recent form</small><span class="pips">'+h.slice(-10).map(x=>'<i class="'+x.r+'" title="'+esc((x.r=='win'?'Win':x.r=='loss'?'Loss':'Draw')+' vs '+x.on)+'">'+(x.r=='win'?'W':x.r=='loss'?'L':'D')+'</i>').join('')+'</span></div>'+(h.length>1?'<div class="frm"><small>Rating trend</small>'+spark(h.slice(-20).map(x=>x.rt))+'</div>':'')+(hs.fav||hs.avgOpp?'<div class="frm"><small>Ranked deck / opponents</small><b class="frb">'+(hs.fav?esc(hs.fav):'-')+(hs.avgOpp?' <small>avg. opp. '+hs.avgOpp+'</small>':'')+'</b></div>':''):'<div class="frm"><small>Play a ranked game to start your match history.</small></div>';
-  hh.innerHTML=h.length?'<h4>Recent matches</h4>'+h.slice(-4).reverse().map(x=>'<div class="hrow '+x.r+'"><b>'+(x.r=='win'?'WIN':x.r=='loss'?'LOSS':'DRAW')+'</b><span class="ho">vs '+esc(x.on||'?')+(x.or!=null?' <small>('+x.or+')</small>':'')+'</span><small class="hdk">'+esc(x.dk||'')+'</small><em>'+(x.d>=0?'+':'')+x.d+'</em><small>'+ago(x.t).replace('Active now','just now')+'</small></div>').join(''):''}
- else{fm.innerHTML='';hh.innerHTML=''}
+ // recent form: your own list is detailed (opponent in the tooltip); other players show the server's last results
+ const pips=[];if(mine&&hs.n)hs.h.slice(-10).forEach(x=>pips.push([x.r,'vs '+x.on]));else if(me&&me.form)me.form.split('').forEach(c=>pips.push([WLD[c]||'draw','']));
+ const fav=mine&&hs.fav?hs.fav:(me&&me.fav)||'',avg=mine&&hs.avgOpp?hs.avgOpp:(me&&me.avgopp)||0;
+ let h='';
+ if(pips.length)h+='<div class="frm"><small>Recent form</small><span class="pips">'+pips.map(p=>'<i class="'+p[0]+'" title="'+esc(p[1])+'">'+(p[0]=='win'?'W':p[0]=='loss'?'L':'D')+'</i>').join('')+'</span></div>';
+ if(mine&&hs.n>1)h+='<div class="frm"><small>Rating trend</small>'+spark(hs.h.slice(-20).map(x=>x.rt))+'</div>';
+ if(fav||avg)h+='<div class="frm"><small>Favourite ranked deck</small><b class="frb">'+(fav?esc(fav):'-')+(avg?' <small>avg. opponent '+avg+'</small>':'')+'</b></div>';
+ if(!h&&mine)h='<div class="frm"><small>Play a ranked game to start your match history.</small></div>';
+ fm.innerHTML=h;
+ if(mine&&hs.n)hh.innerHTML='<h4>Recent matches</h4>'+hs.h.slice(-4).reverse().map(x=>'<div class="hrow '+x.r+'"><b>'+(x.r=='win'?'WIN':x.r=='loss'?'LOSS':'DRAW')+'</b><span class="ho">vs '+esc(x.on||'?')+(x.or!=null?' <small>('+x.or+')</small>':'')+'</span><small class="hdk">'+esc(x.dk||'')+'</small><em>'+(x.d>=0?'+':'')+x.d+'</em><small>'+ago(x.t).replace('Active now','just now')+'</small></div>').join('');
  rk('pfdel').hidden=!mine||!getAcct();renderDc()}
 async function profOpen(msg,home){
  if(home!==undefined)PFH=home;

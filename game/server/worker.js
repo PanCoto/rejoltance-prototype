@@ -70,6 +70,12 @@ export class Hub extends DurableObject {
       if (!cols.includes('pid')) this.sql.exec('ALTER TABLE accounts ADD COLUMN pid TEXT');   // public id: used in profile links and friends, never works as a login
       for (const r of this.all('SELECT uid FROM accounts WHERE pid IS NULL')) this.sql.exec('UPDATE accounts SET pid=? WHERE uid=?', this.newPid(), r.uid);
       this.sql.exec('CREATE UNIQUE INDEX IF NOT EXISTS acc_pid ON accounts(pid)');
+      // profile stats (peak rating, streaks, recent form, favourite deck, opponent average, achievements / Endless best reported by the client)
+      for (const [c, d] of [['peak', 'INTEGER NOT NULL DEFAULT 0'], ['streak', 'INTEGER NOT NULL DEFAULT 0'], ['best', 'INTEGER NOT NULL DEFAULT 0'], ['form', "TEXT NOT NULL DEFAULT ''"], ['decks', "TEXT NOT NULL DEFAULT '{}'"],
+        ['oppsum', 'INTEGER NOT NULL DEFAULT 0'], ['oppn', 'INTEGER NOT NULL DEFAULT 0'], ['ach', 'INTEGER NOT NULL DEFAULT 0'], ['endless', 'INTEGER NOT NULL DEFAULT 0']])
+        if (!cols.includes(c)) this.sql.exec(`ALTER TABLE accounts ADD COLUMN ${c} ${d}`);
+      const mcols = this.all('PRAGMA table_info(matches)').map(c => c.name);
+      for (const c of ['k1', 'k2']) if (!mcols.includes(c)) this.sql.exec(`ALTER TABLE matches ADD COLUMN ${c} TEXT`);
       this.sql.exec(`CREATE TABLE IF NOT EXISTS friends(a TEXT NOT NULL, b TEXT NOT NULL, status TEXT NOT NULL, created INTEGER NOT NULL, PRIMARY KEY(a,b));
         CREATE INDEX IF NOT EXISTS fr_b ON friends(b);
         CREATE TABLE IF NOT EXISTS challenges(id TEXT PRIMARY KEY, a TEXT NOT NULL, b TEXT NOT NULL, code TEXT NOT NULL, status TEXT NOT NULL, created INTEGER NOT NULL);
@@ -89,7 +95,11 @@ export class Hub extends DurableObject {
   }
   async authHdr(req) { const m = /^Bearer ([^.]+)\.(.+)$/.exec(req.headers.get('authorization') || ''); return m ? this.auth(m[1], m[2]) : null; }
   rankOf(a) { return a.games > 0 ? 1 + this.one('SELECT COUNT(*) c FROM accounts WHERE games>0 AND rating>?', a.rating).c : null; }
-  prof(a) { return { uid: a.uid, pid: a.pid, avatar: a.avatar || 0, name: a.name, rating: a.rating, games: a.games, wins: a.wins, losses: a.losses, draws: a.draws, rank: this.rankOf(a), discord: a.discord_name || null, created: a.created || null, last: a.last || null }; }
+  extra(a) {
+    let fav = '', n = 0; try { const d = JSON.parse(a.decks || '{}'); for (const k in d) if (d[k] > n) { n = d[k]; fav = k; } } catch (e) {}
+    return { peak: Math.max(a.peak || 0, a.rating), streak: a.streak || 0, best: a.best || 0, form: a.form || '', fav, avgopp: a.oppn ? Math.round(a.oppsum / a.oppn) : 0, ach: a.ach || 0, endless: a.endless || 0 };
+  }
+  prof(a) { return { ...this.extra(a), uid: a.uid, pid: a.pid, avatar: a.avatar || 0, name: a.name, rating: a.rating, games: a.games, wins: a.wins, losses: a.losses, draws: a.draws, rank: this.rankOf(a), discord: a.discord_name || null, created: a.created || null, last: a.last || null }; }
 
   async fetch(req) {
     const url = new URL(req.url), p = url.pathname, ip = req.headers.get('cf-connecting-ip') || 'x';
@@ -119,6 +129,11 @@ export class Hub extends DurableObject {
       if (p === '/api/avatar' && req.method === 'POST') {
         const v = Math.floor(+(await req.json()).avatar); if (!(v >= 0 && v <= 5000)) return json({ error: 'avatar' }, 400);
         this.sql.exec('UPDATE accounts SET avatar=? WHERE uid=?', v, a.uid); this.lbCache = null; return json(this.prof({ ...a, avatar: v }));
+      }
+      if (p === '/api/stats' && req.method === 'POST') {
+        const b = await req.json(), ach = Math.floor(+b.ach), en = Math.floor(+b.endless);
+        const A = ach >= 0 && ach <= 999 ? ach : a.ach, E = en >= 0 && en <= 10000000 ? en : a.endless;
+        this.sql.exec('UPDATE accounts SET ach=?, endless=? WHERE uid=?', A, E, a.uid); return json({ ok: 1 });
       }
       if (p === '/api/friends') return json(this.friendList(a));
       if (p.startsWith('/api/friends/') && req.method === 'POST') return json(this.friendAct(a, p.slice(13), String((await req.json()).pid || '')));
@@ -225,7 +240,7 @@ export class Hub extends DurableObject {
     const r = this.one('SELECT * FROM friends WHERE (a=? AND b=?) OR (a=? AND b=?)', uid, other, other, uid);
     return !r ? 'none' : r.status === 'accepted' ? 'friends' : r.a === uid ? 'pending_out' : 'pending_in';
   }
-  pub(x) { return { pid: x.pid, name: x.name, avatar: x.avatar || 0, rating: x.rating, games: x.games, wins: x.wins, losses: x.losses, draws: x.draws, rank: this.rankOf(x), created: x.created, last: x.last }; }
+  pub(x) { return { pid: x.pid, name: x.name, avatar: x.avatar || 0, rating: x.rating, games: x.games, wins: x.wins, losses: x.losses, draws: x.draws, rank: this.rankOf(x), created: x.created, last: x.last, ...this.extra(x) }; }
   async player(req, pid) {
     const x = this.one('SELECT * FROM accounts WHERE pid=?', String(pid || '').slice(0, 12)); if (!x) return { error: 'not found' };
     const me = req.headers.get('authorization') ? await this.authHdr(req) : null;
@@ -353,7 +368,8 @@ export class Hub extends DurableObject {
     if (r === 'abort') { if (now - m.created < WAIT_ABORT && !m.r1 && !m.r2) this.sql.exec("UPDATE matches SET status='void' WHERE id=?", m.id); return this.matchInfo(a, m.id); }
     if (!['win', 'loss', 'draw'].includes(r)) return { st: 'none' };
     if (m[me === 1 ? 'r1' : 'r2']) return this.matchInfo(a, m.id);
-    this.sql.exec(`UPDATE matches SET r${me}=?, t${me}=? WHERE id=?`, r, now, m.id);
+    const dk = typeof b.dk === 'string' ? b.dk.replace(/[^\w .'-]/g, '').slice(0, 24) : '';
+    this.sql.exec(`UPDATE matches SET r${me}=?, t${me}=?, k${me}=? WHERE id=?`, r, now, dk, m.id);
     const f = this.one('SELECT * FROM matches WHERE id=?', m.id);
     if (f.r1 && f.r2) this.resolve(f, false); else this.schedule();
     return this.matchInfo(a, m.id);
@@ -375,6 +391,14 @@ export class Hub extends DurableObject {
     const d1 = Math.round(K(A) * (o - E)), d2 = Math.round(K(B) * ((1 - o) - (1 - E)));
     const up = (x, d, s) => this.sql.exec('UPDATE accounts SET rating=MAX(100,rating+?), games=games+1, wins=wins+?, losses=losses+?, draws=draws+? WHERE uid=?', d, s === 1 ? 1 : 0, s === 0 ? 1 : 0, s === .5 ? 1 : 0, x.uid);
     up(A, d1, o); up(B, d2, 1 - o);
+    const bump = (x, d, s, opp, dk) => {
+      const st = s === 1 ? (x.streak > 0 ? x.streak + 1 : 1) : s === 0 ? (x.streak < 0 ? x.streak - 1 : -1) : 0, nr = Math.max(100, x.rating + d);
+      let dc = {}; try { dc = JSON.parse(x.decks || '{}'); } catch (e) {}
+      if (dk && dk !== 'Random deck' && (dc[dk] || Object.keys(dc).length < 30)) dc[dk] = (dc[dk] || 0) + 1;
+      this.sql.exec('UPDATE accounts SET peak=?, streak=?, best=?, form=?, decks=?, oppsum=oppsum+?, oppn=oppn+1 WHERE uid=?', Math.max(x.peak || 0, nr), st, Math.max(x.best || 0, st > 0 ? st : 0),
+        ((x.form || '') + (s === 1 ? 'W' : s === 0 ? 'L' : 'D')).slice(-10), JSON.stringify(dc), opp, x.uid);
+    };
+    bump(A, d1, o, B.rating, m.k1); bump(B, d2, 1 - o, A.rating, m.k2);
     this.sql.exec("UPDATE matches SET status='done', d1=?, d2=? WHERE id=?", d1, d2, m.id); this.lbCache = null;
   }
 
