@@ -569,13 +569,13 @@ const CARDS = [
     Subtypes: ["Machine"],
     Cost: 5,
     Attack: 0,
-    Health: 7,
+    Health: 6,
     Description: "Before Combat Here: Deal 4 damage to the Enemy Hero.",
     Effects: [
       {
         Trigger: "OnPreCombatLine",
         Actions: [
-          { Type: "DealDamage", Target: "EnemyHero", Amount: 4 },
+          { Type: "DealDamage", Target: "EnemyHero", Amount: 5 },
         ],
       },
     ],
@@ -830,7 +830,7 @@ const CARDS = [
     Subtypes: ["Aberration", "Machine"],
     Cost: 3,
     Attack: 3,
-    Health: 2,
+    Health: 3,
     Keywords: ["Unactionable"],
     Description: "After this Attacks: Summon Royal Souldiers in the adjacent lanes.",
     Effects: [
@@ -880,9 +880,9 @@ const CARDS = [
     Name: "Tea Maid",
     Type: "Unit",
     Subtypes: ["Human"],
-    Cost: 3,
+    Cost: 2,
     Attack: 2,
-    Health: 2,
+    Health: 1,
     Description: "While in Play: Your Spells cost 1 less.",
     Effects: [
       {
@@ -1313,8 +1313,7 @@ const CARDS = [
     Subtypes: ["Human"],
     Cost: 5,
     Attack: 2,
-    Health: 5,
-    Keywords: ["Breakthrough"],
+    Health: 6,
     Description: "After Combat Here: Do a Bonus Attack. Whenever this damages a Unit: Bounce it.",
     Effects: [
       {
@@ -1810,7 +1809,7 @@ const CARDS = [
     Subtypes: ["Animal", "Human"],
     Cost: 3,
     Attack: 2,
-    Health: 3,
+    Health: 2,
     Description: "When Played: Apply Burning to all Enemy Units. While in Play: Gains +1 ATK for each Burning Unit on the board.",
     Effects: [
       {
@@ -2188,13 +2187,13 @@ const CARDS = [
     Type: "Spell",
     Subtypes: ["Machine", "Token"],
     Cost: 1,
-    Description: "A Friendly Unit gets +2 ATK.",
+    Description: "A Friendly Unit gets +3 ATK.",
     Effects: [
       {
         Trigger: "OnPlayed",
         Targeting: "TargetFriendlyUnit",
         Actions: [
-          { Type: "BuffStats", Target: "SelectedTarget", BuffAtk: 2, BuffHp: 0 },
+          { Type: "BuffStats", Target: "SelectedTarget", BuffAtk: 3, BuffHp: 0 },
         ],
       },
     ],
@@ -2206,13 +2205,13 @@ const CARDS = [
     Type: "Spell",
     Subtypes: ["Machine", "Token"],
     Cost: 1,
-    Description: "A Friendly Unit gets +2/+2.",
+    Description: "A Friendly Unit gets +3/+2.",
     Effects: [
       {
         Trigger: "OnPlayed",
         Targeting: "TargetFriendlyUnit",
         Actions: [
-          { Type: "BuffStats", Target: "SelectedTarget", BuffAtk: 2, BuffHp: 2 },
+          { Type: "BuffStats", Target: "SelectedTarget", BuffAtk: 3, BuffHp: 2 },
         ],
       },
     ],
