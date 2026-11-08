@@ -1531,8 +1531,8 @@ const CARDS = [
     Type: "Unit",
     Subtypes: ["Machine", "Token"],
     Cost: 2,
-    Attack: 2,
-    Health: 5,
+    Attack: 1,
+    Health: 4,
     Keywords: ["Lifesteal"],
     Description: "",
   },
@@ -2190,13 +2190,13 @@ const CARDS = [
     Type: "Spell",
     Subtypes: ["Machine", "Token"],
     Cost: 1,
-    Description: "A Friendly Unit gets +3 ATK.",
+    Description: "A Friendly Unit gets +2 ATK.",
     Effects: [
       {
         Trigger: "OnPlayed",
         Targeting: "TargetFriendlyUnit",
         Actions: [
-          { Type: "BuffStats", Target: "SelectedTarget", BuffAtk: 3, BuffHp: 0 },
+          { Type: "BuffStats", Target: "SelectedTarget", BuffAtk: 2, BuffHp: 0 },
         ],
       },
     ],
@@ -2208,13 +2208,13 @@ const CARDS = [
     Type: "Spell",
     Subtypes: ["Machine", "Token"],
     Cost: 1,
-    Description: "A Friendly Unit gets +3/+2.",
+    Description: "A Friendly Unit gets +2/+2.",
     Effects: [
       {
         Trigger: "OnPlayed",
         Targeting: "TargetFriendlyUnit",
         Actions: [
-          { Type: "BuffStats", Target: "SelectedTarget", BuffAtk: 3, BuffHp: 2 },
+          { Type: "BuffStats", Target: "SelectedTarget", BuffAtk: 2, BuffHp: 2 },
         ],
       },
     ],
