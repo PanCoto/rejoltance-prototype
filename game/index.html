@@ -82,14 +82,26 @@
   <div class="pkhint">Tip: set a default deck in Card Collection &rsaquo; Decks and it is pre-selected here.</div>
   <div class="btns"><button id="go">Start</button><button id="botback">Back</button></div></div></div>
  <div class="ovl bk" id="achmenu"><div class="panel wide"><h2>Achievements</h2><div class="sub" id="achsum"></div><div id="achbar"><i></i></div><div id="achlist"></div><div class="btns"><button id="achback">Back</button></div></div></div>
- <div class="ovl bk" id="rkmenu"><div class="panel wide"><h2>Ranked</h2><div class="sub" id="rksub"></div><div id="rkme"></div>
-  <div id="rklist"></div>
-  <div class="btns"><button id="rkplay">Play Ranked</button><button id="rkback">Back</button></div></div></div>
+ <div class="ovl bk" id="rkmenu"><div class="panel wide rkp"><h2>Ranked</h2><div class="sub" id="rksub"></div>
+  <div class="rkgrid">
+   <div class="rkl">
+    <div id="rkme"></div>
+    <div class="rkdeck"><div class="pkh"><label>Your deck</label><span class="pkcur" id="pknr"></span></div><div class="pkgrid" id="pkr"></div>
+     <div class="pkhint">You can still change your deck while searching and on the match screen, until you press Ready.</div></div>
+   </div>
+   <div class="rkrt"><h4>Leaderboard</h4><div id="rklist"></div></div>
+  </div>
+  <div class="btns"><button id="rkplay">Play Ranked</button><button id="rkprof">My profile</button><button id="rkback">Back</button></div></div></div>
  <div class="ovl bk" id="acctmenu"><div class="panel prof"><h2 id="pft">Profile</h2><div class="sub" id="pfsub"></div>
   <div class="pfbody">
    <div class="pfl"><button id="pfav" class="pfav" title="Change profile picture"></button><button id="pfchg">Change picture</button>
+    <div id="pftier"></div>
     <div class="pfnm"><label for="pfname">Display name</label><input type="text" id="pfname" maxlength="16" placeholder="Playerzacy" autocomplete="off" spellcheck="false"><button id="pfsave">Save</button></div></div>
-   <div class="pfr"><div id="pfstats"></div>
+   <div class="pfr">
+    <div id="pfrate"></div>
+    <div id="pfstats"></div>
+    <div id="pfform"></div>
+    <div id="pfhist"></div>
     <div id="pfdcrow"><label>Discord</label><span id="pfdc"></span><span class="rkbt"><button id="pfdclink">Link Discord</button><button id="pfdclogin">Log in with Discord</button></span></div></div>
   </div>
   <div id="pfmsg"></div>
@@ -106,9 +118,13 @@
   <div class="srow"><label>Sound effects</label><input type="range" id="sfxv" min="0" max="100" step="5"><b id="sfxn"></b></div>
   <div class="srow"><label>Music</label><input type="range" id="musv" min="0" max="100" step="5"><b id="musn"></b></div>
   <div class="btns"><button id="setclose">Close</button></div></div></div>
- <div class="ovl bk" id="lobby"><div class="panel"><h2 id="lt"></h2><div id="lcode"></div><input id="lin" maxlength="5" placeholder="ROOM CODE" autocomplete="off" spellcheck="false">
+ <div class="ovl bk" id="lobby"><div class="panel"><h2 id="lt"></h2><div id="lcode"></div>
+  <div id="lmatch"><div class="lmvs"><div class="lmp"><em class="av" id="lmav0"></em><b id="lmn0"></b><small id="lmr0"></small></div><div class="lmx">VS</div><div class="lmp"><em class="av" id="lmav1"></em><b id="lmn1"></b><small id="lmr1"></small></div></div>
+   <div class="lmh">Choose your deck - it locks when you press Ready</div></div>
+  <input id="lin" maxlength="5" placeholder="ROOM CODE" autocomplete="off" spellcheck="false">
   <div id="ldrow"><div class="pkh"><label>Your deck</label><span class="pkcur" id="pknl"></span></div><div class="pkgrid" id="pkl"></div></div><div id="ls"></div>
-  <div style="display:flex;gap:30px"><button id="lgo">Join</button><button id="lcopy">Copy invite link</button><button id="lcancel">Cancel</button></div></div></div>
+  <div id="lbar"><i id="lbari"></i></div>
+  <div style="display:flex;gap:30px"><button id="lready">Ready</button><button id="lgo">Join</button><button id="lcopy">Copy invite link</button><button id="lcancel">Cancel</button></div></div></div>
  <div class="ovl" id="mul"><h2 id="mt">Mulligan - click cards to replace</h2><div id="mh"></div><button id="mok">Confirm</button><div id="mpr" style="display:none;gap:40px"><button id="mfirst">Go first</button><button id="msecond">Go second</button></div></div>
  <div class="ovl" id="hist"></div>
  <div class="ovl" id="modal"><h2>Surrender?</h2><div style="display:flex;gap:30px"><button id="myes">Yes</button><button id="mno">No</button></div></div>

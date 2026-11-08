@@ -727,7 +727,7 @@ $('bmodal').addEventListener('mousedown',e=>{if(e.target===$('bmodal'))closeModa
 
 
 const PKR={d0:false,d1:false};let pkPrevR=false;
-const PKS=[['pk0','d0','pkn0'],['pk1','d1','pkn1'],['pkl','d0','pknl'],['pk2','d0']];
+const PKS=[['pk0','d0','pkn0'],['pk1','d1','pkn1'],['pkl','d0','pknl'],['pkr','d0','pknr'],['pk2','d0']];
 const pkRank=(i,bot)=>{const d=ALL[i];return !bot&&getDef()==d.n?0:d.custom?1:2};
 function renderPickers(){
  PKS.forEach(([id,sid])=>{const el=$(id);if(!el)return;const bot=sid=='d1',dn=getDef();

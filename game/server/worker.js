@@ -89,7 +89,7 @@ export class Hub extends DurableObject {
   }
   async authHdr(req) { const m = /^Bearer ([^.]+)\.(.+)$/.exec(req.headers.get('authorization') || ''); return m ? this.auth(m[1], m[2]) : null; }
   rankOf(a) { return a.games > 0 ? 1 + this.one('SELECT COUNT(*) c FROM accounts WHERE games>0 AND rating>?', a.rating).c : null; }
-  prof(a) { return { uid: a.uid, pid: a.pid, avatar: a.avatar || 0, name: a.name, rating: a.rating, games: a.games, wins: a.wins, losses: a.losses, draws: a.draws, rank: this.rankOf(a), discord: a.discord_name || null }; }
+  prof(a) { return { uid: a.uid, pid: a.pid, avatar: a.avatar || 0, name: a.name, rating: a.rating, games: a.games, wins: a.wins, losses: a.losses, draws: a.draws, rank: this.rankOf(a), discord: a.discord_name || null, created: a.created || null, last: a.last || null }; }
 
   async fetch(req) {
     const url = new URL(req.url), p = url.pathname, ip = req.headers.get('cf-connecting-ip') || 'x';

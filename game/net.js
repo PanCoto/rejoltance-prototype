@@ -59,7 +59,8 @@ function syncDecks(){syncPickers();pkReveal('pkl')}
 let LB='frmenu';// panel that Cancel returns to
 function lobby(title,o){o=o||{};['frmenu','mirmenu','rkmenu','botmenu','setmenu','achmenu','acctmenu','avpick','fdmenu'].forEach(k=>{const e=$(k);if(e)e.style.display='none'});$('lt').textContent=title;$('lcode').textContent=o.code||'';$('lcode').style.display=o.code?'block':'none';
  $('lin').style.display=o.join?'block':'none';$('lgo').style.display=o.join?'':'none';$('lcopy').style.display=o.code?'':'none';
- $('ldrow').style.display=o.nodeck?'none':'flex';$('ls').textContent=o.status||'';$('lobby').style.display='flex'}
+ $('ldrow').style.display=o.nodeck?'none':'flex';$('ls').textContent=o.status||'';
+ $('lmatch').style.display=o.match?'flex':'none';$('lready').style.display=o.match?'':'none';$('lobby').classList.toggle('mm',!!o.match);$('lobby').style.display='flex'}
 const netErr=e=>({'network':'Could not reach the matchmaking server. Check your internet connection.','server-error':'The matchmaking server returned an error. Try again in a moment.',
  'socket-error':'Lost connection to the matchmaking server.','socket-closed':'Lost connection to the matchmaking server.','browser-incompatible':'This browser does not support WebRTC.',
  'webrtc':'Could not establish a connection between the two devices (a firewall or network may be blocking it, and the relay server may be busy). Try again, or see README (TURN server).'}[e&&e.type]||('Connection problem: '+((e&&(e.type||e.message))||'unknown')));
@@ -68,8 +69,10 @@ function netLeave(keepLobby){const N=NET;NET=null;NETTK++;
  if(N){clearTimeout(N.to);clearTimeout(N.syncT);clearTimeout(N.mT);clearTimeout(N.pT);try{N.conn&&N.conn.close()}catch(e){}try{N.peer&&N.peer.destroy()}catch(e){}}
  if(!keepLobby)$('lobby').style.display='none'}
 
+// Matched games (ranked / quick match via the server): the deck is only sent / read once the player presses Ready (mm.js), so it can be changed until then.
+function guestHello(N){if(NET!==N||N.hi)return;N.hi=1;pkResolve();netSend({t:'hello',v:NETV,name:myName(),deck:ALL[$('d0').value].c});lobby('Connected',{status:'Waiting for the host to start the game...',nodeck:1})}
 function wire(N,c){
- c.on('open',()=>{if(NET!==N)return;if(!N.host){clearTimeout(N.to);pkResolve();netSend({t:'hello',v:NETV,name:myName(),deck:ALL[$('d0').value].c});lobby('Connected',{status:'Waiting for the host to start the game...',nodeck:1})}});
+ c.on('open',()=>{if(NET!==N)return;if(!N.host){clearTimeout(N.to);N.up=1;if(N.mm&&!N.lr)return;guestHello(N)}});
  c.on('data',m=>{if(NET!==N||!m||!m.t)return;N.host?hostMsg(m):guestMsg(m)});
  c.on('close',()=>onClose(N));c.on('error',()=>onClose(N))}
 async function hostRoom(mirror){mirror=!!mirror;
@@ -120,6 +123,7 @@ function hostMsg(m){
  if(m.t=='preAns'){const p=NET.pre;if(p){NET.pre=null;p.res(m.u===-1?null:(p.opts.find(u=>u.uid==m.u)||p.opts[0]))}return}
  HQ.push(m);if(!hrun)hpump()}
 async function hpump(){hrun=true;while(HQ.length&&NET){const m=HQ.shift();try{await hostHandle(m)}catch(e){console.error('net',e)}}hrun=false}
+function hostGo(){if(!NET||!NET.host||!NET.deckG)return;NET.hp=0;NET.deckH=ALL[$('d0').value].c.slice();hostStart()}
 function hostStart(){
  pkResolve();musicNewGame();
  NET.deckH=ALL[$('d0').value].c.slice();
@@ -139,7 +143,7 @@ async function hostHandle(m){
  case'hello':{
   if(m.v!==NETV){netSend({t:'err',msg:'Version mismatch - the card data differs. Both players should reload the page (Ctrl+F5) and try again.'});break}
   const dk=m.deck;if(!okDeck(dk)){netSend({t:'err',msg:'Your deck is not valid.'});break}
-  OPN=cleanName(m.name).trim();NET.deckG=dk.map(Number);NET.deckH=ALL[$('d0').value].c.slice();hostStart();break}
+  OPN=cleanName(m.name).trim();NET.deckG=dk.map(Number);if(NET.mm&&!NET.lr){NET.hp=1;break}hostGo();break}
  case'mull':{if(!G||G.turn!=0||NET.mull[1])break;
   mulligan(G,G.p[1],(m.ids||[]).filter(u=>G.p[1].hand.some(c=>c.uid==u)));NET.mull[1]=1;netPush();armPref();tryBegin();break}
  case'pref':{if(!G||G.turn!=0||NET.pref[1]||(m.v!='first'&&m.v!='second'))break;NET.pref[1]=m.v;tryBegin();break}
