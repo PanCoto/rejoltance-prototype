@@ -289,13 +289,15 @@ const CARDS = [
     Name: "HellFire",
     Type: "Spell",
     Cost: 4,
-    Description: "Deal 2 damage and apply Burning to all Units.",
+    Description: "Deal 2 damage and apply Burning 2 to all Units.",
     Effects: [
       {
         Trigger: "OnPlayed",
         Actions: [
           { Type: "ApplyStatus", Target: "AllUnitsOnBoard", StatusKeyword: "Burning" },
           { Type: "DealDamage", Target: "AllUnitsOnBoard", Amount: 2 },
+	  { Type: "ApplyStatus", Target: "AllUnitsOnBoard", StatusKeyword: "Burning" },
+
         ],
       },
     ],
@@ -569,13 +571,13 @@ const CARDS = [
     Subtypes: ["Machine"],
     Cost: 5,
     Attack: 0,
-    Health: 6,
+    Health: 7,
     Description: "Before Combat Here: Deal 4 damage to the Enemy Hero.",
     Effects: [
       {
         Trigger: "OnPreCombatLine",
         Actions: [
-          { Type: "DealDamage", Target: "EnemyHero", Amount: 5 },
+          { Type: "DealDamage", Target: "EnemyHero", Amount: 4 },
         ],
       },
     ],
@@ -1313,7 +1315,8 @@ const CARDS = [
     Subtypes: ["Human"],
     Cost: 5,
     Attack: 2,
-    Health: 6,
+    Health: 5,
+	Keywords: ["Breakthrough"],
     Description: "After Combat Here: Do a Bonus Attack. Whenever this damages a Unit: Bounce it.",
     Effects: [
       {
