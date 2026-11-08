@@ -110,6 +110,53 @@ document.addEventListener('mouseover',e=>{if(stickyZoom)return;const t=e.target.
  const c=cardOf(t);if(c)showZoom(c.x,c.live)});
 document.addEventListener('mouseout',e=>{if(e.target.closest&&e.target.closest(CARDSEL))hideZoom()});
 const PH={U:'Units',B:'Unit and Actions',A:'Actions'};
+// ===== TURN TIMER (online games only) ==========================================================
+// Every phase of a round (Units / Unit and Actions / Actions) lasts PHASE_SEC seconds. When it runs out, the phase is skipped for the player whose turn it is
+// (same as pressing End Turn; anything half-selected is cancelled). The host is the referee: it also skips the GUEST's phase if the guest's own client has not
+// done it after TM_GRACE more seconds (lag, animations, a frozen tab). The countdown shows next to "Phase :" and turns red for the last 5 seconds.
+// Choosing a target before combat (Occultist etc.) has its own, shorter limit PRE_SEC; when it runs out the engine picks the target itself, exactly like it does for the bot.
+// There is no timer against the bot, in Endless Mode, or in Mirror Match vs the bot.
+const PHASE_SEC=30,PRE_SEC=10,TM_GRACE=4,MULL_SEC=30,ORDER_SEC=15;   // MULL_SEC: swap cards, ORDER_SEC: go first / second
+const TM={key:'',end:0,iv:0,wd:0};
+function tmStop(){clearInterval(TM.iv);clearTimeout(TM.wd);TM.iv=TM.wd=0;TM.key='';const p=$('phase');if(p)p.style.color=''}
+const tmLeft=()=>TM.key?Math.max(0,Math.ceil((TM.end-Date.now())/1000)):0;
+function tmTick(){if(!NET||!G||G.over){tmStop();return}if(!TM.key)return;
+ const s=tmLeft(),p=$('phase');p.textContent='Phase : '+PH[G.allow]+'  -  '+s+'s';p.style.color=s<=5?'#e3242b':''}
+function tmSync(){   // called at the end of every render(): starts a fresh countdown whenever the phase changes
+ if(!NET||!G||G.over||G.turn<1||G.step>=3||G.act==null){if(TM.key)tmStop();return}
+ const k=G.turn+':'+G.step+':'+gid;
+ if(TM.key!==k){tmStop();TM.key=k;TM.end=Date.now()+PHASE_SEC*1000;TM.iv=setInterval(tmTick,250);
+  TM.wd=setTimeout(()=>tmExpire(k,0),(PHASE_SEC+(G.act==0?0:TM_GRACE))*1000)}
+ tmTick()}
+function tmExpire(k,tries){
+ if(TM.key!==k||!NET||!G||G.over)return;
+ if(busy&&tries<20){TM.wd=setTimeout(()=>tmExpire(k,tries+1),250);return}   // let a running animation finish first (max 5 s)
+ if(G.act==0){if(NET.host)L(G,'You ran out of time');say("Time's up - phase skipped");endNow(true)}
+ else if(NET.host&&G.act==1&&G.step<3){L(G,'Enemy ran out of time');nextStep(G);flow()}}
+// Mulligan screen (online only): a countdown in the screen title. Time up -> the cards currently marked are swapped (nothing marked = keep all);
+// time up on first/second -> random. The host does the same for a silent guest (see hostForceMull / armPref in net.js).
+let mtI=0;
+function mtStop(){clearInterval(mtI);mtI=0;const t=$('mt');if(t)t.style.color=''}
+function mtRun(base,secs,onEnd){mtStop();if(!NET)return;let left=secs;
+ const show=()=>{$('mt').textContent=base+'  -  '+left+'s';$('mt').style.color=left<=5?'#e3242b':''};show();
+ mtI=setInterval(()=>{if(!NET||!G){mtStop();return}if(--left<=0){mtStop();onEnd()}else show()},1000)}
+// ===== END TURN TIMER =====
+// ===== AUTO-SKIP: no legal move ==============================================================
+// If none of the cards in your hand can be played right now (not enough mana, no free lane, a spell with no valid target, or only Actions during the Units phase),
+// the phase is skipped after a short pause with a message. It is re-checked after every card you play, so it also ends the phase once your last playable card is gone.
+// Uses the same playable() check that greys cards out in your hand. Works in every game mode.
+const AUTOSKIP_MS=1100,AS={t:0,msg:false};
+const noMoves=()=>{const me=G.p[0];return!me.hand.some((c,i)=>playable(G,me,i))};
+function asClear(){if(AS.t){clearTimeout(AS.t);AS.t=0}if(AS.msg){AS.msg=false;const b=$('msg');if(b&&(b.textContent||'').indexOf('No playable cards')==0)say('')}}
+function autoSkip(){
+ const idle=G&&!G.over&&G.turn>=1&&G.step<3&&mine()&&!pend&&sel==null&&!castMode&&$('game').style.display=='block'&&$('mul').style.display!='flex'&&$('modal').style.display!='flex';
+ if(!idle||!noMoves()){asClear();return}
+ if(AS.t)return;
+ say('No playable cards - skipping this phase');AS.msg=true;
+ AS.t=setTimeout(()=>{AS.t=0;AS.msg=false;
+  if(G&&!G.over&&G.step<3&&mine()&&!pend&&sel==null&&!castMode&&noMoves())endNow();else asClear()},AUTOSKIP_MS)}
+setInterval(autoSkip,400);
+// ===== END AUTO-SKIP =====
 const ASK={L:'Choose a free lane to summon into',M:'Choose units to sacrifice',e:'Choose an enemy unit',f:'Choose a friendly unit',S:'Choose a unit to sacrifice',a:'Choose any unit',D:'Choose a card from your deck',eh:'Choose an enemy unit or the enemy hero'};
 const LX=[36,332,624,916],LY=[88,432];
 const mine=()=>G.act==0&&!busy&&!G.over;
@@ -153,7 +200,7 @@ function render(){
  const pl=G.hist.filter(x=>x.t==G.turn).slice(-4);let s='';for(let i=0;i<4;i++){const x=pl[i-(4-pl.length)];s+=x&&i>=4-pl.length?`<div class="s"><img src="${artSrc(x.id)}" alt="" onerror="artErr(this,${x.id})"></div>`:'<div class="s"></div>'}
  $('strip').innerHTML=s+`<div class="w">${(G.log[G.log.length-1]||'').replace(/^— |—$/g,'').slice(0,16)}</div>`;
  const act=mine();$('end').disabled=!act;$('end').textContent=G.step>=3?'Combat…':act?'End Turn':'Enemy…';
- refreshPin();musicUpdate();achPoll();if(G.over)finish()}
+ refreshPin();musicUpdate();achPoll();tmSync();autoSkip();if(G.over)finish()}
 function info(x,live){showZoom(x,live)}
 // Pop-up banner for Endless Mode boss events (upgrades, new deck). Several in one round are shown one after another.
 const BPQ=[];let bpBusy=false;
@@ -348,7 +395,12 @@ function endDrag(e,drop){if(!drag)return;const d=drag;drag=null;if(!d.on)return;
  dragSupp=true;setTimeout(()=>{dragSupp=false;if(G&&!G.over)dropOn(el)},0)}
 document.addEventListener('pointerup',e=>endDrag(e,true));
 document.addEventListener('pointercancel',e=>endDrag(e,false));
-function choosePre(u){return new Promise(r=>{pendRes=r;pend={ks:['e'],got:[],pre:true};render();say(`<b>${u.d.Name}</b> - before combat: choose an enemy unit (red outline)`)})}
+function choosePre(u){return new Promise(r=>{   // online: PRE_SEC seconds, then resolves null -> the engine picks a target itself (lane(): botPick)
+ let left=PRE_SEC,iv=0,done=false;
+ const fin=v=>{if(done)return;done=true;clearInterval(iv);pendRes=null;r(v)};
+ const show=()=>say(`<b>${u.d.Name}</b> - before combat: choose an enemy unit (red outline)`+(NET?` - <b style="color:#e3242b">${left}s</b>`:''));
+ pendRes=fin;pend={ks:['e'],got:[],pre:true};render();show();
+ if(NET)iv=setInterval(()=>{if(done||!pend||!pend.pre){clearInterval(iv);return}if(--left<=0){pend=null;say('');render();fin(null)}else show()},1000)})}
 let LUN=[];
 function strikeLane(i){LUN=[];const A=G.p[0].ln[i],B=G.p[1].ln[i],both=!!(A&&B);
  [[0,A],[1,B]].forEach(([r,u])=>{if(!u||u.atk<=0||u.kw.has('Stunned'))return;
@@ -392,9 +444,10 @@ function finish(){if($('ov').style.display=='flex')return;$('ovd').style.display
 // Endless Mode: the run ends when you die (or surrender). Score = total damage dealt to the Boss; best score is saved locally.
 function endHook(){achEnd();if($('ovmm'))$('ovmm').textContent='';if(typeof mmEnd=='function')mmEnd();if(G.mir||G.en)$('ovd').style.display='none';
  if(G.en){const sc=G.en.dealt,b=Math.max(sc,+lsGet('rj_endless_best')||0);lsSet('rj_endless_best',b);$('ovt').textContent='RUN OVER';$('ovdk').textContent='Score: '+sc+'  -  Best: '+b+(sc>=b&&sc>0?'  (new record!)':'');$('ovr').textContent='New run'}}
-$('end').onclick=()=>{if(!mine())return;sfx('endTurn');sel=pend=null;castMode=false;say('');
- if(NET&&!NET.host){busy=true;netSend({t:'end'});armSync();return}
- nextStep(G);flow()};
+function endNow(timeout){sfx('endTurn');sel=pend=null;castMode=false;say('');
+ if(NET&&!NET.host){busy=true;netSend(timeout?{t:'end',to:1}:{t:'end'});armSync();return}
+ nextStep(G);flow()}
+$('end').onclick=()=>{if(!mine())return;endNow()};
 $('sur').onclick=()=>{if(G&&!G.over)$('modal').style.display='flex'};$('mno').onclick=()=>$('modal').style.display='none';
 $('myes').onclick=()=>{$('modal').style.display='none';if(!G||G.over)return;if(NET&&!NET.host){netSend({t:'sur'});return}
  G.over={win:1,sur:1};L(G,'You surrendered');pend=null;sel=null;castMode=false;say('');$('mul').style.display='none';$('hist').style.display='none';render();netPush()};
@@ -410,11 +463,13 @@ addEventListener('keydown',e=>{if(e.key=='Escape'&&$('dkpick').style.display=='f
 function showMul(){mulSel=new Set();$('mt').textContent='Mulligan - click cards to replace';$('mok').style.display='';$('mh').style.display='';$('mpr').style.display='none';
  const draw=()=>{$('mh').innerHTML=G.p[0].hand.map(c=>`<div class="slot2 ${mulSel.has(c.uid)?'rm':''}" data-m="${c.uid}">${cardHTML(c,0)}</div>`).join('')};draw();
  $('mh').onclick=e=>{const m=e.target.closest('[data-m]');if(!m)return;const k=+m.dataset.m;mulSel.has(k)?mulSel.delete(k):mulSel.add(k);draw()};
+ if(NET)mtRun('Mulligan - click cards to replace',MULL_SEC,()=>{if(NET&&G&&G.turn==0&&$('mul').style.display=='flex')mulOK()});
  $('mul').style.display='flex'}
 function askOrder(cb){$('mt').textContent='Your new hand - do you prefer to go first or second?';$('mok').style.display='none';$('mh').onclick=null;
  $('mh').innerHTML=G.p[0].hand.map(c=>`<div class="slot2">${cardHTML(c,0)}</div>`).join('');$('mh').style.display='';$('mpr').style.display='flex';$('mul').style.display='flex';
- const go=v=>{$('mpr').style.display='none';$('mul').style.display='none';cb(v)};$('mfirst').onclick=()=>go('first');$('msecond').onclick=()=>go('second')}
-const mulOK=()=>{const ids=[...mulSel];
+ const go=v=>{mtStop();$('mpr').style.display='none';$('mul').style.display='none';cb(v)};$('mfirst').onclick=()=>go('first');$('msecond').onclick=()=>go('second');
+ if(NET)mtRun('Your new hand - do you prefer to go first or second?',ORDER_SEC,()=>{if(NET&&G&&G.turn==0&&$('mpr').style.display=='flex')go(Math.random()<.5?'first':'second')})}
+const mulOK=()=>{mtStop();const ids=[...mulSel];
  if(NET){
   if(NET.host){mulligan(G,G.p[0],ids);NET.mull[0]=1;render();askOrder(v=>{NET.pref[0]=v;say('Waiting for opponent…');tryBegin()})}
   else{netSend({t:'mull',ids});$('mok').style.display='none';$('mt').textContent='Swapping your cards…';NET.ao=v=>{say('Waiting for opponent…');netSend({t:'pref',v})}}

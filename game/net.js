@@ -53,7 +53,7 @@ function netPush(x){if(!NET||!NET.host||!G)return;
 const descr=v=>Array.isArray(v)?{m:v.map(u=>u.uid)}:typeof v=='number'?{n:v}:v&&v.h?{h:v.p}:v&&v.kw?{u:v.uid}:{c:v.uid};
 const armSync=()=>{if(!NET)return;clearTimeout(NET.syncT);NET.syncT=setTimeout(()=>netSend({t:'sync'}),3500)};
 function askPre(i,opts){return new Promise(res=>{NET.pre={opts,res};netSend({t:'pre',i});
- setTimeout(()=>{if(NET&&NET.pre&&NET.pre.res===res){NET.pre=null;res(opts[0])}},90000)})}
+ setTimeout(()=>{if(NET&&NET.pre&&NET.pre.res===res){NET.pre=null;res(null)}},(PRE_SEC+TM_GRACE)*1000)})}   // no answer in time -> null -> the engine picks the target itself
 
 function syncDecks(){syncPickers();pkReveal('pkl')}
 let LB='frmenu';// panel that Cancel returns to
@@ -64,7 +64,8 @@ const netErr=e=>({'network':'Could not reach the matchmaking server. Check your 
  'socket-error':'Lost connection to the matchmaking server.','socket-closed':'Lost connection to the matchmaking server.','browser-incompatible':'This browser does not support WebRTC.',
  'webrtc':'Could not establish a connection between the two devices (a firewall or network may be blocking it, and the relay server may be busy). Try again, or see README (TURN server).'}[e&&e.type]||('Connection problem: '+((e&&(e.type||e.message))||'unknown')));
 function netLeave(keepLobby){const N=NET;NET=null;NETTK++;
- if(N){clearTimeout(N.to);clearTimeout(N.syncT);try{N.conn&&N.conn.close()}catch(e){}try{N.peer&&N.peer.destroy()}catch(e){}}
+ tmStop();mtStop();
+ if(N){clearTimeout(N.to);clearTimeout(N.syncT);clearTimeout(N.mT);clearTimeout(N.pT);try{N.conn&&N.conn.close()}catch(e){}try{N.peer&&N.peer.destroy()}catch(e){}}
  if(!keepLobby)$('lobby').style.display='none'}
 
 function wire(N,c){
@@ -116,7 +117,7 @@ function rematch(){if(!NET||NET.dead)return;
 
 const HQ=[];let hrun=false;
 function hostMsg(m){
- if(m.t=='preAns'){const p=NET.pre;if(p){NET.pre=null;p.res(p.opts.find(u=>u.uid==m.u)||p.opts[0])}return}
+ if(m.t=='preAns'){const p=NET.pre;if(p){NET.pre=null;p.res(m.u===-1?null:(p.opts.find(u=>u.uid==m.u)||p.opts[0]))}return}
  HQ.push(m);if(!hrun)hpump()}
 async function hpump(){hrun=true;while(HQ.length&&NET){const m=HQ.shift();try{await hostHandle(m)}catch(e){console.error('net',e)}}hrun=false}
 function hostStart(){
@@ -126,7 +127,12 @@ function hostStart(){
  gid++;G=newGame(NET.deckH,NET.deckG,go);busy=true;sel=pend=null;castMode=false;stickyZoom=false;
  NET.mull=[0,0];NET.pref=[null,null];NET.rm=[0,0];NET.ev=[];NET.pre=null;
  ['lobby','ov','hist','modal'].forEach(k=>$(k).style.display='none');$('ovr').style.display='';$('ovr').textContent='Rematch';
- show('game');say('');render();showMul();netSend({t:'start',name:myName(),s:snap(G)})}
+ show('game');say('');render();showMul();netSend({t:'start',name:myName(),s:snap(G)});
+ clearTimeout(NET.mT);clearTimeout(NET.pT);NET.mT=setTimeout(hostForceMull,(MULL_SEC+TM_GRACE)*1000)}
+// A guest that stays silent on the mulligan screen: keep their hand / pick first or second at random, so the game cannot be stalled there.
+function hostForceMull(){if(!NET||!NET.host||!G||G.turn!=0||NET.mull[1])return;mulligan(G,G.p[1],[]);NET.mull[1]=1;netPush();armPref();tryBegin()}
+function armPref(){if(!NET||!NET.host)return;clearTimeout(NET.pT);
+ NET.pT=setTimeout(()=>{if(!NET||!NET.host||!G||G.turn!=0||NET.pref[1])return;NET.pref[1]=Math.random()<.5?'first':'second';tryBegin()},(ORDER_SEC+TM_GRACE)*1000)}
 function tryBegin(){if(!NET.mull[0]||!NET.mull[1]||!NET.pref[0]||!NET.pref[1])return;decideStart(G,NET.pref[0],NET.pref[1]);startRound(G);render();anim();flow()}
 async function hostHandle(m){
  switch(m.t){
@@ -135,7 +141,7 @@ async function hostHandle(m){
   const dk=m.deck;if(!okDeck(dk)){netSend({t:'err',msg:'Your deck is not valid.'});break}
   OPN=cleanName(m.name).trim();NET.deckG=dk.map(Number);NET.deckH=ALL[$('d0').value].c.slice();hostStart();break}
  case'mull':{if(!G||G.turn!=0||NET.mull[1])break;
-  mulligan(G,G.p[1],(m.ids||[]).filter(u=>G.p[1].hand.some(c=>c.uid==u)));NET.mull[1]=1;netPush();tryBegin();break}
+  mulligan(G,G.p[1],(m.ids||[]).filter(u=>G.p[1].hand.some(c=>c.uid==u)));NET.mull[1]=1;netPush();armPref();tryBegin();break}
  case'pref':{if(!G||G.turn!=0||NET.pref[1]||(m.v!='first'&&m.v!='second'))break;NET.pref[1]=m.v;tryBegin();break}
  case'move':{
   if(!G||G.over||G.act!==1||G.step>=3){netPush();break}
@@ -148,7 +154,7 @@ async function hostHandle(m){
   if(!G||G.over)break;
   const ok=play(G,p,m.ci,ln==null?null:ln,pk);render();anim();
   netPush(ok?{fly:{id:c.id,sp:sp?1:0,ln,by:1}}:{});break}
- case'end':{if(!G||G.over||G.act!==1||G.step>=3){netPush();break}nextStep(G);flow();break}
+ case'end':{if(!G||G.over||G.act!==1||G.step>=3){netPush();break}if(m.to)L(G,'Enemy ran out of time');nextStep(G);flow();break}
  case'sur':{if(!G||G.over)break;G.over={win:0,sur:1};L(G,'Enemy surrendered');pend=null;sel=null;castMode=false;say('');
   ['mul','hist','modal'].forEach(k=>$(k).style.display='none');render();netPush();break}
  case'rm':{if(!G||!G.over)break;if(okDeck(m.deck))NET.deckG=m.deck.map(Number);
@@ -174,7 +180,7 @@ async function guestHandle(m){
   render();anim();break}
  case'lane':{busy=true;flash=m.i;render();
   await strikeLane(m.i);G=unsnap(m.s,m.ev);flash=-1;render();anim();recoil();await sleep((m.ev||[]).some(x=>x.k=='atk'&&x.post)?1150:650);break}
- case'pre':{busy=true;flash=m.i;render();const u=await choosePre(G.p[0].ln[m.i]);netSend({t:'preAns',u:u.uid});say('Combat!');render();break}
+ case'pre':{busy=true;flash=m.i;render();const u=await choosePre(G.p[0].ln[m.i]);netSend({t:'preAns',u:u?u.uid:-1});say('Combat!');render();break}
  case'rm':if($('ovr').textContent=='Rematch')$('ovr').textContent='Rematch (opponent ready)';break;
  case'full':case'err':{if(m.t=='full'&&NET.qm){qmAgain();break}const msg=m.t=='full'?'That room already has two players.':m.msg;netLeave(1);lobby('Could not join',{join:1,status:msg});break}}}
 
