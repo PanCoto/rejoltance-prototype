@@ -229,7 +229,7 @@ export class Hub extends DurableObject {
   }
   board(limit) {
     if (!this.lbCache || Date.now() - this.lbCache.t > 20000) {
-      const rows = this.all('SELECT pid,name,avatar,rating,games,wins,losses FROM accounts WHERE games>0 ORDER BY wins DESC, losses ASC, games DESC LIMIT 100');
+      const rows = this.all('SELECT pid,name,avatar,rating,games,wins,losses FROM accounts WHERE games>0 ORDER BY rating DESC, games DESC LIMIT 100');
       this.lbCache = { t: Date.now(), rows: rows.map((r, i) => ({ ...r, rank: i + 1 })) };
     }
     return this.lbCache.rows.slice(0, limit);

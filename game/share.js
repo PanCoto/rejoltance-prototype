@@ -107,20 +107,35 @@
     });
   }
 
+  // compact sheet (deck preview): just the cards, columns chosen so the whole grid fits a box of the given width:height
+  const bestCols = (n, aspect) => { let best = 1, bs = 0; for (let c = 1; c <= Math.max(1, n); c++) { const r = Math.ceil(n / c), w = 28 + c * CW + (c - 1) * 10, h = 28 + r * CH + (r - 1) * 10, s = Math.min(aspect / w, 1 / h); if (s > bs) { bs = s; best = c; } } return best; };
+
   async function render(o) {
     await ensureArt();
     const css = getComputedStyle(document.body);
     const F = { fd: css.getPropertyValue('--fd').trim() || 'monospace', fb: css.getPropertyValue('--fb').trim() || 'monospace', fw: parseFloat(css.getPropertyValue('--fw')) || 1 };
     try { await Promise.all([document.fonts.load('700 30px ' + F.fd), document.fonts.load('400 30px ' + F.fb), document.fonts.load('700 30px ' + F.fb)]); } catch (e) {}
     const ids = o.ids.filter(id => CD[id]).sort((a, b) => CD[a].Cost - CD[b].Cost || CD[a].Name.localeCompare(CD[b].Name) || a - b);
-    const rows = Math.max(1, Math.ceil(ids.length / COLS));
-    const W = PAD * 2 + COLS * CW + (COLS - 1) * GAP, gridH = rows * CH + (rows - 1) * GAP, H = HEAD + gridH + FOOT;
+    const cp = !!o.compact, cols = cp ? bestCols(ids.length, o.aspect || 1.9) : COLS, pad = cp ? 14 : PAD, head = cp ? 14 : HEAD, foot = cp ? 14 : FOOT, gap = cp ? 10 : GAP;
+    const rows = Math.max(1, Math.ceil(ids.length / cols));
+    const W = pad * 2 + cols * CW + (cols - 1) * gap, gridH = rows * CH + (rows - 1) * gap, H = head + gridH + foot;
     const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const ctx = cv.getContext('2d');
     const uniq = [...new Set(ids)];
     const [frame, iconArt, ...arts] = await Promise.all([frameImg(), o.icon ? artOf(o.icon) : null, ...uniq.map(artOf)]);
     const artById = {}; uniq.forEach((id, i) => artById[id] = arts[i]);
 
     ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
+    // cards
+    ids.forEach((id, i) => {
+      const x = pad + (i % cols) * (CW + gap), y = head + Math.floor(i / cols) * (CH + gap);
+      drawCard(ctx, CD[id], x, y, artById[id], frame, F);
+      const q = cp && o.counts ? o.counts[id] : 0;
+      if (q > 1) {
+        ctx.fillStyle = RED; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x + 10, y + 10, 84, 48, 12); else ctx.rect(x + 10, y + 10, 84, 48); ctx.fill();
+        ctx.font = `700 34px ${F.fd}`; ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('x' + q, x + 52, y + 35);
+      }
+    });
+    if (!cp) {
     // header: icon-card badge + name + stats
     const bs = 168, bx = PAD, by = 44;
     ctx.save(); ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bx, by, bs, bs, 22) : ctx.rect(bx, by, bs, bs); ctx.clip();
@@ -137,9 +152,6 @@
     ctx.font = `400 36px ${F.fb}`; ctx.fillStyle = '#8d8d8d';
     ctx.fillText(`${st.n || ids.length} cards  \u00b7  ${st.u || 0} units  \u00b7  ${st.sp || 0} spells  \u00b7  avg cost ${(st.avg || 0).toFixed(1)}`, tx + 2, by + 150);
     ctx.fillStyle = LN; ctx.fillRect(PAD, HEAD - 28, W - PAD * 2, 3);
-
-    // cards
-    ids.forEach((id, i) => drawCard(ctx, CD[id], PAD + (i % COLS) * (CW + GAP), HEAD + Math.floor(i / COLS) * (CH + GAP), artById[id], frame, F));
 
     // footer: mana curve (left), import code + brand (right)
     const fy = HEAD + gridH + 30; ctx.fillStyle = LN; ctx.fillRect(PAD, fy, W - PAD * 2, 3);
@@ -160,6 +172,7 @@
     }
     ctx.textAlign = 'right'; ctx.font = `700 44px ${F.fd}`; ctx.fillStyle = RED; ctx.fillText('RE:Joltance', W - PAD, base + 36);
 
+    }
     return new Promise((res, rej) => cv.toBlob(b => b ? res(b) : rej(new Error('toBlob failed')), 'image/png'));
   }
   window.RJShare = { render, drawCard, ensureArt, artOf, frameImg, CW, CH }; // drawCard & co. are also used by export-cards.html

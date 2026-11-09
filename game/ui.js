@@ -615,7 +615,7 @@ function setView(v){
  $('bback').innerHTML=v=='edit'?'&lsaquo; Decks':'&lsaquo; Menu';
  unpin();
  if(v=='decks')renderDecks();if(v=='edit')renderEdit();refit()}
-$('bopen').onclick=()=>{setView('cards');show('bld')};
+$('bopen').onclick=()=>{EDRET=null;setView('cards');show('bld')};
 $('btabs').onclick=e=>{const b=e.target.closest('button');if(b)setView(b.dataset.tab)};
 $('bback').onclick=()=>{if(bview=='edit')leaveEdit();else{unpin();show('menu');refreshDecks()}};
 
@@ -650,7 +650,7 @@ $('dimp').onclick=()=>importDialog(true);
 function openEditor(st){E=st;E.dirty=!!st.dirty;E.def=!!E.orig&&getDef()==E.orig;$('bn').value=E.name;setView('edit');$('bd').scrollTop=0;$('gedit').scrollTop=0}
 function newDeck(){openEditor({orig:null,fresh:1,name:uniqName('New deck'),cards:{}})}
 function editDeck(d){if(!d)return;openEditor(d.custom?{orig:d.n,name:d.n,cards:countsOf(d.c)}:{orig:null,name:uniqName(d.n+' (copy)'),cards:countsOf(d.c)})}
-function leaveEdit(){const go=()=>{E=null;setView('decks')};
+function leaveEdit(){const go=()=>{E=null;if(!retEdit())setView('decks')};
  if(E&&E.dirty)modal({title:'Discard changes?',text:'This deck has unsaved changes.',buttons:[{label:'Keep editing'},{label:'Discard',pri:1,fn:go}]});else go()}
 let hintT=0;
 function hint(msg,bad){const h=$('bi');h.textContent=msg;h.className=bad?'bad':'';clearTimeout(hintT);if(bad)hintT=setTimeout(()=>hint(HINT0),2600)}
@@ -695,7 +695,9 @@ $('bsave').onclick=()=>{
  const ent={n,c:expand(E.cards)},i=cust.findIndex(d=>d.n==E.orig);if(i>=0)cust[i]=ent;else cust.push(ent);
  saveC(cust);
  if(E.def)putDef(n);else if(E.orig&&getDef()==E.orig)putDef(null);
- selDeck='c:'+n;E=null;refreshDecks();setView('decks');toast('Saved "'+n+'"')};
+ selDeck='c:'+n;E=null;refreshDecks();
+ if(EDRET){const k=ALL.findIndex(d=>d.n==n);if(k>=0){PKR.d0=false;$('d0').selectedIndex=k;syncPickers()}if(retEdit())return}
+ setView('decks');toast('Saved "'+n+'"')};
 
 $('bexp').onclick=()=>{const code=deckEncode(E.cards);if(!code)return hint('Add some cards first.',1);
  const tot=btot();
@@ -731,8 +733,10 @@ const PKR={d0:false,d1:false};let pkPrevR=false;
 // [container, select, name label, options]  bot: opponent's deck (view only)  act: Edit button allowed (it leaves the current screen)  wide: roomy layout
 const PKS=[['pk0','d0','pkn0',{act:1}],['pk1','d1','pkn1',{bot:1}],['pkl','d0','pknl',{}],['pkr','d0','pknr',{act:1}],['pk2','d0',null,{wide:1}]];
 const pkRank=(i,bot)=>{const d=ALL[i];return !bot&&getDef()==d.n?0:d.custom?1:2};
-const PKG=['Default deck','Your decks','Premade decks'];
+const PKG=['','Your decks','Premade decks'];   // group 0 = the pinned (default) deck: sits at the top, no heading
+const PIN='<svg class="pin" viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M5 1h6v2h-1v4l2 2v2H9v4H7v-4H4V9l2-2V3H5z"/></svg>';
 const pkHideOn=()=>{let v=false;try{v=localStorage.getItem('rj_hideprem')==='1'}catch(e){}return v&&ALL.some(d=>d.custom)};
+let EDRET=null;   // where to go back to after editing a deck that was opened from a deck picker: {btn: id of the menu button that opens that screen}
 let pkRen=-1,pkErr='',pkVal='';   // pkRen: index of the deck being renamed (its row shows a text box)
 const pkOpt=id=>(PKS.find(p=>p[0]==id)||[])[3]||{};
 // one long bar per deck: art, name + stats, and its own buttons
@@ -741,7 +745,7 @@ function pkRows(id){
  const order=ALL.map((d,i)=>i).filter(i=>!hide||ALL[i].custom).sort((a,b)=>pkRank(a,bot)-pkRank(b,bot)||a-b);
  let lg=-1;
  return order.map(i=>{const d=ALL[i],m=countsOf(d.c),st=statsOf(m),ic=iconId(m),g=pkRank(i,bot),isDef=!bot&&dn==d.n,ren=pkRen==i&&d.custom&&!bot;
-  const head=g!=lg?`<div class="pkg">${PKG[g]}</div>`:'';lg=g;
+  const head=g!=lg&&g>0?`<div class="pkg">${PKG[g]}</div>`:'';lg=g;
   const mid=ren?`<div class="pkmid"><input class="pdin" maxlength="24" value="${hesc(pkVal||d.n)}" spellcheck="false" autocomplete="off">${pkErr?'<small class="pkerr">'+hesc(pkErr)+'</small>':''}</div>`
    :`<div class="pkmid"><b>${hesc(d.n)}</b><small>${st.u} units &middot; ${st.sp} spells &middot; avg ${st.avg.toFixed(1)}</small></div>`;
   let bt;
@@ -750,7 +754,7 @@ function pkRows(id){
    if(!bot){
     if(d.custom)bt+='<button data-a="ren" title="Rename this deck">Rename</button>';
     if(o.act)bt+=`<button data-a="edit" title="${d.custom?'Open in the deck editor':'Open a copy in the deck editor'}">${d.custom?'Edit':'Edit copy'}</button>`;
-    bt+=`<button data-a="def" class="${isDef?'on':''}" title="${isDef?'Your default deck - click to unset':'Make this your default deck'}">${STAR}<span class="bl">Default</span></button>`}}
+    bt+=`<button data-a="def" class="${isDef?'on':''}" title="${isDef?'Pinned to the top and used as your default deck - click to unpin':'Pin this deck to the top (it becomes your default deck)'}">${PIN}<span class="bl">${isDef?'Pinned':'Pin'}</span></button>`}}
   return head+`<div class="pk" data-i="${i}" tabindex="0" role="button" title="${hesc(d.n)}">
    <div class="pkth">${ic?imgTag(ic.Id):'<i class="dkq">?</i>'}</div>${mid}<div class="pkbt">${bt}</div><i class="pkchk"></i></div>`}).join('')}
 function pkList(id){const l=$(id).querySelector('.pkl'),s=l.scrollTop;l.innerHTML=pkRows(id);l.scrollTop=s;syncPickers()}
@@ -776,36 +780,48 @@ function pkDoRename(i,nn){
  return ''}
 function pkAct(id,a,i){
  const d=ALL[i];if(!d)return;
- if(a=='prev')return pkPreview(d);
+ if(a=='prev')return pkPreview(d,!!pkOpt(id).act,id);
  if(a=='ren'){pkRen=i;pkErr=pkVal='';pkList(id);const x=$(id).querySelector('.pdin');if(x){x.focus();x.select()}return}
  if(a=='rno'){pkRen=-1;pkErr=pkVal='';return pkList(id)}
  if(a=='rok'){const x=$(id).querySelector('.pdin'),v=x?x.value:'',er=pkDoRename(i,v);
   if(er){pkErr=er;pkVal=v;pkList(id);const y=$(id).querySelector('.pdin');if(y)y.focus();return}
   pkRen=-1;pkErr=pkVal='';refreshDecks();return}
  if(a=='def'){setDefault(getDef()!=d.n?d.n:null);return}
- if(a=='edit'){pkRen=-1;setView('cards');show('bld');editDeck(d)}}
+ if(a=='edit')pkLaunchEdit(d,id)}
+function pkLaunchEdit(d,id){const pn=$(id)&&$(id).closest('.ovl'),pid=pn?pn.id:'';
+ EDRET=pid=='rkmenu'?{btn:'rkopen'}:pid=='botmenu'?{btn:MODE=='endless'?'tendless':'tbot'}:null;
+ pkRen=-1;setView('cards');show('bld');editDeck(d)}
+function retEdit(){const r=EDRET;EDRET=null;if(!r)return false;E=null;unpin();show('menu');refreshDecks();const b=$(r.btn);if(b)b.click();return true}
 function syncPickers(){
  PKS.forEach(([id,sid,nm])=>{const el=$(id);if(!el)return;const cur=$(sid).selectedIndex,rnd=!!PKR[sid];
   el.querySelectorAll('.pk').forEach(t=>t.classList.toggle('sel',!rnd&&+t.dataset.i==cur));
   const rb=el.parentElement.querySelector('.pkrnd');if(rb)rb.classList.toggle('on',rnd);
   if(nm&&$(nm)&&ALL[cur])$(nm).textContent=rnd?'Random deck':ALL[cur].n})}
 function pickDeck(sid,i){PKR[sid]=false;$(sid).selectedIndex=i;syncPickers()}
-const PVC=new Map();let pvUrl=null,pvBlob=null,pvName='deck',pvTk=0;
+const PVC=new Map();let pvUrl=null,pvD=null,pvTk=0,pvSrc='';
 const pvClose=()=>{pvTk++;$('dkprev').style.display='none'};
-async function pkPreview(d){
- const m=countsOf(d.c),ids=expand(m),st=statsOf(m),key=d.n+'|'+d.c.join(','),tk=++pvTk;pvName=d.n;
+// the preview is a compact sheet with ALL the cards of the deck (every copy drawn) sized to fit the window; Save / Copy produce the full share sheet
+async function pkPreview(d,canEdit,src){
+ const m=countsOf(d.c),st=statsOf(m),key=d.n+'|'+d.c.join(','),tk=++pvTk;pvD=d;pvSrc=src||'';
+ $('dkpvedit').style.display=canEdit?'':'none';$('dkpvedit').textContent=d.custom?'Edit':'Edit copy';
  $('dkpvt').textContent=d.n;$('dkpvs').textContent=st.n+' cards \u00b7 '+st.u+' units \u00b7 '+st.sp+' spells \u00b7 avg cost '+st.avg.toFixed(1);
- $('dkpvimg').hidden=true;$('dkpvld').hidden=false;$('dkpvld').textContent='Drawing the deck...';$('dkpvmsg').textContent='';$('dkpvbox').scrollTop=0;
+ $('dkpvimg').hidden=true;$('dkpvld').hidden=false;$('dkpvld').textContent='Drawing the deck...';$('dkpvmsg').textContent='';
  $('dkpvcopy').style.display=navigator.clipboard&&window.ClipboardItem?'':'none';$('dkprev').style.display='flex';
  try{let blob=PVC.get(key);
-  if(!blob){blob=await RJShare.render({name:d.n,ids,icon:(iconId(m)||{}).Id,stats:st,code:deckEncode(m)});PVC.set(key,blob);if(PVC.size>8)PVC.delete(PVC.keys().next().value)}
-  if(tk!==pvTk)return;pvBlob=blob;if(pvUrl)URL.revokeObjectURL(pvUrl);pvUrl=URL.createObjectURL(blob);
+  if(!blob){const bx=$('dkpvbox');blob=await RJShare.render({ids:expand(m),compact:true,aspect:bx.clientWidth&&bx.clientHeight?bx.clientWidth/bx.clientHeight:1.9});PVC.set(key,blob);if(PVC.size>12)PVC.delete(PVC.keys().next().value)}
+  if(tk!==pvTk)return;if(pvUrl)URL.revokeObjectURL(pvUrl);pvUrl=URL.createObjectURL(blob);
   $('dkpvimg').src=pvUrl;$('dkpvimg').hidden=false;$('dkpvld').hidden=true}
  catch(e){if(tk===pvTk)$('dkpvld').textContent='Could not draw the image in this browser.'}}
+async function pvFull(){const d=pvD,m=countsOf(d.c),key=d.n+'|'+d.c.join(',')+'|full';let b=PVC.get(key);
+ if(!b){b=await RJShare.render({name:d.n,ids:expand(m),icon:(iconId(m)||{}).Id,stats:statsOf(m),code:deckEncode(m)});PVC.set(key,b);if(PVC.size>12)PVC.delete(PVC.keys().next().value)}return b}
 $('dkpvx').onclick=pvClose;
+$('dkpvedit').onclick=()=>{const d=pvD;if(!d)return;pvClose();pkLaunchEdit(d,pvSrc)};
 $('dkprev').addEventListener('mousedown',e=>{if(e.target===$('dkprev'))pvClose()});
-$('dkpvsave').onclick=()=>{if(!pvUrl)return;const a=document.createElement('a');a.href=pvUrl;a.download=pngName(pvName);document.body.appendChild(a);a.click();a.remove();$('dkpvmsg').textContent='Saved as '+pngName(pvName)+'.'};
-$('dkpvcopy').onclick=()=>{if(!pvBlob)return;navigator.clipboard.write([new ClipboardItem({'image/png':pvBlob})]).then(()=>$('dkpvmsg').textContent='Image copied to the clipboard.',()=>$('dkpvmsg').textContent='Your browser would not copy the image - use Save PNG.')};
+$('dkpvsave').onclick=async()=>{if(!pvD)return;$('dkpvmsg').textContent='Preparing the full deck sheet...';
+ try{const b=await pvFull(),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=pngName(pvD.n);document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);$('dkpvmsg').textContent='Saved the full deck sheet as '+pngName(pvD.n)+'.'}
+ catch(e){$('dkpvmsg').textContent='Could not draw the image in this browser.'}};
+$('dkpvcopy').onclick=()=>{if(!pvD)return;$('dkpvmsg').textContent='Preparing the full deck sheet...';
+ navigator.clipboard.write([new ClipboardItem({'image/png':pvFull()})]).then(()=>$('dkpvmsg').textContent='Full deck sheet copied to the clipboard.',()=>$('dkpvmsg').textContent='Your browser would not copy the image - use Save PNG.')};
 addEventListener('keydown',e=>{if(e.key=='Escape'&&$('dkprev').style.display=='flex'){e.stopPropagation();e.preventDefault();pvClose()}},true);
 function pkReveal(...ids){requestAnimationFrame(()=>ids.forEach(id=>{const t=$(id)&&$(id).querySelector('.pk.sel');if(t)t.scrollIntoView({block:'nearest',inline:'nearest'})}))}
 function setDefault(name){putDef(name);if(name){const j=ALL.findIndex(d=>d.n==name);if(j>=0)$('d0').selectedIndex=j}renderPickers()}

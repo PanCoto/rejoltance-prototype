@@ -152,10 +152,9 @@ function rkCard(me){
   +'<div class="rkt">Prestige '+p.lv+'</div><div class="rkrt">'+p.prog+' / '+PRESTIGE_WINS+'<small>wins to Prestige '+(p.lv+1)+'</small></div></div></div>'
   +'<div class="tbar rk"><i style="width:'+p.pct+'%"></i></div>'
   +'<div class="rkchs">'+chip('Wins',me.wins,'#fff')+chip('Losses',me.losses,'#ff4a50')+chip('Draws',me.draws||0)+chip('Win rate',pct(me.wins,g))+(hs.n?chip('Streak',(hs.ct=='win'?'W':hs.ct=='loss'?'L':'D')+hs.cur):'')+'</div>'}
-function rkRows(lb,me){
- lb=lb.slice().sort((a,b)=>b.wins-a.wins||a.losses-b.losses||String(a.name).localeCompare(String(b.name)));
- return lb.length?lb.map(p=>{const mine=me&&p.pid&&p.pid==me.pid;
-  return'<div class="rkr'+(mine?' me':'')+'" data-pid="'+esc(p.pid||'')+'" title="View profile"><em class="av">'+avHTML(mine?avId()||p.avatar:p.avatar,p.name)+'</em><b>'+esc(p.name)+'</b><u>'+prBadge(p.wins)+'</u><span>'+p.wins+' W</span><small>'+p.losses+' L</small></div>'}).join(''):'<div class="rkr"><b>No ranked games have been played yet.</b></div>'}
+function rkRows(lb,me){   // the server sends the list already ordered by rating
+ return lb.length?lb.map((p,i)=>{const mine=me&&p.pid&&p.pid==me.pid;
+  return'<div class="rkr'+(mine?' me':'')+'" data-pid="'+esc(p.pid||'')+'" title="View profile"><i>'+(i+1)+'</i><em class="av">'+avHTML(mine?avId()||p.avatar:p.avatar,p.name)+'</em><b>'+esc(p.name)+'</b><u>'+prBadge(p.wins)+'</u><span>'+p.rating+'</span><small>'+p.wins+'-'+p.losses+'</small></div>'}).join(''):'<div class="rkr"><b>No ranked games have been played yet.</b></div>'}
 async function rkOpen(){
  openPanel('rkmenu');rk('rklist').innerHTML='';rk('rkme').innerHTML=rkCard(MM.me);rk('rkplay').disabled=true;rk('rkplay').textContent='Play Ranked';
  try{syncPickers();pkReveal('pkr')}catch(e){}
