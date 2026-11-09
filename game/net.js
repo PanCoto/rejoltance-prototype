@@ -90,7 +90,8 @@ async function hostRoom(mirror){mirror=!!mirror;
   peer.on('error',e=>{if(NET!==N)return;
    if(e.type=='unavailable-id'&&n<6){try{peer.destroy()}catch(x){}open(n+1)}else lobby('Could not create room',{nodeck:1,status:netErr(e)})})};
  open(0)}
-function joinLobby(code){netLeave();syncDecks();lobby('Join a room',{join:1,status:'Pick your deck, enter the room code and press Join.'});$('lin').value=code||'';$('lin').focus()}
+let JM=false;
+function joinLobby(code,mirror){JM=!!mirror;netLeave();syncDecks();lobby('Join a room',{join:1,nodeck:mirror,status:mirror?'Enter the room code and press Join. Both players get the same deck.':'Pick your deck, enter the room code and press Join.'});$('lin').value=code||'';$('lin').focus()}
 async function joinRoom(code){
  code=(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
  if(code.length!=5){lobby('Join a room',{join:1,status:'Enter the 5-character room code.'});return}
@@ -186,7 +187,7 @@ async function guestHandle(m){
   await strikeLane(m.i);G=unsnap(m.s,m.ev);flash=-1;render();anim();recoil();await sleep((m.ev||[]).some(x=>x.k=='atk'&&x.post)?1150:650);break}
  case'pre':{busy=true;flash=m.i;render();const u=await choosePre(G.p[0].ln[m.i]);netSend({t:'preAns',u:u?u.uid:-1});say('Combat!');render();break}
  case'rm':if($('ovr').textContent=='Rematch')$('ovr').textContent='Rematch (opponent ready)';break;
- case'full':case'err':{if(m.t=='full'&&NET.qm){qmAgain();break}const msg=m.t=='full'?'That room already has two players.':m.msg;netLeave(1);lobby('Could not join',{join:1,status:msg});break}}}
+ case'full':case'err':{if(m.t=='full'&&NET.qm){qmAgain();break}const msg=m.t=='full'?'That room already has two players.':m.msg;netLeave(1);lobby('Could not join',{join:1,nodeck:JM,status:msg});break}}}
 
 $('mhost').onclick=()=>{LB='frmenu';startAudio();hostRoom(false)};
 $('mjoin').onclick=()=>{LB='frmenu';joinLobby('')};

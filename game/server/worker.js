@@ -229,7 +229,7 @@ export class Hub extends DurableObject {
   }
   board(limit) {
     if (!this.lbCache || Date.now() - this.lbCache.t > 20000) {
-      const rows = this.all('SELECT pid,name,avatar,rating,games,wins,losses FROM accounts WHERE games>0 ORDER BY rating DESC, games DESC LIMIT 100');
+      const rows = this.all('SELECT pid,name,avatar,rating,games,wins,losses FROM accounts WHERE games>0 ORDER BY wins DESC, losses ASC, games DESC LIMIT 100');
       this.lbCache = { t: Date.now(), rows: rows.map((r, i) => ({ ...r, rank: i + 1 })) };
     }
     return this.lbCache.rows.slice(0, limit);
@@ -248,13 +248,13 @@ export class Hub extends DurableObject {
   }
   search(q) {
     q = String(q || '').replace(/[%_\\]/g, '').trim().slice(0, 16); if (q.length < 2) return [];
-    return this.all('SELECT pid,name,avatar,rating,games FROM accounts WHERE name LIKE ? ORDER BY games DESC, rating DESC LIMIT 10', q + '%');
+    return this.all('SELECT pid,name,avatar,rating,games,wins FROM accounts WHERE name LIKE ? ORDER BY games DESC, rating DESC LIMIT 10', q + '%');
   }
   friendList(a) {
     const rows = this.all('SELECT f.a fa, f.status st, x.* FROM friends f JOIN accounts x ON x.uid = CASE WHEN f.a=? THEN f.b ELSE f.a END WHERE f.a=? OR f.b=? ORDER BY x.last DESC', a.uid, a.uid, a.uid);
     const out = { friends: [], incoming: [], outgoing: [] };
     for (const r of rows) {
-      const o = { pid: r.pid, name: r.name, avatar: r.avatar || 0, rating: r.rating, games: r.games, last: r.last };
+      const o = { pid: r.pid, name: r.name, avatar: r.avatar || 0, rating: r.rating, games: r.games, wins: r.wins, last: r.last };
       if (r.st === 'accepted') out.friends.push(o); else if (r.fa === a.uid) out.outgoing.push(o); else out.incoming.push(o);
     }
     return out;

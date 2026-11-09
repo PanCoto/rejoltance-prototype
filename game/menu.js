@@ -7,7 +7,7 @@ $('tfriend').onclick=()=>{MODE='online';openPanel('frmenu')};
 $('tbot').onclick=()=>botPanel('bot');$('tendless').onclick=()=>botPanel('endless');
 $('tmirror').onclick=()=>{MODE='mirror';openPanel('mirmenu')};
 $('mirbot').onclick=()=>{MODE='mirror';closePanels();start();musicStart()};
-$('mirhost').onclick=()=>{LB='mirmenu';startAudio();hostRoom(true)};$('mirjoin').onclick=()=>{LB='mirmenu';joinLobby('')};
+$('mirhost').onclick=()=>{LB='mirmenu';startAudio();hostRoom(true)};$('mirjoin').onclick=()=>{LB='mirmenu';joinLobby('',true)};
 const openSet=()=>{$('setmenu').classList.toggle('ig',$('game').style.display=='block');
  openPanel('setmenu')};
 $('sopen').onclick=openSet;$('mu').onclick=openSet;
@@ -17,6 +17,8 @@ addEventListener('keydown',e=>{if(e.key!='Escape')return;if($('game').style.disp
  if($('lobby').style.display=='flex')$('lcancel').click();else closePanels()});
 $('rndprem').checked=lsGet('rj_rndpool')!=='mine';
 $('rndprem').onchange=()=>lsSet('rj_rndpool',$('rndprem').checked?'all':'mine');
+$('hideprem').checked=lsGet('rj_hideprem')==='1';
+$('hideprem').onchange=()=>{lsSet('rj_hideprem',$('hideprem').checked?'1':'0');renderPickers()};
 $('hotnum').checked=lsGet('rj_hotnum')==='1';document.body.classList.toggle('hn',$('hotnum').checked);
 $('hotnum').onchange=()=>{lsSet('rj_hotnum',$('hotnum').checked?'1':'0');document.body.classList.toggle('hn',$('hotnum').checked)};
 const pct=(id,key,def,apply)=>{const el=$(id),n=$(id.replace('v','n'));let v=lsGet(key);v=v===null||v===''||isNaN(+v)?def:Math.max(0,Math.min(100,+v));

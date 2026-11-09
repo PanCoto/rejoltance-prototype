@@ -4,7 +4,7 @@ let ALL=[],gid=0,NET=null,MODE='bot';// MODE: 'bot' | 'mirror' | 'endless' (onli
 function fit(){const s=Math.min(innerWidth/1920,innerHeight/1080);$('stage').style.transform=`translate(-50%,-50%) scale(${s})`}
 addEventListener('resize',fit);fit();
 const show=id=>{['menu','bld','game'].forEach(k=>$(k).style.display=k==id?(k=='menu'?'flex':'block'):'none');
- ['frmenu','mirmenu','rkmenu','botmenu','achmenu','acctmenu','avpick','fdmenu','lobby','dkpick'].forEach(k=>{const e=$(k);if(e)e.style.display='none'});
+ ['frmenu','mirmenu','rkmenu','botmenu','achmenu','acctmenu','avpick','fdmenu','lobby','dkpick','dkprev'].forEach(k=>{const e=$(k);if(e)e.style.display='none'});
  if(id!='game'){const e=$('setmenu');if(e)e.style.display='none'}};
 document.querySelectorAll('.ring').forEach(c=>{const x=c.getContext('2d');for(let i=0;i<60;i++)for(let j=0;j<60;j++){const r=Math.hypot(i-29.5,j-29.5);
  if(r<=29.6&&r>=25.6){x.fillStyle=r>=27.4?'#2c2c2c':'#222';x.fillRect(i,j,1,1)}}});
@@ -246,7 +246,7 @@ function fxFlip(e,justIn){const live=findLive(e.u);if(!live)return;
  fxRm(sl,tot+60)}
 function fxDie(e,v){const sl=fxSlot(e.o,e.lane),f={id:e.id,atk:e.atk,hp:e.hp,mx:e.hp,d:CD[e.id],kw:new Set()};
  sl.insertAdjacentHTML('beforeend',cardHTML(f,1,(e.o?'e ':'')+'dying '+v));
- if(v=='burnd'){sl.insertAdjacentHTML('beforeend','<div class=\"char\"></div><div class=\"flm1\"></div><div class=\"emb\">'+[0,1,2,3].map(i=>`<b style=\"left:${22+i*18}%;--dx:${i%2?14:-14}px;animation-delay:${(i*.12).toFixed(2)}s\"></b>`).join('')+'</div>');fxRm(sl,1200)} else if(v=='aoed'){sl.insertAdjacentHTML('beforeend','<div class="fxr" style="--c:#ff5a3c"></div>');fxRm(sl,1000)}
+ if(v=='burnd'){sl.insertAdjacentHTML('beforeend','<div class=\"char\"></div><div class=\"flm1\"></div><div class=\"emb\">'+[0,1,2,3].map(i=>`<b style=\"left:${22+i*18}%;--dx:${i%2?14:-14}px;animation-delay:${(i*.12).toFixed(2)}s\"></b>`).join('')+'</div>');fxRm(sl,1200)} else if(v=='aoed'){sl.insertAdjacentHTML('beforeend','<div class="fxr" style="--c:#ff2b2b"></div>');fxRm(sl,1000)}
  else fxRm(sl,900)}
 const AOEC=e=>{const T=e.T;return T=='DealDamage'?['dmg','#ff2b2b']:T=='DestroyUnit'?['des','#c4161c']:(T=='Heal'||T=='HealToFull')?['heal','#ffffff']:T=='BuffStats'?(e.pos?['buff','#ffffff']:['deb','#c4161c']):['sil','#ffffff']};
 const slotOf=uid=>{const x=findLive(uid);return x?{o:x.o,l:x.lane}:null};
@@ -727,26 +727,86 @@ $('bmodal').addEventListener('mousedown',e=>{if(e.target===$('bmodal'))closeModa
 
 
 const PKR={d0:false,d1:false};let pkPrevR=false;
-const PKS=[['pk0','d0','pkn0'],['pk1','d1','pkn1'],['pkl','d0','pknl'],['pkr','d0','pknr'],['pk2','d0']];
+// Deck picker = a compact list on the left + a contents pane on the right (hover a row to peek, click to choose).
+// [container, select, name label, options]  bot: opponent's deck (view only)  act: Edit button allowed (it leaves the current screen)  wide: roomy layout
+const PKS=[['pk0','d0','pkn0',{act:1}],['pk1','d1','pkn1',{bot:1}],['pkl','d0','pknl',{}],['pkr','d0','pknr',{act:1}],['pk2','d0',null,{wide:1}]];
 const pkRank=(i,bot)=>{const d=ALL[i];return !bot&&getDef()==d.n?0:d.custom?1:2};
+const PKG=['Default deck','Your decks','Premade decks'];
+const pkHideOn=()=>{let v=false;try{v=localStorage.getItem('rj_hideprem')==='1'}catch(e){}return v&&ALL.some(d=>d.custom)};
+let pkRen=-1,pkErr='',pkVal='';   // pkRen: index of the deck being renamed (its row shows a text box)
+const pkOpt=id=>(PKS.find(p=>p[0]==id)||[])[3]||{};
+// one long bar per deck: art, name + stats, and its own buttons
+function pkRows(id){
+ const el=$(id),o=pkOpt(id),bot=!!o.bot,dn=getDef(),hide=!bot&&pkHideOn();
+ const order=ALL.map((d,i)=>i).filter(i=>!hide||ALL[i].custom).sort((a,b)=>pkRank(a,bot)-pkRank(b,bot)||a-b);
+ let lg=-1;
+ return order.map(i=>{const d=ALL[i],m=countsOf(d.c),st=statsOf(m),ic=iconId(m),g=pkRank(i,bot),isDef=!bot&&dn==d.n,ren=pkRen==i&&d.custom&&!bot;
+  const head=g!=lg?`<div class="pkg">${PKG[g]}</div>`:'';lg=g;
+  const mid=ren?`<div class="pkmid"><input class="pdin" maxlength="24" value="${hesc(pkVal||d.n)}" spellcheck="false" autocomplete="off">${pkErr?'<small class="pkerr">'+hesc(pkErr)+'</small>':''}</div>`
+   :`<div class="pkmid"><b>${hesc(d.n)}</b><small>${st.u} units &middot; ${st.sp} spells &middot; avg ${st.avg.toFixed(1)}</small></div>`;
+  let bt;
+  if(ren)bt='<button data-a="rok" class="pri">Save</button><button data-a="rno">Cancel</button>';
+  else{bt='<button data-a="prev" title="See every card in this deck">Preview</button>';
+   if(!bot){
+    if(d.custom)bt+='<button data-a="ren" title="Rename this deck">Rename</button>';
+    if(o.act)bt+=`<button data-a="edit" title="${d.custom?'Open in the deck editor':'Open a copy in the deck editor'}">${d.custom?'Edit':'Edit copy'}</button>`;
+    bt+=`<button data-a="def" class="${isDef?'on':''}" title="${isDef?'Your default deck - click to unset':'Make this your default deck'}">${STAR}<span class="bl">Default</span></button>`}}
+  return head+`<div class="pk" data-i="${i}" tabindex="0" role="button" title="${hesc(d.n)}">
+   <div class="pkth">${ic?imgTag(ic.Id):'<i class="dkq">?</i>'}</div>${mid}<div class="pkbt">${bt}</div><i class="pkchk"></i></div>`}).join('')}
+function pkList(id){const l=$(id).querySelector('.pkl'),s=l.scrollTop;l.innerHTML=pkRows(id);l.scrollTop=s;syncPickers()}
 function renderPickers(){
- PKS.forEach(([id,sid])=>{const el=$(id);if(!el)return;const bot=sid=='d1',dn=getDef();
-  const order=ALL.map((d,i)=>i).sort((a,b)=>pkRank(a,bot)-pkRank(b,bot)||a-b);
-  el.dataset.sid=sid;
-  el.innerHTML=order.map(i=>{const d=ALL[i],m=countsOf(d.c),st=statsOf(m),ic=iconId(m),mx=Math.max(1,...st.cv),isDef=!bot&&dn==d.n;
-   return`<div class="pk" data-i="${i}" tabindex="0" role="button" title="${hesc(d.n)}">
-    <div class="pkart">${ic?imgTag(ic.Id):'<i class="dkq">?</i>'}<span class="pkb">${isDef?'<span class="pkd">'+STAR+' Default</span>':''}${d.custom?'<span class="pkt">Yours</span>':''}</span><i class="pkchk"></i></div>
-    <div class="pkinfo"><b>${hesc(d.n)}</b><small>${st.u} units &middot; ${st.sp} spells<br>avg cost ${st.avg.toFixed(1)}</small>
-     <div class="dkmini">${st.cv.map(q=>`<i style="height:${q?Math.max(12,q/mx*100):5}%"></i>`).join('')}</div></div></div>`}).join('');
-  el.onclick=e=>{const t=e.target.closest('.pk');if(t)pickDeck(sid,+t.dataset.i)};
-  el.onkeydown=e=>{if(e.key=='Enter'||e.key==' '){const t=e.target.closest('.pk');if(t){e.preventDefault();pickDeck(sid,+t.dataset.i)}}}});
+ if(pkHideOn()&&$('game').style.display!='block'){const c=$('d0'),cu=ALL[c.selectedIndex];if(!cu||!cu.custom){const dn=getDef(),j=ALL.findIndex(d=>d.custom&&d.n==dn),k=j>=0?j:ALL.findIndex(d=>d.custom);if(k>=0)c.selectedIndex=k}}
+ PKS.forEach(([id,sid,nm,o])=>{const el=$(id);if(!el)return;
+  el.dataset.sid=sid;el.innerHTML='<div class="pkl"></div>';const list=el.querySelector('.pkl');list.innerHTML=pkRows(id);
+  list.onclick=e=>{const b=e.target.closest('button[data-a]');
+   if(b){pkAct(id,b.dataset.a,+b.closest('.pk').dataset.i);return}
+   if(e.target.closest('.pdin'))return;
+   const t=e.target.closest('.pk');if(t){const was=pkRen>=0;pkRen=-1;pkErr=pkVal='';pickDeck(sid,+t.dataset.i);if(was)renderPickers()}};
+  list.onkeydown=e=>{const t=e.target;
+   if(t.classList.contains('pdin')){if(e.key=='Enter'){e.preventDefault();pkAct(id,'rok',pkRen)}else if(e.key=='Escape'){e.preventDefault();e.stopPropagation();pkAct(id,'rno',pkRen)}return}
+   if((e.key=='Enter'||e.key==' ')&&t.classList.contains('pk')){e.preventDefault();const was=pkRen>=0;pkRen=-1;pkErr=pkVal='';pickDeck(sid,+t.dataset.i);if(was)renderPickers()}}});
  syncPickers()}
+function pkDoRename(i,nn){
+ const d=ALL[i];if(!d||!d.custom)return 'That deck cannot be renamed.';const n=String(nn||'').trim().slice(0,24);
+ if(!n)return 'Give the deck a name.';if(n==d.n)return '';
+ if(DECKS.some(x=>x.n==n)||loadC().some(x=>x.n==n))return 'A deck with that name already exists.';
+ const c=loadC(),k=c.findIndex(x=>x.n==d.n);if(k<0)return 'Could not find that deck.';
+ c[k]={...c[k],n};saveC(c);if(getDef()==d.n)putDef(n);if(selDeck=='c:'+d.n)selDeck='c:'+n;
+ ['d0','d1'].forEach(s=>{const op=$(s).selectedOptions[0];if(op&&op.dataset.n==d.n)op.dataset.n=n});
+ return ''}
+function pkAct(id,a,i){
+ const d=ALL[i];if(!d)return;
+ if(a=='prev')return pkPreview(d);
+ if(a=='ren'){pkRen=i;pkErr=pkVal='';pkList(id);const x=$(id).querySelector('.pdin');if(x){x.focus();x.select()}return}
+ if(a=='rno'){pkRen=-1;pkErr=pkVal='';return pkList(id)}
+ if(a=='rok'){const x=$(id).querySelector('.pdin'),v=x?x.value:'',er=pkDoRename(i,v);
+  if(er){pkErr=er;pkVal=v;pkList(id);const y=$(id).querySelector('.pdin');if(y)y.focus();return}
+  pkRen=-1;pkErr=pkVal='';refreshDecks();return}
+ if(a=='def'){setDefault(getDef()!=d.n?d.n:null);return}
+ if(a=='edit'){pkRen=-1;setView('cards');show('bld');editDeck(d)}}
 function syncPickers(){
  PKS.forEach(([id,sid,nm])=>{const el=$(id);if(!el)return;const cur=$(sid).selectedIndex,rnd=!!PKR[sid];
   el.querySelectorAll('.pk').forEach(t=>t.classList.toggle('sel',!rnd&&+t.dataset.i==cur));
   const rb=el.parentElement.querySelector('.pkrnd');if(rb)rb.classList.toggle('on',rnd);
   if(nm&&$(nm)&&ALL[cur])$(nm).textContent=rnd?'Random deck':ALL[cur].n})}
 function pickDeck(sid,i){PKR[sid]=false;$(sid).selectedIndex=i;syncPickers()}
+const PVC=new Map();let pvUrl=null,pvBlob=null,pvName='deck',pvTk=0;
+const pvClose=()=>{pvTk++;$('dkprev').style.display='none'};
+async function pkPreview(d){
+ const m=countsOf(d.c),ids=expand(m),st=statsOf(m),key=d.n+'|'+d.c.join(','),tk=++pvTk;pvName=d.n;
+ $('dkpvt').textContent=d.n;$('dkpvs').textContent=st.n+' cards \u00b7 '+st.u+' units \u00b7 '+st.sp+' spells \u00b7 avg cost '+st.avg.toFixed(1);
+ $('dkpvimg').hidden=true;$('dkpvld').hidden=false;$('dkpvld').textContent='Drawing the deck...';$('dkpvmsg').textContent='';$('dkpvbox').scrollTop=0;
+ $('dkpvcopy').style.display=navigator.clipboard&&window.ClipboardItem?'':'none';$('dkprev').style.display='flex';
+ try{let blob=PVC.get(key);
+  if(!blob){blob=await RJShare.render({name:d.n,ids,icon:(iconId(m)||{}).Id,stats:st,code:deckEncode(m)});PVC.set(key,blob);if(PVC.size>8)PVC.delete(PVC.keys().next().value)}
+  if(tk!==pvTk)return;pvBlob=blob;if(pvUrl)URL.revokeObjectURL(pvUrl);pvUrl=URL.createObjectURL(blob);
+  $('dkpvimg').src=pvUrl;$('dkpvimg').hidden=false;$('dkpvld').hidden=true}
+ catch(e){if(tk===pvTk)$('dkpvld').textContent='Could not draw the image in this browser.'}}
+$('dkpvx').onclick=pvClose;
+$('dkprev').addEventListener('mousedown',e=>{if(e.target===$('dkprev'))pvClose()});
+$('dkpvsave').onclick=()=>{if(!pvUrl)return;const a=document.createElement('a');a.href=pvUrl;a.download=pngName(pvName);document.body.appendChild(a);a.click();a.remove();$('dkpvmsg').textContent='Saved as '+pngName(pvName)+'.'};
+$('dkpvcopy').onclick=()=>{if(!pvBlob)return;navigator.clipboard.write([new ClipboardItem({'image/png':pvBlob})]).then(()=>$('dkpvmsg').textContent='Image copied to the clipboard.',()=>$('dkpvmsg').textContent='Your browser would not copy the image - use Save PNG.')};
+addEventListener('keydown',e=>{if(e.key=='Escape'&&$('dkprev').style.display=='flex'){e.stopPropagation();e.preventDefault();pvClose()}},true);
 function pkReveal(...ids){requestAnimationFrame(()=>ids.forEach(id=>{const t=$(id)&&$(id).querySelector('.pk.sel');if(t)t.scrollIntoView({block:'nearest',inline:'nearest'})}))}
 function setDefault(name){putDef(name);if(name){const j=ALL.findIndex(d=>d.n==name);if(j>=0)$('d0').selectedIndex=j}renderPickers()}
 window.pkResolve=pkResolve;window.PKR=PKR;window.renderPickers=renderPickers;window.syncPickers=syncPickers;window.pkReveal=pkReveal;window.setDefault=setDefault;
@@ -754,7 +814,7 @@ window.pkResolve=pkResolve;window.PKR=PKR;window.renderPickers=renderPickers;win
 // Random is a mode, not a preview: the deck is only drawn when the game starts (pkResolve), so it can't be rerolled until you like it.
 function pkRandom(sid){PKR[sid]=true;syncPickers()}
 // Random draws from every deck, or - with Settings > Random deck > "My decks only" - from your own decks (premade ones only if you have none).
-function pkResolve(){const mineOnly=$('rndprem')&&!$('rndprem').checked;
+function pkResolve(){const mineOnly=($('rndprem')&&!$('rndprem').checked)||pkHideOn();
  ['d0','d1'].forEach(sid=>{if(!PKR[sid]||!ALL.length)return;
   let pool=ALL.map((d,i)=>i);if(mineOnly){const mine=pool.filter(i=>ALL[i].custom);if(mine.length)pool=mine}
   const cur=$(sid).selectedIndex;let i=pool[Math.floor(Math.random()*pool.length)];

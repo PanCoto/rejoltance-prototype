@@ -76,18 +76,18 @@
  <div class="ovl bk" id="botmenu"><div class="panel wide"><h2 id="bott">Play with the bot</h2><div class="sub" id="botdiff"></div><div id="ebest"></div>
   <select id="d0" hidden></select><select id="d1" hidden></select>
   <div class="pkcols">
-   <section class="pkcol"><div class="pkh"><label>Your deck</label><span class="pkcur" id="pkn0"></span></div><div class="pkgrid" id="pk0"></div></section>
-   <section class="pkcol"><div class="pkh"><label id="botlbl">Bot's deck</label><span class="pkcur" id="pkn1"></span></div><div class="pkgrid" id="pk1"></div></section>
+   <section class="pkcol"><div class="pkh"><label>Your deck</label><span class="pkcur" id="pkn0"></span></div><div class="pkx" id="pk0"></div></section>
+   <section class="pkcol"><div class="pkh"><label id="botlbl">Bot's deck</label><span class="pkcur" id="pkn1"></span></div><div class="pkx" id="pk1"></div></section>
   </div>
-  <div class="pkhint">Tip: set a default deck in Card Collection &rsaquo; Decks and it is pre-selected here.</div>
+  <div class="pkhint">Use Preview to see every card in a deck. Set a default deck to have it pre-selected everywhere.</div>
   <div class="btns"><button id="go">Start</button><button id="botback">Back</button></div></div></div>
  <div class="ovl bk" id="achmenu"><div class="panel wide"><h2>Achievements</h2><div class="sub" id="achsum"></div><div id="achbar"><i></i></div><div id="achlist"></div><div class="btns"><button id="achback">Back</button></div></div></div>
  <div class="ovl bk" id="rkmenu"><div class="panel wide rkp"><h2>Ranked</h2><div class="sub" id="rksub"></div>
   <div class="rkgrid">
    <div class="rkl">
     <div id="rkme"></div>
-    <div class="rkdeck"><div class="pkh"><label>Your deck</label><span class="pkcur" id="pknr"></span></div><div class="pkgrid" id="pkr"></div>
-     <div class="pkhint">You can still change your deck while searching and on the match screen, until you press Ready.</div></div>
+    <div class="rkdeck"><div class="pkh"><label>Your deck</label><span class="pkcur" id="pknr"></span></div><div class="pkx" id="pkr"></div>
+     <div class="pkhint">Use Preview to see every card in a deck. You pick your final deck again on the match screen, until you press Ready.</div></div>
    </div>
    <div class="rkrt"><h4>Leaderboard</h4><div id="rklist"></div></div>
   </div>
@@ -105,7 +105,7 @@
     <div id="pfdcrow"><label>Discord</label><span id="pfdc"></span><span class="rkbt"><button id="pfdclink">Link Discord</button><button id="pfdclogin">Log in with Discord</button></span></div></div>
   </div>
   <div id="pfmsg"></div>
-  <div class="btns"><button id="pffr" hidden></button><button id="pfdel">Delete account</button><button id="pfback">Back</button></div></div></div>
+  <div class="btns"><button id="pffr" hidden></button><button id="pflogout" hidden>Log out</button><button id="pfdel">Delete account</button><button id="pfback">Back</button></div></div></div>
  <div class="ovl bk" id="fdmenu"><div class="panel prof"><h2>Friends</h2><div class="sub" id="fdsub"></div>
   <div class="fdsearch"><input type="text" id="fdq" placeholder="Find a player by name..." maxlength="16" autocomplete="off" spellcheck="false"><button id="fdgo">Search</button></div>
   <div id="fdres"></div><div id="fdlist"></div>
@@ -114,6 +114,7 @@
   <input type="text" id="avq" placeholder="Search cards..." autocomplete="off" spellcheck="false"><div id="avgrid"></div>
   <div class="btns"><button id="avclear">Use initial instead</button><button id="avback">Back</button></div></div></div>
  <div class="ovl bk" id="setmenu"><div class="panel"><h2>Settings</h2>  <div class="srow chk"><label for="rndprem">Random includes Premade decks</label><input type="checkbox" id="rndprem" checked title="When on, the Random button can pick premade decks too. When off, it only picks your own decks (premade ones are used only if you have none)."></div>
+  <div class="srow chk"><label for="hideprem">Hide premade decks in my deck lists</label><input type="checkbox" id="hideprem" title="Premade decks are hidden from the deck pickers as long as you have at least one deck of your own. The bot's deck list is not affected."></div>
   <div class="srow chk"><label for="hotnum">Show card numbers (hotkeys 1-8)</label><input type="checkbox" id="hotnum" title="Shows a small number above each card in your hand. Press that number on the keyboard to select the card."></div>
   <div class="srow"><label>Sound effects</label><input type="range" id="sfxv" min="0" max="100" step="5"><b id="sfxn"></b></div>
   <div class="srow"><label>Music</label><input type="range" id="musv" min="0" max="100" step="5"><b id="musn"></b></div>
@@ -122,7 +123,7 @@
   <div id="lmatch"><div class="lmvs"><div class="lmp"><em class="av" id="lmav0"></em><b id="lmn0"></b><small id="lmr0"></small></div><div class="lmx">VS</div><div class="lmp"><em class="av" id="lmav1"></em><b id="lmn1"></b><small id="lmr1"></small></div></div>
    <div class="lmh">Choose your deck - it locks when you press Ready</div></div>
   <input id="lin" maxlength="5" placeholder="ROOM CODE" autocomplete="off" spellcheck="false">
-  <div id="ldrow"><div class="pkh"><label>Your deck</label><span class="pkcur" id="pknl"></span></div><div class="pkgrid" id="pkl"></div></div><div id="ls"></div>
+  <div id="ldrow"><div class="pkh"><label>Your deck</label><span class="pkcur" id="pknl"></span></div><div class="pkx" id="pkl"></div></div><div id="ls"></div>
   <div id="lbar"><i id="lbari"></i></div>
   <div style="display:flex;gap:30px"><button id="lready">Ready</button><button id="lgo">Join</button><button id="lcopy">Copy invite link</button><button id="lcancel">Cancel</button></div></div></div>
  <div class="ovl" id="mul"><h2 id="mt">Mulligan - click cards to replace</h2><div id="mh"></div><button id="mok">Confirm</button><div id="mpr" style="display:none;gap:40px"><button id="mfirst">Go first</button><button id="msecond">Go second</button></div></div>
@@ -130,8 +131,12 @@
  <div class="ovl" id="modal"><h2>Surrender?</h2><div style="display:flex;gap:30px"><button id="myes">Yes</button><button id="mno">No</button></div></div>
  <div class="ovl" id="ov"><div id="ovt"></div><div id="ovdk"></div><div id="ovmm"></div><div style="display:flex;gap:30px"><button id="ovr">Rematch</button><button id="ovd">Change deck</button><button id="ovb">Menu</button></div></div>
  <div class="ovl bk" id="dkpick"><div class="panel wide"><h2>Choose your deck</h2><div class="sub">Used for the next game</div>
-  <div class="pkgrid big" id="pk2"></div>
+  <div class="pkx" id="pk2"></div>
   <div class="btns"><button id="dkok">Use this deck</button><button id="dkcancel">Back</button></div></div></div>
+ <div class="ovl bk" id="dkprev"><div class="panel"><h2 id="dkpvt"></h2><div class="sub" id="dkpvs"></div>
+  <div id="dkpvbox"><div id="dkpvld">Drawing the deck...</div><img id="dkpvimg" alt="" hidden></div>
+  <div id="dkpvmsg"></div>
+  <div class="btns"><button id="dkpvsave" class="pri">Save PNG</button><button id="dkpvcopy">Copy image</button><button id="dkpvx">Close</button></div></div></div>
 </div>
 <div id="rot">Please rotate your device to landscape (this game is designed for a wide screen).</div>
 <audio id="au" loop></audio>
