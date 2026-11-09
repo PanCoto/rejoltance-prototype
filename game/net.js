@@ -52,6 +52,29 @@ function netPush(x){if(!NET||!NET.host||!G)return;
  const m=Object.assign({t:'st',s:snap(G),ev:NET.ev.map(mev)},x||{});NET.ev=[];netSend(m)}
 const descr=v=>Array.isArray(v)?{m:v.map(u=>u.uid)}:typeof v=='number'?{n:v}:v&&v.h?{h:v.p}:v&&v.kw?{u:v.uid}:{c:v.uid};
 const armSync=()=>{if(!NET)return;clearTimeout(NET.syncT);NET.syncT=setTimeout(()=>netSend({t:'sync'}),3500)};
+// The online guest chooses targets for their own effects that the engine parked in G.pq (summons, transforms, evolving, Echo Chamber, Dual Wield's 2nd cast).
+// Host -> guest {t:'ask',d,xu}: the (pseudo) card and the uid of the unit it belongs to. Guest runs the normal pick flow and answers {t:'askAns',pk}.
+// No answer in time -> [] -> the engine picks whatever is missing, like it did before.
+function askRemote(it){return new Promise(res=>{
+ if(!NET||!NET.host||NET.dead||!NET.conn||!NET.conn.open){res([]);return}
+ netPush();
+ const d=JSON.parse(JSON.stringify(Object.assign({},it.d,{ExU:undefined}))),xu=it.d.ExU?it.d.ExU.uid:0,p=G.p[1],sp=it.d.Type=='Spell';
+ let t=0;
+ const fin=pk=>{clearTimeout(t);if(NET){NET.ask=null;NET.asking=0}say('');res(pk)};
+ NET.ask={res:raw=>{   // resolve + validate what the guest sent
+  const pk=[];
+  for(const o of Array.isArray(raw)?raw:[]){
+   const ks=apicks(G,p,it.d,pk,null),k=ks[pk.length];if(!k)break;
+   const v=o&&o.h!=null?H(1-o.h):o?resolvePick(G,p,null,o):undefined;
+   if(v==null)break;
+   if(['e','f','a','eh','S'].includes(k)&&typeof v=='object'&&!v.h&&!req(G,p,k,ks.f[pk.length]||null,null,sp,it.d.ExU).includes(v))break;
+   if(k=='L'&&!req(G,p,'L',null,pk.filter((_,j)=>ks[j]=='L')).includes(v))break;
+   if(k=='P'&&!(v>=0&&v<4))break;
+   pk.push(v)}
+  fin(pk)}};
+ NET.asking=1;say('Opponent is choosing a target...');
+ t=setTimeout(()=>{if(NET&&NET.ask)fin([])},(15+TM_GRACE+2)*1000);
+ netSend({t:'ask',d,xu})})}
 function askPre(i,opts){return new Promise(res=>{NET.pre={opts,res};netSend({t:'pre',i});
  setTimeout(()=>{if(NET&&NET.pre&&NET.pre.res===res){NET.pre=null;res(null)}},(PRE_SEC+TM_GRACE)*1000)})}   // no answer in time -> null -> the engine picks the target itself
 
@@ -106,6 +129,7 @@ async function joinRoom(code){
  peer.on('error',e=>fail(e.type=='peer-unavailable'?'No room with that code. Check the code and try again.':netErr(e)))}
 function onClose(N){if(NET!==N||N.dead)return;N.dead=true;clearTimeout(N.syncT);
  if(N.pre){N.pre.res(N.pre.opts[0]);N.pre=null}
+ if(N.ask){const a=N.ask;N.ask=null;a.res([])}
  const inGame=G&&$('game').style.display=='block';
  if(inGame){if(!G.over){G.over={win:0,left:1};say('');$('mul').style.display='none';$('hist').style.display='none';$('modal').style.display='none';pend=sel=null;castMode=false}
   $('ovr').style.display='none';busy=false;render();finish();return}
@@ -121,6 +145,7 @@ function rematch(){if(!NET||NET.dead)return;
 
 const HQ=[];let hrun=false;
 function hostMsg(m){
+ if(m.t=='askAns'){const a=NET.ask;if(a){NET.ask=null;a.res(m.pk)}return}   // handled right away: the move handler that is waiting for it is still running in the queue
  if(m.t=='preAns'){const p=NET.pre;if(p){NET.pre=null;p.res(m.u===-1?null:(p.opts.find(u=>u.uid==m.u)||p.opts[0]))}return}
  HQ.push(m);if(!hrun)hpump()}
 async function hpump(){hrun=true;while(HQ.length&&NET){const m=HQ.shift();try{await hostHandle(m)}catch(e){console.error('net',e)}}hrun=false}
@@ -130,7 +155,7 @@ function hostStart(){
  NET.deckH=ALL[$('d0').value].c.slice();
  let go=null;if(NET.mirror){const m=mirrorDeck();NET.deckH=m.slice();NET.deckG=m.slice();go={mir:1}}
  gid++;G=newGame(NET.deckH,NET.deckG,go);busy=true;sel=pend=null;castMode=false;stickyZoom=false;
- NET.mull=[0,0];NET.pref=[null,null];NET.rm=[0,0];NET.ev=[];NET.pre=null;
+ NET.mull=[0,0];NET.pref=[null,null];NET.rm=[0,0];NET.ev=[];NET.pre=null;NET.ask=null;NET.asking=0;
  ['lobby','ov','hist','modal'].forEach(k=>$(k).style.display='none');$('ovr').style.display='';$('ovr').textContent='Rematch';
  show('game');say('');render();showMul();netSend({t:'start',name:myName(),s:snap(G)});
  clearTimeout(NET.mT);clearTimeout(NET.pT);NET.mT=setTimeout(hostForceMull,(MULL_SEC+TM_GRACE)*1000)}
@@ -158,7 +183,8 @@ async function hostHandle(m){
   await flyCard(c.id,heroFrom(),sp?centerRect():slotRect(1,ln),{out:sp,dur:sp?480:380,hold:300,fc:cost(G,p,c),ba:c.ba});
   if(!G||G.over)break;
   const ok=play(G,p,m.ci,ln==null?null:ln,pk);render();anim();
-  netPush(ok?{fly:{id:c.id,sp:sp?1:0,ln,by:1}}:{});break}
+  netPush(ok?{fly:{id:c.id,sp:sp?1:0,ln,by:1}}:{});
+  if(ok&&G.pq&&G.pq.length)await askPending(gid);break}
  case'end':{if(!G||G.over||G.act!==1||G.step>=3){netPush();break}if(m.to)L(G,'Enemy ran out of time');nextStep(G);flow();break}
  case'sur':{if(!G||G.over)break;G.over={win:0,sur:1};L(G,'Enemy surrendered');pend=null;sel=null;castMode=false;say('');
   ['mul','hist','modal'].forEach(k=>$(k).style.display='none');render();netPush();break}
@@ -185,6 +211,9 @@ async function guestHandle(m){
   render();anim();break}
  case'lane':{busy=true;flash=m.i;render();
   await strikeLane(m.i);G=unsnap(m.s,m.ev);flash=-1;render();anim();recoil();await sleep((m.ev||[]).some(x=>x.k=='atk'&&x.post)?1150:650);break}
+ case'ask':{busy=true;const d=m.d;d.ExU=m.xu?units(G.p[0]).concat(units(G.p[1])).find(u=>u.uid==m.xu)||null:null;
+  sel=pend=null;castMode=false;render();
+  const pk=await askExt({d});netSend({t:'askAns',pk:(pk||[]).map(descr)});say('');render();break}
  case'pre':{busy=true;flash=m.i;render();const u=await choosePre(G.p[0].ln[m.i]);netSend({t:'preAns',u:u?u.uid:-1});say('Combat!');render();break}
  case'rm':if($('ovr').textContent=='Rematch')$('ovr').textContent='Rematch (opponent ready)';break;
  case'full':case'err':{if(m.t=='full'&&NET.qm){qmAgain();break}const msg=m.t=='full'?'That room already has two players.':m.msg;netLeave(1);lobby('Could not join',{join:1,nodeck:JM,status:msg});break}}}

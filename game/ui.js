@@ -130,7 +130,7 @@ function tmSync(){   // called at the end of every render(): starts a fresh coun
  tmTick()}
 function tmExpire(k,tries){
  if(TM.key!==k||!NET||!G||G.over)return;
- if(busy&&tries<20){TM.wd=setTimeout(()=>tmExpire(k,tries+1),250);return}   // let a running animation finish first (max 5 s)
+ if((busy&&tries<20)||(pend&&pend.ext)||(NET&&NET.asking)){TM.wd=setTimeout(()=>tmExpire(k,tries+1),250);return}   // let a running animation finish first (max 5 s)
  if(G.act==0){if(NET.host)L(G,'You ran out of time');say("Time's up - phase skipped");endNow(true)}
  else if(NET.host&&G.act==1&&G.step<3){L(G,'Enemy ran out of time');nextStep(G);flow()}}
 // Mulligan screen (online only): a countdown in the screen title. Time up -> the cards currently marked are swapped (nothing marked = keep all);
@@ -157,15 +157,16 @@ function autoSkip(){
   if(G&&!G.over&&G.step<3&&mine()&&!pend&&sel==null&&!castMode&&noMoves())endNow();else asClear()},AUTOSKIP_MS)}
 setInterval(autoSkip,400);
 // ===== END AUTO-SKIP =====
-const ASK={L:'Choose a free lane to summon into',M:'Choose units to sacrifice',e:'Choose an enemy unit',f:'Choose a friendly unit',S:'Choose a unit to sacrifice',a:'Choose any unit',D:'Choose a card from your deck',eh:'Choose an enemy unit or the enemy hero'};
+const ASK={L:'Choose a free lane to summon into',M:'Choose units to sacrifice',e:'Choose an enemy unit',f:'Choose a friendly unit',S:'Choose a unit to sacrifice',a:'Choose any unit',D:'Choose a card from your deck',eh:'Choose an enemy unit or the enemy hero',P:'Choose a lane - enemy units there and in the adjacent lanes are affected'};
 const LX=[36,332,624,916],LY=[88,432];
-const mine=()=>G.act==0&&!busy&&!G.over;
-const ksNow=()=>pend.pre?pend.ks:apicks(G,G.p[0],CD[G.p[0].hand[pend.ci].id],pend.got,pend.ln);
+const mine=()=>(G.act==0||(pend&&pend.ext))&&!busy&&!G.over;
+const pdef=()=>pend.ext?pend.ext.d:CD[G.p[0].hand[pend.ci].id];   // the card (or pseudo card) whose picks are being made
+const ksNow=()=>pend.pre?pend.ks:apicks(G,G.p[0],pdef(),pend.got,pend.ln);
 const kind=()=>pend?ksNow()[pend.got.length]:null;
 function laneEx(){const ex=pend.ln!=null?[pend.ln]:[];ksNow().forEach((k,j)=>{if(k=='L'&&j<pend.got.length&&typeof pend.got[j]=='number')ex.push(pend.got[j])});return ex}
-const pendSp=()=>{const c=pend&&!pend.pre&&G.p[0].hand[pend.ci];return !!c&&CD[c.id].Type=='Spell'};
+const pendSp=()=>{if(pend&&pend.ext)return pend.ext.d.Type=='Spell';const c=pend&&!pend.pre&&G.p[0].hand[pend.ci];return !!c&&CD[c.id].Type=='Spell'};
 function validTargets(){const k=kind();if(k=='L')return req(G,G.p[0],'L',null,laneEx());if(!k||k=='C'||k=='D')return[];
- const f=(ksNow().f||[])[pend.got.length]||null;return req(G,G.p[0],k,f,null,pendSp())}
+ const f=(ksNow().f||[])[pend.got.length]||null;return req(G,G.p[0],k,f,null,pendSp(),pend.ext?pend.ext.d.ExU:null)}
 function dots(p){return Array.from({length:10},(_,i)=>`<i class="${i<p.b?'on':i<p.mb?'sp':''}"></i>`).join('')}
 function say(t,cancel){const b=$('msg');if(!t){b.style.display='none';b.innerHTML='';return}b.innerHTML=t+(cancel?' <button data-cancel="1">Cancel</button>':'');b.style.display='block'}
 const cleanName=s=>String(s||'').replace(/[<>&"'`\\]/g,'').replace(/\s+/g,' ').trimStart().slice(0,16);
@@ -182,7 +183,7 @@ function render(){
  const hs=h=>RULES.fullHandRework?`${h.length}/${HAND_MAX}`:h.length;$('ecn').textContent=`hand ${hs(op.hand)} - deck ${op.deck.length}`;$('pcn').textContent=`hand ${hs(me.hand)} - deck ${me.deck.length}`;$('edots').innerHTML=dots(op);$('pdots').innerHTML=dots(me);
  const top=me.disc[me.disc.length-1];$('pile').className=top?'':'empty';$('pile').innerHTML=top?cardHTML(top,0):'';$('pc').textContent=me.disc.length+'x';$('dc').textContent=me.deck.length?me.deck.length+'x':'Fatigue '+((me.fat||0)+1);
  const placing=mine()&&sel!=null&&!pend&&me.hand[sel]&&CD[me.hand[sel].id].Type=='Unit';
- for(const row of[1,0])for(let i=0;i<4;i++){const u=G.p[row].ln[i];const free=(placing&&!u&&row==0&&canPlay(G,me,sel,i))||(!u&&row==0&&tg.includes(i)&&pend&&!pend.pre&&kind()=='L');
+ for(const row of[1,0])for(let i=0;i<4;i++){const u=G.p[row].ln[i];const free=(placing&&!u&&row==0&&canPlay(G,me,sel,i))||(!u&&row==0&&tg.includes(i)&&pend&&!pend.pre&&kind()=='L')||(pend&&!pend.pre&&kind()=='P');
   h+=`<div class="slot ${free?'hl':''} ${flash==i?'fl':''}" data-r="${row}" data-i="${i}" style="left:${LX[i]}px;top:${LY[row?0:1]}px">${u?cardHTML(u,1,(row?'e ':'')+(tg.includes(u)?'tgt':'')+(pend&&pend.multi&&pend.multi.includes(u)?' msel':''),`data-u="${u.uid}"`):`<span class="num">${ROM(i+1)}</span>`}</div>`}
  if(flash>=0)h='<div class="laneband" style="left:'+(LX[flash]-14)+'px"></div>'+h;
  $('board').innerHTML=h+'<div id="castlbl"></div>';
@@ -199,7 +200,7 @@ function render(){
  Object.values(ex).forEach(e=>e.remove());
  const pl=G.hist.filter(x=>x.t==G.turn).slice(-4);let s='';for(let i=0;i<4;i++){const x=pl[i-(4-pl.length)];s+=x&&i>=4-pl.length?`<div class="s"><img src="${artSrc(x.id)}" alt="" onerror="artErr(this,${x.id})"></div>`:'<div class="s"></div>'}
  $('strip').innerHTML=s+`<div class="w">${(G.log[G.log.length-1]||'').replace(/^— |—$/g,'').slice(0,16)}</div>`;
- const act=mine();$('end').disabled=!act;$('end').textContent=G.step>=3?'Combat…':act?'End Turn':'Enemy…';
+ const act=mine()&&!(pend&&pend.ext);$('end').disabled=!act;$('end').textContent=G.step>=3?'Combat…':act?'End Turn':'Enemy…';
  refreshPin();musicUpdate();achPoll();tmSync();autoSkip();if(G.over)finish()}
 function info(x,live){showZoom(x,live)}
 // Pop-up banner for Endless Mode boss events (upgrades, new deck). Several in one round are shown one after another.
@@ -287,19 +288,57 @@ function flyCard(id,from,to,o){o=o||{};if(o.out)sfx('spellCast');return new Prom
 const slotRect=(r,i)=>document.querySelector(`#board .slot[data-r="${r}"][data-i="${i}"]`).getBoundingClientRect();
 function centerRect(){const k=scl(),b=$('board').getBoundingClientRect(),w=300*k,h=w*368/260;return{left:b.left+(b.width-w)/2,top:b.top+(b.height-h)/2,width:w,height:h}}
 function heroFrom(){const k=scl(),r=$('ehero').getBoundingClientRect();return{left:r.left+r.width/2-45*k,top:r.top+r.height/2-64*k,width:90*k,height:127*k}}
-function cancel(){sel=pend=null;castMode=false;say('');render()}
-function mmsg(){const n=pend.multi.length;say(`<b>${CD[G.p[0].hand[pend.ci].id].Name}</b>: click friendly units to sacrifice (+1/+1 each) <button data-mok="1">${n?'Sacrifice '+n:'Sacrifice none'}</button>`,1)}
-function nextPick(){const me=G.p[0],d=CD[me.hand[pend.ci].id],ks=apicks(G,me,d,pend.got,pend.ln);
+function cancel(){if(pend&&pend.ext)return;sel=pend=null;castMode=false;say('');render()}
+function mmsg(){const n=pend.multi.length;say(`<b>${pdef().Name}</b>: click friendly units to sacrifice (+1/+1 each) <button data-mok="1">${n?'Sacrifice '+n:'Sacrifice none'}</button>`,pend.ext?0:1)}
+// What the pick the player is about to make will DO (shown for effects that are not played from the hand: Echo Chamber replays, summons, transforms...).
+function actVerb(a,u){let b=a;try{b=ra(G,a,u||null,{})}catch(e){}
+ const n=x=>x>0?'+'+x:''+x;
+ switch(b.Type){
+  case'DealDamage':return`deal ${b.Amount} damage to`;case'DestroyUnit':return'destroy';case'Silence':return'silence';case'ReturnToHand':return'bounce (return to hand)';
+  case'ApplyStatus':return({Marked:'mark',Burning:'set on fire',Stunned:'stun'})[b.StatusKeyword]||'give '+b.StatusKeyword+' to';
+  case'BuffStats':return b.Amount!=null?null:`give ${n(b.BuffAtk||0)}/${n(b.BuffHp||0)} to`;
+  case'Heal':return`heal ${b.Amount} on`;case'HealToFull':return'fully heal';
+  case'GrantKeyword':return`grant ${b.Keyword||'a keyword'} to`;case'BonusAttack':return'give an extra attack to';
+  case'LaneDebuff':return`give -${b.Amount||3} ATK to enemy units in and next to`;
+  case'MakeAUnit':return'summon a unit into';case'Reanimate':return'revive a unit into';
+  case'SacrificeUnit':return'sacrifice'}
+ return null}
+// The actions that ask for a pick, in the same order as picks() asks for them.
+function pickActs(d){const out=[];let hasT=0,hasE=0,hasF=0,hasA=0;
+ for(const e of d.Effects||[]){if(e.Trigger!='OnPlayed')continue;
+  if(e.Targeting=='Choice'&&e.ChoiceLabels&&e.ChoiceLabels.length==e.Actions.length){out.push({k:'C',e});continue}
+  for(const a0 of e.Actions){const a=TYPEALIAS[a0.Type]?Object.assign({},a0,{Type:TYPEALIAS[a0.Type]}):a0,T=a.Type,tt=a.Target;if(T=='AbsorbStats')continue;
+   if(a.Select=='P'){out.push({k:'P',a,e});continue}
+   if(T=='TutorCard'){out.push({k:'D',a,e});continue}
+   if(T=='SacrificeUnits'){out.push({k:'M',a,e});continue}
+   if((T=='MakeAUnit'||T=='Reanimate')&&a.StringParam!='AdjacentLanes'&&!a.Auto){for(let i=0;i<(a.Count||1);i++)out.push({k:'L',a,e});continue}
+   if(T=='SacrificeUnit'&&tt!='Self'){if(tt=='SelectedTarget'&&hasT)continue;out.push({k:'S',a,e});continue}
+   const k=selKind(a,e);if(!k)continue;
+   if(tt=='SelectedTarget'){if(hasT)continue;hasT=1}else if(k=='e'){if(hasE)continue;hasE=1}else if(k=='f'){if(hasF)continue;hasF=1}else{if(hasA)continue;hasA=1}
+   out.push({k,a,e})}}
+ return out}
+function effNote(d,ks,got,k){
+ const idx=got.length;let a=null;
+ const j=ks.indexOf('C');
+ if(j>=0&&j<idx&&k!='C'){const e=(d.Effects||[]).find(x=>x.ChoiceLabels);a=e&&e.Actions[got[j]]}
+ else{const nth=ks.slice(0,idx).filter(x=>x==k).length;const x=pickActs(d).filter(y=>y.k==k)[nth];a=x&&x.a}
+ const v=a&&actVerb(a,d.ExU);if(!v)return'';
+ const who={e:'the chosen enemy unit',f:'the chosen friendly unit',a:'the chosen unit',eh:'the chosen enemy unit or hero',L:'the chosen lane',P:'the chosen lane',S:'the chosen unit',M:'the chosen units',D:'a card'}[k]||'the target';
+ return`<br><span class=\"efx\">Effect: <b>${v} ${who}</b></span>`}
+function nextPick(){const me=G.p[0],d=pdef(),ks=apicks(G,me,d,pend.got,pend.ln),cx=pend.ext?0:1;
  if(pend.got.length<ks.length){const k=ks[pend.got.length];
-  if(d.Type=='Unit'&&['e','f','a'].includes(k)){const r=req(G,me,k,ks.f[pend.got.length]);if(r.length==1){pend.got.push(r[0]);nextPick();return}}
+  if(d.Type=='Unit'&&['e','f','a'].includes(k)){const r=req(G,me,k,ks.f[pend.got.length],null,false,d.ExU);if(r.length==1){pend.got.push(r[0]);nextPick();return}}
   if(k=='L'){const r=req(G,me,'L',null,laneEx());if(r.length==1){pend.got.push(r[0]);nextPick();return}}
   render();
-  if(k=='C'){const e=d.Effects.find(x=>x.ChoiceLabels);say(`<b>${d.Name}</b>: `+e.ChoiceLabels.map((l,i)=>`<button data-ch="${i}" ${choiceOK(G,me,d,i)?'':'disabled'}>${l}</button>`).join(''),1)}
-  else if(k=='D'){say(ASK.D,1);pickCard(d.Name+' - choose a card from your deck',[...me.deck].sort((a,b)=>CD[a.id].Cost-CD[b.id].Cost||CD[a.id].Name.localeCompare(CD[b.id].Name)),c=>{pend.got.push(c);nextPick()})}
+  if(k=='C'){const e=d.Effects.find(x=>x.ChoiceLabels);say(`<b>${d.Name}</b>: `+e.ChoiceLabels.map((l,i)=>`<button data-ch="${i}" ${choiceOK(G,me,d,i)?'':'disabled'}>${l}</button>`).join(''),cx)}
+  else if(k=='D'){say(ASK.D,cx);pickCard(d.Name+' - choose a card from your deck',[...me.deck].sort((a,b)=>CD[a.id].Cost-CD[b.id].Cost||CD[a.id].Name.localeCompare(CD[b.id].Name)),c=>{pend.got.push(c);nextPick()})}
   else if(k=='M'){pend.multi=[];mmsg()}
-  else if(k=='S'&&optSac(d))say(`<b>${d.Name}</b>: sacrifice a unit? (red outline) <button data-skip="1">Don't sacrifice</button>`,1);
-  else say(k=='L'?`<b>${d.Name}</b>: ${ASK.L} (white outline)`:ASK[k]+' (red outline)',1);return}
- const p=pend;sel=pend=null;castMode=false;doPlay(p)}
+  else if(k=='S'&&optSac(d))say(`<b>${d.Name}</b>: sacrifice a unit? (red outline) <button data-skip="1">Don't sacrifice</button>`,cx);
+  else{const fx=pend.ext?effNote(d,ks,pend.got,k):'';
+   if(k=='P')say(`<b>${d.Name}</b>: ${ASK.P} (white outline)${fx}`,cx);
+   else if(k=='L')say(`<b>${d.Name}</b>: ${ASK.L} (white outline)${fx}`,cx);
+   else say((pend.ext?`<b>${d.Name}</b>: `:'')+ASK[k]+' (red outline)'+fx,cx)}return}
+ const p=pend;if(p.ext){p.ext.fin(p.got.slice());return}sel=pend=null;castMode=false;doPlay(p)}
 async function doPlay(p){const me=G.p[0],c=me.hand[p.ci],d=CD[c.id];say('');busy=true;
  const el=document.querySelector(`#hand [data-hid="${c.uid}"]`),sp=d.Type=='Spell';
  const from=el?el.getBoundingClientRect():{left:innerWidth/2-60,top:innerHeight-200,width:120,height:170};
@@ -307,8 +346,29 @@ async function doPlay(p){const me=G.p[0],c=me.hand[p.ci],d=CD[c.id];say('');busy
  await flyCard(c.id,from,sp?centerRect():slotRect(0,p.ln),{out:sp,dur:sp?480:380,hold:sp?300:0,fc,ba:c.ba});
  if(NET&&!NET.host){netSend({t:'move',ci:p.ci,ln:p.ln,pk:p.got.map(descr)});armSync();return}
  const ok=play(G,me,p.ci,p.ln,p.got);busy=false;render();anim();
- if(NET&&ok)netPush({fly:{id:c.id,sp:sp?1:0,ln:p.ln,by:0,fc,ba:c.ba||0}})}
+ if(NET&&ok)netPush({fly:{id:c.id,sp:sp?1:0,ln:p.ln,by:0,fc,ba:c.ba||0}});
+ if(ok&&G.pq&&G.pq.length)await askPending(gid)}
 function begin(ci,ln){pend={ci,ln,got:[]};nextPick()}
+// ===== player-chosen targets for effects the engine parked in G.pq (summons, transforms, evolving, Echo Chamber, Dual Wield's 2nd cast) =====
+// askOn() is read by engine.js: only the local human player is asked (bots, simulations and the online guest's side still auto-target).
+const askOn=(G,pi)=>pi==0?(!NET||NET.host):(!NET||(NET.host&&!!NET.conn&&!NET.dead));   // pi 0 = you; pi 1 = the bot (picks itself, botAskPicks) or the online guest (asked over the connection, askRemote)
+let extRes=null;
+function askExt(it){return new Promise(res=>{let done=false,iv=0;
+ const fin=v=>{if(done)return;done=true;clearInterval(iv);extRes=null;pend=null;sel=null;castMode=false;say('');$('mul').style.display='none';$('mok').style.display='';busy=true;res(v)};
+ extRes=()=>fin(null);pend={ci:-1,ln:null,got:[],ext:{d:it.d,fin}};sel=null;castMode=false;
+ if(NET){let left=15;iv=setInterval(()=>{if(done)return;if(--left<=0)fin(pend?pend.got.slice():[])},1000)}   // online: 15 s, then the engine auto-picks whatever is missing
+ busy=false;nextPick()})}
+async function askPending(my){const was=busy;busy=true;
+ while(G&&!G.over&&my==gid&&G.pq&&G.pq.length){const it=G.pq.shift();
+  if(it.k=='eff'&&(!it.u||it.u.gone||it.u.hp<=0))continue;
+  const ow=it.k=='eff'?it.u.o:it.pi,ks=apicks(G,G.p[ow],it.d,[],null);let pk=[];
+  if(ks.length){
+   if(ow==0)pk=await askExt(it);
+   else if(NET){render();anim();pk=await askRemote(it)}
+   else pk=botAskPicks(G,it);
+   if(my!=gid||!G)return}
+  runItem(G,it,pk);render();anim();if(NET)netPush();await sleep(350)}
+ if(my==gid){busy=was;if(G)render()}}   // redraw: the hand / End button were last drawn while busy
 function selectHand(i){const me=G.p[0];pend=null;castMode=false;sel=sel==i?null:i;say('');render();if(sel==null)return;
  const c=me.hand[i],d=CD[c.id];
  if(!playable(G,me,i)){const why=cost(G,me,c)>me.b?'not enough Blood':G.allow=='U'&&d.Type!='Unit'?'only Units now':G.allow=='A'&&d.Type!='Spell'?'only Actions now':'no valid target';say(`Can't play ${d.Name} now (${why})`);return}
@@ -325,11 +385,11 @@ document.addEventListener('click',e=>{if(!G||G.over||$('game').style.display!='b
  if(t.dataset.ch!=null&&pend&&!t.disabled){pend.got.push(+t.dataset.ch);nextPick();return}
  if(t.dataset.mok&&pend&&pend.multi){pend.got.push(pend.multi.slice());pend.multi=null;nextPick();return}
  if(!mine())return;
- if(hd){selectHand(+hd.dataset.h);return}
+ if(hd){if(!(pend&&pend.ext))selectHand(+hd.dataset.h);return}
  if(pend&&kind()=='eh'&&t.closest('#ehero')){pend.got.push(H(1));nextPick();return}
  if(castMode&&t.closest('#board')){const ci=sel;castMode=false;sel=null;doPlay({ci,ln:null,got:[]});return}
  if(sl){const r=+sl.dataset.r,i=+sl.dataset.i,u=G.p[r].ln[i];
-  if(pend){if(kind()=='L'){if(!u&&r==0&&validTargets().includes(i)){pend.got.push(i);nextPick()}return}
+  if(pend){if(kind()=='P'){pend.got.push(i);nextPick();return}if(kind()=='L'){if(!u&&r==0&&validTargets().includes(i)){pend.got.push(i);nextPick()}return}
    if(u&&validTargets().includes(u)){if(kind()=='M'){const a=pend.multi,j=a.indexOf(u);j<0?a.push(u):a.splice(j,1);render();mmsg()}else{pend.got.push(u);nextPick()}}return}
   if(sel!=null&&r==0&&!u&&CD[me.hand[sel].id].Type=='Unit'&&canPlay(G,me,sel,i)){begin(sel,i);return}
   }});
@@ -341,7 +401,7 @@ document.addEventListener('keydown',e=>{if(!G||$('game').style.display!='block'|
  if(e.key=='Escape'&&viewing){closeMul();return}
  if(e.key=='Escape'&&$('modal').style.display=='flex'){$('modal').style.display='none';return}
  if(e.key=='Escape'&&!busy&&!(pend&&pend.pre))cancel();
- if(/^[1-8]$/.test(e.key)&&mine()&&G.p[0].hand[+e.key-1])selectHand(+e.key-1)});
+ if(/^[1-8]$/.test(e.key)&&mine()&&!(pend&&pend.ext)&&G.p[0].hand[+e.key-1])selectHand(+e.key-1)});
 let drag=null,dragSupp=false;
 document.addEventListener('click',e=>{if(dragSupp){e.stopImmediatePropagation();e.preventDefault()}},true);
 function choiceSpot(el,d){const me=G.p[0],ef=(d.Effects||[]).find(x=>x.ChoiceLabels);if(!ef||!el)return null;
@@ -358,6 +418,7 @@ function dropInfo(el){const me=G.p[0];if(!el||sel==null||!me.hand[sel])return nu
  if(d.Type=='Unit'){if(sl&&+sl.dataset.r==0&&!me.ln[+sl.dataset.i]&&canPlay(G,me,sel,+sl.dataset.i))return{node:sl,ok:1,run:()=>sl.click()};return null}
  if(castMode)return el.closest('#board')?{node:null,ok:1,run:()=>el.click()}:null;
  if(pend){const k=kind();
+  if(k=='P'){return sl?{node:sl,ok:1,run:()=>sl.click()}:null}
   if(k=='L'){if(sl&&+sl.dataset.r==0&&!me.ln[+sl.dataset.i]&&validTargets().includes(+sl.dataset.i))return{node:sl,ok:1,run:()=>sl.click()};return null}
   if(k=='eh'&&el.closest('#ehero'))return{node:el.closest('#ehero'),ok:1,run:()=>el.click()};
   if(sl){const u=G.p[+sl.dataset.r].ln[+sl.dataset.i];if(u&&validTargets().includes(u))return{node:sl,ok:1,run:()=>el.click()}}
@@ -374,7 +435,7 @@ function dragZones(on){document.querySelectorAll('.dz,.dh').forEach(x=>x.classLi
   if(a.Type=='DrawCard')$('deckb').classList.add('dz');else if(a.Type=='DrawFromDiscard')$('pile').classList.add('dz');
   else if(a.Target=='EnemyHero')ringOf($('ehero')).classList.add('dz');
   else if(a.Target=='TargetEnemyUnit'){const k=apicks(G,me,d,[j])[1];if(k)req(G,me,k,apicks(G,me,d,[j]).f[1],null,true).forEach(u=>{const sl=document.querySelector(`#board .slot[data-r="${u.o}"][data-i="${u.lane}"]`);if(sl)sl.classList.add('dz')})}})}
-document.addEventListener('pointerdown',e=>{if(e.button!==0||!G||$('game').style.display!='block'||!mine()||(pend&&pend.pre))return;
+document.addEventListener('pointerdown',e=>{if(e.button!==0||!G||$('game').style.display!='block'||!mine()||(pend&&(pend.pre||pend.ext)))return;
  const hc=e.target.closest('#hand .hc');if(!hc)return;drag={hc,i:+hc.dataset.h,x:e.clientX,y:e.clientY,on:false}});
 document.addEventListener('pointermove',e=>{if(!drag)return;
  if(!drag.on){if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)<10)return;
@@ -415,16 +476,18 @@ async function combat(my){for(let i=0;i<4&&!G.over&&my==gid;i++){flash=i;render(
   if(opts)pre[0]=opts.length==1?opts[0]:await choosePre(G.p[0].ln[i]);
   if(NET){const o1=preTargets(G,G.p[1].ln[i]);if(o1)pre[1]=o1.length==1?o1[0]:await askPre(i,o1);if(my!=gid)return}
   say('');render();
-  await strikeLane(i);if(my!=gid)return;lane(G,i,pre);flash=-1;const pb=G.ev.some(x=>x.k=='atk'&&x.post);render();anim();recoil();if(NET)netPush({t:'lane',i});await sleep(pb?1150:650)}}
+  await strikeLane(i);if(my!=gid)return;lane(G,i,pre);flash=-1;const pb=G.ev.some(x=>x.k=='atk'&&x.post);render();anim();recoil();if(NET)netPush({t:'lane',i});await sleep(pb?1150:650);if(G.pq&&G.pq.length){await askPending(my);if(my!=gid)return}}}
 async function flow(){busy=true;const my=gid;
  while(!G.over&&my==gid){
-  if(G.step>=3){say('Combat!');netPush();await combat(my);if(G.over||my!=gid)break;endRound(G);startRound(G);say('');render();anim();continue}
+  if(G.step>=3){say('Combat!');netPush();await combat(my);if(G.over||my!=gid)break;endRound(G);if(G.pq&&G.pq.length){render();anim();await askPending(my);if(G.over||my!=gid)break}
+  startRound(G);say('');render();anim();if(G.pq&&G.pq.length){await askPending(my);if(my!=gid)break}continue}
   if(G.act==0){busy=false;say('');render();netPush();return}
   if(NET){say('Opponent: '+PH[G.allow]+'…');render();netPush();return}
   say('Enemy: '+PH[G.allow]+'…');render();let n=0;
   while(n++<20&&!G.over&&my==gid){await sleep(450);if(my!=gid)return;const m=botPlan(G,G.p[1]);if(!m)break;
    const bc=G.p[1].hand[m.ci],fc=bc?cost(G,G.p[1],bc):null;await flyCard(m.id,heroFrom(),m.sp?centerRect():slotRect(1,m.ln),{out:!!m.sp,dur:m.sp?480:380,hold:300,fc,ba:bc&&bc.ba});if(my!=gid)return;
-   play(G,G.p[1],m.ci,m.ln,m.pk);render();anim()}
+   play(G,G.p[1],m.ci,m.ln,m.pk);render();anim();if(G.pq&&G.pq.length){await askPending(my);if(my!=gid)return}}
+  if(G.pq&&G.pq.length){await askPending(my);if(my!=gid)return}
   await sleep(300);if(my!=gid)return;nextStep(G)}
  if(my==gid){render();netPush()}}
 function showHist(){const rows=G.hist.slice().reverse().map(h=>`<div class="hr" data-cid="${h.id}"><img src="${artSrc(h.id)}" alt="" onerror="artErr(this,${h.id})"><span><b>${CD[h.id].Name}</b> ${CD[h.id].Type=='Spell'?'cast':'played'} by ${h.p?'Enemy':'You'}${h.tg?' -> '+h.tg:''}<br><small>Round ${h.t}</small></span></div>`).join('')||'<small>No cards played yet.</small>';
@@ -447,7 +510,7 @@ function endHook(){achEnd();if($('ovmm'))$('ovmm').textContent='';if(typeof mmEn
 function endNow(timeout){sfx('endTurn');sel=pend=null;castMode=false;say('');
  if(NET&&!NET.host){busy=true;netSend(timeout?{t:'end',to:1}:{t:'end'});armSync();return}
  nextStep(G);flow()}
-$('end').onclick=()=>{if(!mine())return;endNow()};
+$('end').onclick=()=>{if(!mine()||(pend&&pend.ext))return;endNow()};
 $('sur').onclick=()=>{if(G&&!G.over)$('modal').style.display='flex'};$('mno').onclick=()=>$('modal').style.display='none';
 $('myes').onclick=()=>{$('modal').style.display='none';if(!G||G.over)return;if(NET&&!NET.host){netSend({t:'sur'});return}
  G.over={win:1,sur:1};L(G,'You surrendered');pend=null;sel=null;castMode=false;say('');$('mul').style.display='none';$('hist').style.display='none';render();netPush()};
@@ -477,11 +540,11 @@ const mulOK=()=>{mtStop();const ids=[...mulSel];
  mulligan(G,G.p[0],ids);botMull(G,G.p[1]);
  askOrder(v=>{decideStart(G,v,'first');startRound(G);flow()})};
 $('mok').onclick=mulOK;
-function start(){unpin();bpClear();pkResolve();musicNewGame();if(NET)netLeave();$('ovr').style.display='';$('ovr').textContent='Rematch';gid++;
+function start(){if(extRes)extRes();unpin();bpClear();pkResolve();musicNewGame();if(NET)netLeave();$('ovr').style.display='';$('ovr').textContent='Rematch';gid++;
  if(MODE=='mirror'){const m=mirrorDeck();G=newGame(m,m,{mir:1})}else if(MODE=='endless')G=newGame(ALL[$('d0').value].c,mirrorDeck(BOSS_BAN),{endless:1}); // the Boss always plays a random deck - it can't be rigged
  else G=newGame(ALL[$('d0').value].c,ALL[$('d1').value].c);busy=true;sel=pend=null;castMode=false;stickyZoom=false;
  show('game');$('ov').style.display='none';say('');render();showMul()}
-function toMenu(){unpin();bpClear();$('dkpick').style.display='none';if(NET)netLeave();$('ovr').style.display='';$('ovr').textContent='Rematch';gid++;$('ov').style.display='none';$('mul').style.display='none';$('hist').style.display='none';show('menu');$('zoom').style.display='none';G=null;musicUpdate()}
+function toMenu(){if(extRes)extRes();unpin();bpClear();$('dkpick').style.display='none';if(NET)netLeave();$('ovr').style.display='';$('ovr').textContent='Rematch';gid++;$('ov').style.display='none';$('mul').style.display='none';$('hist').style.display='none';show('menu');$('zoom').style.display='none';G=null;musicUpdate()}
 $('go').onclick=()=>{$('botmenu').style.display='none';start();musicStart()};
 $('ovb').onclick=toMenu;
 const cmpC=(a,b)=>(a.Cost-b.Cost)||((a.Type==b.Type)?0:a.Type=='Unit'?-1:1)||a.Name.localeCompare(b.Name);

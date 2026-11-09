@@ -45,6 +45,7 @@ function project(G,me){const c=blindClone(G,me);
  return evalG(c,me)}
 
 function pickOptions(G,p,d,k,f){const sp=d.Type=='Spell';
+ if(k=='P'){const en=units(G.p[1-p.i]),ls=[0,1,2,3].filter(l=>en.some(u=>Math.abs(u.lane-l)<=1));return(ls.length?ls:[0,1,2,3]).map(n=>({n}))}   // Excision Conjucture: every lane that hits something is a real option
  if(k=='M'){const us=req(G,p,'M').sort((a,b)=>unitVal(a)-unitVal(b)),o=[{m:[]}];for(let n=1;n<=us.length;n++)o.push({m:us.slice(0,n).map(u=>u.uid)});return o}
  if(k=='L')return[{u:null}];
  if(k=='C')return[0,1].filter(i=>choiceOK(G,p,d,i)).map(i=>({n:i}));
@@ -171,5 +172,24 @@ function botMullSmart(G,p){
  if(!p.hand.some(c=>CD[c.id].Cost<=2&&!out.includes(c.uid))&&p.hand.length)out.push(...p.hand.filter(c=>CD[c.id].Cost>=4&&!out.includes(c.uid)).map(c=>c.uid));
  mulligan(G,p,out)}
 
+// Targets for the effects the engine parks in G.pq for the bot (summons / transforms / evolving / Echo Chamber / Dual Wield's 2nd cast).
+// Same idea as the human prompt, but the choice is made here: strongest enemy, best friendly unit, best Excision lane, no optional sacrifice.
+function botAskPicks(G,it){
+ const p=G.p[it.k=='eff'?it.u.o:it.pi],d=it.d,sp=d.Type=='Spell',xu=d.ExU||null,pk=[];
+ for(let n=0;n<10;n++){
+  const ks=apicks(G,p,d,pk,null);if(ks.length<=pk.length)break;
+  const k=ks[pk.length],f=ks.f[pk.length]||null;let v;
+  if(k=='P')v=bestLane(G,p.i);
+  else if(k=='M')v=[];
+  else if(k=='C')v=(p.deck.length<2&&p.disc.length>=2)?1:0;
+  else if(k=='D')v=p.deck.slice().sort((a,b)=>CD[b.id].Cost-CD[a.id].Cost)[0];
+  else if(k=='S')v=optSac(d)?NOSAC:req(G,p,k,f,null,sp,xu).sort((a,b)=>unitVal(a)-unitVal(b))[0];
+  else{
+   const ex=k=='L'?pk.filter((_,j)=>ks[j]=='L'&&typeof pk[j]=='number'):null,ts=req(G,p,k,f,ex,sp,xu);
+   if(k=='L'){const op=G.p[1-p.i];v=shuf(ts.slice()).sort((a,b)=>(op.ln[a]?1:0)-(op.ln[b]?1:0))[0]}
+   else if(k=='f')v=ts.slice().sort((a,b)=>unitVal(b)-unitVal(a))[0];
+   else{const un=ts.filter(x=>!x.h&&x.o!=p.i).sort((a,b)=>unitVal(b)-unitVal(a));v=un[0]||ts.find(x=>x.h)||ts[0]}}
+  if(v==null)break;pk.push(v)}
+ return pk}
 function botPlan(G,p){return botPlanSmart(G,p)}
 function botMull(G,p){return botMullSmart(G,p)}

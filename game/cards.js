@@ -1144,13 +1144,13 @@ const CARDS = [
     Name: "Excision Conjucture",
     Type: "Spell",
     Cost: 4,
-    Description: "All Enemy Units get -2 ATK.",
+    Description: "Enemy Units here and in adjacent lanes get -3 ATK this round. They regain 1 ATK at the start of the next round.",
     Effects: [
       {
         Trigger: "OnPlayed",
-        Targeting: "AllEnemyUnits",
+        Targeting: "LaneChoice",
         Actions: [
-          { Type: "BuffStats", Target: "AllEnemyUnits", BuffAtk: -2, BuffHp: 0 },
+          { Type: "LaneDebuff", Target: "EnemyUnitsNearLane", Select: "P", Amount: 3, Regain: 1 },
         ],
       },
     ],
