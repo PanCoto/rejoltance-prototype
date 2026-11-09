@@ -1,4 +1,4 @@
-const PANELS=['frmenu','botmenu','setmenu','mirmenu','achmenu','rkmenu','acctmenu','avpick','fdmenu'];
+const PANELS=['frmenu','botmenu','setmenu','mirmenu','achmenu','rkmenu','acctmenu','avpick','fdmenu','clmenu'];
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}},lsSet=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
 const openPanel=id=>{PANELS.forEach(k=>$(k).style.display=k==id?'flex':'none')},closePanels=()=>openPanel('');
 const botPanel=m=>{MODE=m;const en=m=='endless';$('botmenu').classList.toggle('endless',en);$('ebest').textContent=en?'Best score: '+(+lsGet('rj_endless_best')||0):'';$('bott').textContent=en?'Endless Mode':'Play with the bot';$('pk1').closest('.pkcol').style.display=en?'none':'';document.querySelector('#botmenu .pkcols').style.gridTemplateColumns=en?'1fr':'';
@@ -11,7 +11,7 @@ $('mirhost').onclick=()=>{LB='mirmenu';startAudio();hostRoom(true)};$('mirjoin')
 const openSet=()=>{$('setmenu').classList.toggle('ig',$('game').style.display=='block');
  openPanel('setmenu')};
 $('sopen').onclick=openSet;$('mu').onclick=openSet;
-['frback','botback','setclose','mirback','achback','pfback','fdback'].forEach(i=>$(i).onclick=closePanels);
+['frback','botback','setclose','mirback','achback','pfback','fdback','clback'].forEach(i=>$(i).onclick=closePanels);
 PANELS.forEach(k=>$(k).addEventListener('click',e=>{if(e.target===$(k))closePanels()}));
 addEventListener('keydown',e=>{if(e.key!='Escape')return;if($('game').style.display=='block'){if($('setmenu').style.display=='flex')closePanels();return}
  if($('lobby').style.display=='flex')$('lcancel').click();else closePanels()});
@@ -26,3 +26,16 @@ const pct=(id,key,def,apply)=>{const el=$(id),n=$(id.replace('v','n'));let v=lsG
  el.oninput=()=>{n.textContent=el.value+'%';apply(+el.value);lsSet(key,el.value)};return el};
 {const s=pct('sfxv','rj_sfx',Math.round(SFX.vol*100),sfxSetVol);s.onchange=()=>sfx('unitPlayed',{pitch:0})}
 pct('musv','rj_mus',100,musicSetVol);
+
+/* ---- build version label + changelog (data lives in changelog.js) ---- */
+$('mver').textContent=GAME_STAGE+' Build v. '+GAME_VERSION;
+const clInline=(el,t)=>t.split(/\*\*(.+?)\*\*/).forEach((s,i)=>{if(!s)return;if(i%2){const b=document.createElement('b');b.textContent=s;el.appendChild(b)}else el.appendChild(document.createTextNode(s))});
+const renderChangelog=()=>{const box=$('cllist');box.textContent='';let ent=null,sec=null,ul=null,n=0;
+ for(const raw of CHANGELOG.split('\n')){const l=raw.trim();if(!l)continue;let m;
+  if(m=l.match(/^##\s+(.*?)(?:\s+[-\u2013]\s+(\d{4}-\d{2}-\d{2}))?$/)){n++;ent=document.createElement('section');ent.className='cle';const h=document.createElement('h3');h.textContent=m[1];if(m[2]){const d=document.createElement('small');d.textContent=m[2];h.appendChild(d)}ent.appendChild(h);box.appendChild(ent);sec=ul=null}
+  else if(!ent)continue;
+  else if(m=l.match(/^###\s+(.*)$/)){sec=document.createElement('h4');sec.textContent=m[1];ent.appendChild(sec);ul=null}
+  else if(m=l.match(/^[-*]\s+(.*)$/)){if(!ul){ul=document.createElement('ul');ent.appendChild(ul)}const li=document.createElement('li');clInline(li,m[1]);ul.appendChild(li)}
+  else{const p=document.createElement('p');clInline(p,l);ent.appendChild(p);ul=null}}
+ $('clsub').textContent=n?'Balance changes and updates, newest first':'No entries yet';box.scrollTop=0};
+$('clopen').onclick=()=>{renderChangelog();openPanel('clmenu')};

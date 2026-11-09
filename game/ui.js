@@ -4,7 +4,7 @@ let ALL=[],gid=0,NET=null,MODE='bot';// MODE: 'bot' | 'mirror' | 'endless' (onli
 function fit(){const s=Math.min(innerWidth/1920,innerHeight/1080);$('stage').style.transform=`translate(-50%,-50%) scale(${s})`}
 addEventListener('resize',fit);fit();
 const show=id=>{['menu','bld','game'].forEach(k=>$(k).style.display=k==id?(k=='menu'?'flex':'block'):'none');
- ['frmenu','mirmenu','rkmenu','botmenu','achmenu','acctmenu','avpick','fdmenu','lobby','dkpick','dkprev'].forEach(k=>{const e=$(k);if(e)e.style.display='none'});
+ ['frmenu','mirmenu','rkmenu','botmenu','achmenu','acctmenu','avpick','fdmenu','clmenu','lobby','dkpick','dkprev'].forEach(k=>{const e=$(k);if(e)e.style.display='none'});
  if(id!='game'){const e=$('setmenu');if(e)e.style.display='none'}};
 document.querySelectorAll('.ring').forEach(c=>{const x=c.getContext('2d');for(let i=0;i<60;i++)for(let j=0;j<60;j++){const r=Math.hypot(i-29.5,j-29.5);
  if(r<=29.6&&r>=25.6){x.fillStyle=r>=27.4?'#2c2c2c':'#222';x.fillRect(i,j,1,1)}}});

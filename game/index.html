@@ -7,8 +7,8 @@
 </head><body>
 <div id="stage">
  <div class="scr" id="menu">
-  <div class="mtop"><h1>RE<span>:</span>Joltance</h1>
-   <div class="mutil"><button id="pchip" title="Your profile"><span class="av" id="pchipav"></span><span class="pi"><b id="pchipn"></b><small id="pchips"></small></span></button><button id="fdopen" title="Friends">Friends <b id="fdcnt"></b></button><button id="achopen" title="Achievements"><span class="aico"></span>Achievements <b id="achcnt"></b></button><button id="sopen" title="Settings"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M7 0h2v2.2l1.7.7 1.6-1.5 1.4 1.4-1.5 1.6.7 1.7H15v2h-2.2l-.7 1.7 1.5 1.6-1.4 1.4-1.6-1.5-1.7.7V16H7v-2.2l-1.7-.7-1.6 1.5-1.4-1.4 1.5-1.6-.7-1.7H1V7h2.2l.7-1.7-1.5-1.6 1.4-1.4 1.6 1.5 1.7-.7z"/><circle cx="8" cy="8" r="2.4" fill="#000"/></svg>Settings</button></div></div>
+  <div class="mtop"><div class="mlogo"><h1>RE<span>:</span>Joltance</h1><small id="mver"></small></div>
+   <div class="mutil"><button id="clopen" class="txt" title="Version history and balance changes">Changelog</button><button id="pchip" title="Your profile"><span class="av" id="pchipav"></span><span class="pi"><b id="pchipn"></b><small id="pchips"></small></span></button><button id="fdopen" title="Friends">Friends <b id="fdcnt"></b></button><button id="achopen" title="Achievements"><span class="aico"></span>Achievements <b id="achcnt"></b></button><button id="sopen" title="Settings"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M7 0h2v2.2l1.7.7 1.6-1.5 1.4 1.4-1.5 1.6.7 1.7H15v2h-2.2l-.7 1.7 1.5 1.6-1.4 1.4-1.6-1.5-1.7.7V16H7v-2.2l-1.7-.7-1.6 1.5-1.4-1.4 1.5-1.6-.7-1.7H1V7h2.2l.7-1.7-1.5-1.6 1.4-1.4 1.6 1.5 1.7-.7z"/><circle cx="8" cy="8" r="2.4" fill="#000"/></svg>Settings</button></div></div>
   <div class="mgrid">
    <section class="mgrp"><h3>Play online</h3>
     <button class="tile feat" id="rkopen"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M3 1h10v5h-1v2h-1v1H9v2h3v3H4v-3h3V9H5V8H4V6H3z"/><path fill="#c4161c" d="M0 2h3v3H1v2h2v1H1V6H0zM13 2h3v4h-1v2h-2V7h2V5h-2z"/><path fill="#050505" d="M6 3h4v2H6z"/></svg><span class="tt"><b>Ranked</b><small>Climb the leaderboard</small></span></button>
@@ -113,6 +113,9 @@
  <div class="ovl bk" id="avpick"><div class="panel wide"><h2>Profile picture</h2><div class="sub">Pick any card - it is shown next to your name on the leaderboard</div>
   <input type="text" id="avq" placeholder="Search cards..." autocomplete="off" spellcheck="false"><div id="avgrid"></div>
   <div class="btns"><button id="avclear">Use initial instead</button><button id="avback">Back</button></div></div></div>
+ <div class="ovl bk" id="clmenu"><div class="panel wide clp"><h2>Changelog</h2><div class="sub" id="clsub"></div>
+  <div id="cllist"></div>
+  <div class="btns"><button id="clback">Back</button></div></div></div>
  <div class="ovl bk" id="setmenu"><div class="panel"><h2>Settings</h2>  <div class="srow chk"><label for="rndprem">Random includes Premade decks</label><input type="checkbox" id="rndprem" checked title="When on, the Random button can pick premade decks too. When off, it only picks your own decks (premade ones are used only if you have none)."></div>
   <div class="srow chk"><label for="hideprem">Hide premade decks in my deck lists</label><input type="checkbox" id="hideprem" title="Premade decks are hidden from the deck pickers as long as you have at least one deck of your own. The bot's deck list is not affected."></div>
   <div class="srow chk"><label for="hotnum">Show card numbers (hotkeys 1-8)</label><input type="checkbox" id="hotnum" title="Shows a small number above each card in your hand. Press that number on the keyboard to select the card."></div>
@@ -141,5 +144,5 @@
 </div>
 <div id="rot">Please rotate your device to landscape (this game is designed for a wide screen).</div>
 <audio id="au" loop></audio>
-<script src="cards.js?v=20261110"></script><script src="decks.js"></script><script src="live-config.js"></script><script src="cards-live.js"></script><script src="img-index.js"></script><script src="engine.js?v=20261110"></script><script src="bot.js"></script><script src="sfx.js"></script><script src="music.js"></script><script src="share.js"></script><script src="ui.js?v=20261110"></script><script src="peerjs.min.js"></script><script src="net-config.js"></script><script src="turn-secret.js" onerror="void 0"></script><script src="net.js?v=20261109"></script><script src="menu.js"></script><script src="mm.js?v=20261109"></script><script src="ach.js"></script>
+<script src="cards.js?v=20261110"></script><script src="decks.js"></script><script src="live-config.js"></script><script src="cards-live.js"></script><script src="img-index.js"></script><script src="engine.js?v=20261110"></script><script src="bot.js"></script><script src="sfx.js"></script><script src="music.js"></script><script src="share.js"></script><script src="ui.js?v=20261110"></script><script src="peerjs.min.js"></script><script src="net-config.js"></script><script src="turn-secret.js" onerror="void 0"></script><script src="net.js?v=20261109"></script><script src="changelog.js"></script><script src="menu.js"></script><script src="mm.js?v=20261109"></script><script src="ach.js"></script>
 </body></html>

@@ -732,3 +732,25 @@ body.ld,body.ld *{cursor:progress!important}
 #acctmenu .pips i.draw,#acctmenu .hrow.draw b{background:#999}
 #acctmenu .hrow em,#acctmenu #pfmsg{color:#ddd}
 #stage #acctmenu #pffr,#stage #acctmenu #pffr.pri{border-color:#fff;color:#fff;background:transparent}
+
+/* ===== main menu: build label under the logo + Changelog pill ===== */
+#menu .mlogo{display:flex;flex-direction:column;align-items:flex-end;gap:0;flex:none}
+#menu .mlogo small{margin-top:-16px;margin-right:4px;line-height:1}
+#menu .mlogo small{font-size:22px;color:#888;letter-spacing:1px;font-family:var(--fd);white-space:nowrap}
+#menu .mutil button.txt{justify-content:center}
+@media (max-width:1700px){#menu .mlogo small{font-size:20px}}
+
+/* ===== match-found lobby: deck picker centred and same width as the timer bar ===== */
+#stage #lobby #ldrow{align-self:center;margin-left:auto;margin-right:auto;width:min(980px,90vw);box-sizing:border-box}
+#stage #lobby #lmatch,#stage #lobby #lbar{margin-left:auto;margin-right:auto}
+
+/* ===== changelog pop-up ===== */
+#stage #clmenu .panel{justify-content:flex-start;overflow:hidden}
+#cllist{align-self:stretch;flex:1;min-height:0;overflow-y:auto;text-align:left;padding:4px 18px 4px 4px;scrollbar-width:thin;scrollbar-color:#3a3a3a transparent;display:flex;flex-direction:column;gap:22px}
+#cllist .cle{border:3px solid #232323;border-radius:18px;background:#0a0a0a;padding:18px 26px 20px}
+#cllist h3{margin:0 0 6px;font-size:38px;color:#eee;display:flex;align-items:baseline;gap:18px}
+#cllist h3 small{font-size:22px;color:#777;font-weight:400}
+#cllist h4{margin:14px 0 4px;font-size:22px;letter-spacing:3px;text-transform:uppercase;color:#ff4a50;font-weight:400}
+#cllist ul{margin:0;padding-left:28px;display:flex;flex-direction:column;gap:5px}
+#cllist li,#cllist p{font-size:26px;color:#bbb;line-height:1.3;margin:0}
+#cllist li b{color:#fff;font-weight:700}
