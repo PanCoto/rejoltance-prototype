@@ -138,6 +138,7 @@ function hstats(me){const h=hist();let run=0,best=0;h.forEach(x=>{if(x.r=='win')
  return{h,n:h.length,cur,ct,best,fav,peak,avgOpp:opp.length?Math.round(opp.reduce((t,x)=>t+x.or,0)/opp.length):0}}
 const fmtDate=t=>{if(!t)return'-';try{return new Date(t).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'})}catch(e){return'-'}};
 const pct=(w,g)=>g?Math.round(100*w/g)+'%':'-';
+function ratingBox(me){return'<div class="tb rt"><div class="tbh"><span class="tbn">Rating</span><span class="tbr big">'+me.rating+'</span></div><small>'+(me.rank?'Rank #'+me.rank+' on the ranked leaderboard':'Not on the leaderboard yet')+'</small></div>'}
 function prBox(wins,withNext){const p=prestigeOf(wins);
  return'<div class="tb"><div class="tbh"><span class="tbn">Prestige '+p.lv+'</span><span class="tbr">'+p.prog+' / '+PRESTIGE_WINS+'</span></div><div class="tbar"><i style="width:'+p.pct+'%"></i></div>'
   +(withNext?'<small>'+p.left+(p.left==1?' win':' wins')+' to Prestige '+(p.lv+1)+'. Progress then goes back to 0.</small>':'')+'</div>'}
@@ -149,24 +150,32 @@ function rkCard(me){
  const g=me.games!=null?me.games:me.wins+me.losses+(me.draws||0),hs=hstats(me),p=prestigeOf(me.wins);
  const chip=(l,v,c)=>'<div class="rkch"><small>'+l+'</small><b'+(c?' style="color:'+c+'"':'')+'>'+v+'</b></div>';
  return'<div class="rkcard"><em class="av big">'+avHTML(avId()||me.avatar,me.name)+'</em><div class="rki"><b class="rkn">'+esc(me.name)+'</b>'
-  +'<div class="rkt">Prestige '+p.lv+'</div><div class="rkrt">'+p.prog+' / '+PRESTIGE_WINS+'<small>wins to Prestige '+(p.lv+1)+'</small></div></div></div>'
-  +'<div class="tbar rk"><i style="width:'+p.pct+'%"></i></div>'
+  +'<div class="rkt">Rating</div><div class="rkrt">'+me.rating+'<small>'+(me.rank?'Rank #'+me.rank:'Unranked')+'</small></div></div></div>'
+  +'<div class="rkpg"><b>Prestige '+p.lv+'</b><span>'+p.prog+' / '+PRESTIGE_WINS+' wins</span></div><div class="tbar rk"><i style="width:'+p.pct+'%"></i></div>'
   +'<div class="rkchs">'+chip('Wins',me.wins,'#fff')+chip('Losses',me.losses,'#ff4a50')+chip('Draws',me.draws||0)+chip('Win rate',pct(me.wins,g))+(hs.n?chip('Streak',(hs.ct=='win'?'W':hs.ct=='loss'?'L':'D')+hs.cur):'')+'</div>'}
 function rkRows(lb,me){   // the server sends the list already ordered by rating
  return lb.length?lb.map((p,i)=>{const mine=me&&p.pid&&p.pid==me.pid;
   return'<div class="rkr'+(mine?' me':'')+'" data-pid="'+esc(p.pid||'')+'" title="View profile"><i>'+(i+1)+'</i><em class="av">'+avHTML(mine?avId()||p.avatar:p.avatar,p.name)+'</em><b>'+esc(p.name)+'</b><u>'+prBadge(p.wins)+'</u><span>'+p.rating+'</span><small>'+p.wins+'-'+p.losses+'</small></div>'}).join(''):'<div class="rkr"><b>No ranked games have been played yet.</b></div>'}
+let OPENING=0;   // a screen that needs data opens only once the data has arrived (clicks are ignored while it loads)
+const ldOn=()=>{OPENING=1;document.body.classList.add('ld')},ldOff=()=>{OPENING=0;document.body.classList.remove('ld')};
 async function rkOpen(){
- openPanel('rkmenu');rk('rklist').innerHTML='';rk('rkme').innerHTML=rkCard(MM.me);rk('rkplay').disabled=true;rk('rkplay').textContent='Play Ranked';
- try{syncPickers();pkReveal('pkr')}catch(e){}
- if(!cfg()){rk('rksub').textContent='The ranking server is not configured for this copy of the game (see server/README.md).';return}
- rk('rksub').textContent='Connecting...';const up=await serverUp();
- if(!up){rk('rksub').textContent='The ranking server is not reachable right now.';return}
- rk('rksub').textContent=(up.ranked||0)?(up.ranked+' searching for a ranked game right now.'):'Nobody is searching right now - you may have to wait for an opponent.';rk('rkplay').disabled=false;
- try{const a=getAcct(),[me,lb]=await Promise.all([a?api('/api/me',{method:'POST'},a):null,api('/api/leaderboard?limit=50')]);
+ if(OPENING)return;ldOn();
+ try{
+  let me=MM.me,lb=null,up=null,err=null,unauth=false;
+  if(cfg()){up=await serverUp();
+   if(up){try{const a=getAcct();[me,lb]=await Promise.all([a?api('/api/me',{method:'POST'},a):null,api('/api/leaderboard?limit=50')])}
+    catch(e){if(e.status==401)unauth=true;else err=e}}}
+  openPanel('rkmenu');rk('rklist').innerHTML='';rk('rkme').innerHTML=rkCard(MM.me);rk('rkplay').disabled=true;rk('rkplay').textContent='Play Ranked';
+  try{syncPickers();pkReveal('pkr')}catch(e){}
+  if(!cfg()){rk('rksub').textContent='The ranking server is not configured for this copy of the game (see server/README.md).';return}
+  if(!up){rk('rksub').textContent='The ranking server is not reachable right now.';return}
+  rk('rksub').textContent=(up.ranked||0)?(up.ranked+' searching for a ranked game right now.'):'Nobody is searching right now - you may have to wait for an opponent.';rk('rkplay').disabled=false;
+  if(unauth){setAcct(null);MM.me=null;chipRefresh();rk('rkme').innerHTML=rkCard(null);rk('rksub').textContent='Your saved account was not recognised by the server; log in with Discord from your Profile.';return}
+  if(err){rk('rksub').textContent='Could not load the ranking: '+err.message;return}
   MM.me=me||null;if(me&&me.avatar&&CD[me.avatar])lsSet('rj_avatar',String(me.avatar));chipRefresh();
   if(needDc()&&!(me&&me.discord)){rk('rkplay').textContent='Link Discord to play';rk('rksub').textContent='Ranked games require a linked Discord account (set up in your Profile).'}
   rk('rkme').innerHTML=rkCard(me);LBROWS=lb;rk('rklist').innerHTML=rkRows(lb,me)}
- catch(e){if(e.status==401){setAcct(null);MM.me=null;chipRefresh();rk('rkme').innerHTML=rkCard(null);rk('rksub').textContent='Your saved account was not recognised by the server; log in with Discord from your Profile.'}else rk('rksub').textContent='Could not load the ranking: '+e.message}}
+ finally{ldOff()}}
 rk('rkopen').onclick=rkOpen;rk('rkback').onclick=closePanels;
 rk('rkprof').onclick=()=>profOpen('',rkOpen);
 rk('rklist').onclick=e=>{const r=e.target.closest('.rkr[data-pid]');if(r&&r.dataset.pid)profView(r.dataset.pid,rkOpen)};
@@ -179,20 +188,20 @@ const WLD={W:'win',L:'loss',D:'draw'};
 function profFill(me,mine){
  const n=mine?dispName():(me&&me.name)||'',hs=mine?hstats(me):null;
  rk('pfav').innerHTML=avHTML(mine?(avId()||(me&&me.avatar)):(me&&me.avatar),n);
- rk('pfrate').innerHTML=me?prBox(me.wins,true):'';rk('pfrate').style.display=me?'':'none';
- rk('pftier').innerHTML=me?'<span class="tem">Prestige '+prestigeOf(me.wins).lv+'</span>':'';
+ rk('pfrate').innerHTML=me?ratingBox(me):'';rk('pfrate').style.display=me?'':'none';
+ rk('pftier').innerHTML=me?(()=>{const p=prestigeOf(me.wins);return'<span class="tem">Prestige '+p.lv+'</span><div class="tbar pf"><i style="width:'+p.pct+'%"></i></div><small class="pfpg">'+p.prog+' / '+PRESTIGE_WINS+' wins to Prestige '+(p.lv+1)+'</small>'})():'';
  const t=[],fm=rk('pfform'),hh=rk('pfhist');hh.innerHTML='';
  if(!me&&!mine){rk('pfstats').innerHTML='';fm.innerHTML='';rk('pfdel').hidden=true;rk('pflogout').hidden=true;renderDc();return}
  // values come from the server (so every viewer sees the same); your own profile also merges what this browser remembers
  const g=me?(me.games!=null?me.games:me.wins+me.losses+(me.draws||0)):0;
- const pr=me?prestigeOf(me.wins):{lv:0,left:PRESTIGE_WINS};
+ const peak=me?Math.max(me.peak||0,me.rating||0,mine&&hs?hs.peak||0:0):0;
  const sk=mine&&hs.n?(hs.ct=='win'?hs.cur:hs.ct=='loss'?-hs.cur:0):(me?me.streak||0:0);
  const skT=sk>0?'W'+sk:sk<0?'L'+(-sk):'-';
  const best=Math.max(me?me.best||0:0,mine?hs.best:0);
  const ach=mine?(typeof achCount=='function'?achCount():0):(me?me.ach||0:0),en=mine?(+lsGet('rj_endless_best')||0):(me?me.endless||0:0);
  const total=typeof ACH!='undefined'?ACH.length:0;
  if(me){
-  t.push(stat('Prestige',pr.lv),stat('Wins to next',pr.left),stat('Games',g),stat('Win rate',pct(me.wins,g)),
+  t.push(stat('Rank',me.rank?'#'+me.rank:'Unranked'),stat('Peak rating',peak),stat('Games',g),stat('Win rate',pct(me.wins,g)),
    stat('Wins',me.wins),stat('Losses',me.losses),stat('Draws',me.draws||0),stat('Streak',g?skT:'-'),
    stat('Best win streak',best||'-'),stat('Member since',fmtDate(me.created||(mine&&+lsGet('rj_first'))||0)),stat('Achievements',total?ach+'/'+total:ach),stat('Endless best',en))}
  else t.push(stat('Achievements',total?ach+'/'+total:ach),stat('Endless best',en));
@@ -208,26 +217,32 @@ function profFill(me,mine){
  if(mine&&hs.n)hh.innerHTML='<h4>Recent matches</h4>'+hs.h.slice(-4).reverse().map(x=>'<div class="hrow '+x.r+'"><b>'+(x.r=='win'?'WIN':x.r=='loss'?'LOSS':'DRAW')+'</b><span class="ho">vs '+esc(x.on||'?')+'</span><small class="hdk">'+esc(x.dk||'')+'</small><small>'+ago(x.t).replace('Active now','just now')+'</small></div>').join('');
  rk('pfdel').hidden=!mine||!getAcct();rk('pflogout').hidden=!mine||!getAcct();renderDc()}
 async function profOpen(msg,home){
- if(home!==undefined)PFH=home;
- rk('acctmenu').classList.remove('view');rk('pft').textContent='Profile';rk('pfsub').textContent='';rk('pffr').hidden=true;PFP=null;
- openPanel('acctmenu');rk('pfname').value=dispName();rk('pfmsg').textContent=msg||'';rk('pfback').onclick=()=>{const h=PFH;PFH=null;h?h():closePanels()};
- if(!lsGet('rj_first'))lsSet('rj_first',String(Date.now()));
- profFill(MM.me,true);
- if(!cfg()){rk('pfsub').textContent='Ranked stats are unavailable: the ranking server is not configured.';return}
- const up=await serverUp();if(!up){rk('pfsub').textContent='Ranked stats are unavailable: the ranking server is not reachable.';renderDc();return}
- await meLoad();chipRefresh();profFill(MM.me,true);
- if(!MM.me)rk('pfsub').textContent='Log in with Discord to create your ranked account.'}
+ if(OPENING)return;ldOn();
+ try{
+  if(home!==undefined)PFH=home;
+  let up=null;if(cfg()){up=await serverUp();if(up){await meLoad();chipRefresh()}}
+  rk('acctmenu').classList.remove('view');rk('pft').textContent='Profile';rk('pfsub').textContent='';rk('pffr').hidden=true;PFP=null;
+  openPanel('acctmenu');rk('pfname').value=dispName();rk('pfmsg').textContent=msg||'';rk('pfback').onclick=()=>{const h=PFH;PFH=null;h?h():closePanels()};
+  if(!lsGet('rj_first'))lsSet('rj_first',String(Date.now()));
+  profFill(MM.me,true);
+  if(!cfg()){rk('pfsub').textContent='Ranked stats are unavailable: the ranking server is not configured.';return}
+  if(!up){rk('pfsub').textContent='Ranked stats are unavailable: the ranking server is not reachable.';renderDc();return}
+  if(!MM.me)rk('pfsub').textContent='Log in with Discord to create your ranked account.'}
+ finally{ldOff()}}
 let PFH=null;
 let PFB=null,PFP=null;   // where Back goes from another player's profile / who is shown
 const frLabel={none:'Add friend',pending_out:'Cancel request',pending_in:'Accept request',friends:'Remove friend'};
 function pfFriendBtn(){const b=rk('pffr'),p=PFP;b.hidden=!(p&&!p.self&&p.rel);if(!b.hidden)b.textContent=frLabel[p.rel]||'Add friend'}
 async function profView(pid,back){
  if(MM.me&&MM.me.pid==pid)return profOpen();
- PFB=back||rkOpen;PFP=null;rk('acctmenu').classList.add('view');rk('pft').textContent='Player';rk('pfsub').textContent='Loading...';rk('pfmsg').textContent='';rk('pffr').hidden=true;
- openPanel('acctmenu');rk('pfback').onclick=()=>PFB();
- try{const p=await api('/api/player?pid='+encodeURIComponent(pid),null,getAcct());if(p.error)throw new Error(p.error);PFP=p;
-  rk('pft').textContent=p.name;rk('pfsub').textContent=(p.last?'Last seen: '+ago(p.last).replace('Active now','online now'):'');profFill(p,false);pfFriendBtn()}
- catch(e){rk('pfsub').textContent='Could not load this profile: '+e.message}}
+ if(OPENING)return;ldOn();
+ try{
+  let p=null,err=null;try{p=await api('/api/player?pid='+encodeURIComponent(pid),null,getAcct());if(p.error)throw new Error(p.error)}catch(e){err=e}
+  PFB=back||rkOpen;PFP=null;rk('acctmenu').classList.add('view');rk('pft').textContent='Player';rk('pfsub').textContent='';rk('pfmsg').textContent='';rk('pffr').hidden=true;
+  openPanel('acctmenu');rk('pfback').onclick=()=>PFB();
+  if(err){rk('pfsub').textContent='Could not load this profile: '+err.message;return}
+  PFP=p;rk('pft').textContent=p.name;rk('pfsub').textContent=(p.last?'Last seen: '+ago(p.last).replace('Active now','online now'):'');profFill(p,false);pfFriendBtn()}
+ finally{ldOff()}}
 rk('pffr').onclick=async()=>{const p=PFP,a=getAcct();if(!p||!a)return;
  const act={none:'request',pending_out:'remove',pending_in:'accept',friends:'remove'}[p.rel];
  if(p.rel=='friends'&&!confirm('Remove '+p.name+' from your friends?'))return;
@@ -266,12 +281,15 @@ function fdBadge(){const n=MM.fr?MM.fr.incoming.length:0;rk('fdcnt').textContent
 async function friendsLoad(){const a=getAcct();if(!a||!cfg())return null;
  try{MM.fr=await api('/api/friends',{method:'POST'},a);fdBadge();if(rk('fdmenu').style.display=='flex')fdRender();return MM.fr}catch(e){return null}}
 async function fdOpen(msg){
- openPanel('fdmenu');rk('fdres').innerHTML='';rk('fdq').value='';rk('fdsub').textContent=msg||'';rk('fdlist').innerHTML='';
- if(!cfg()){rk('fdsub').textContent='Friends need the online server, which is not configured for this copy of the game.';return}
- if(!getAcct()){rk('fdsub').textContent='Friends need an account: open your Profile and log in with Discord first.';return}
- rk('fdsub').textContent=msg||'Loading...';const f=await friendsLoad();
- if(!f){rk('fdsub').textContent='Could not reach the server.';return}
- rk('fdsub').textContent=msg||'';fdRender()}
+ if(OPENING)return;ldOn();
+ try{
+  let f=null;if(cfg()&&getAcct())f=await friendsLoad();
+  openPanel('fdmenu');rk('fdres').innerHTML='';rk('fdq').value='';rk('fdsub').textContent=msg||'';rk('fdlist').innerHTML='';
+  if(!cfg()){rk('fdsub').textContent='Friends need the online server, which is not configured for this copy of the game.';return}
+  if(!getAcct()){rk('fdsub').textContent='Friends need an account: open your Profile and log in with Discord first.';return}
+  if(!f){rk('fdsub').textContent='Could not reach the server.';return}
+  rk('fdsub').textContent=msg||'';fdRender()}
+ finally{ldOff()}}
 async function fdSearch(){const q=rk('fdq').value.trim();if(q.length<2){rk('fdres').innerHTML='<div class="fdempty">Type at least 2 letters.</div>';return}
  try{const r=await api('/api/search?q='+encodeURIComponent(q),null,getAcct()),me=MM.me&&MM.me.pid;
   rk('fdres').innerHTML=r.filter(p=>p.pid!=me).length?'<h4>Results</h4>'+r.filter(p=>p.pid!=me).map(p=>fdRow(p,fdBtn('view','Profile')+(MM.fr&&[...MM.fr.friends,...MM.fr.incoming,...MM.fr.outgoing].some(x=>x.pid==p.pid)?'':fdBtn('request','Add')))).join(''):'<div class="fdempty">No players found.</div>'}

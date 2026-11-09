@@ -716,3 +716,19 @@ body[data-font=dys] #menu .tile b{font-size:36px}body[data-font=dys] #menu .tile
 #stage #acctmenu .panel.prof .pfav{width:210px;height:210px}
 #stage #acctmenu .panel.prof .pfbody{grid-template-columns:260px minmax(0,1fr);gap:36px}
 .prb .pstar{width:24px;height:24px}
+
+/* waiting for a screen to load */
+body.ld,body.ld *{cursor:progress!important}
+/* rating is the headline on a profile; prestige + its bar sit under the avatar */
+.tbr.big{font-size:88px;line-height:1;letter-spacing:2px}
+.tb.rt{padding:12px 24px 12px}.tb.rt small{font-size:24px}
+#pftier{width:100%;display:flex;flex-direction:column;align-items:center;gap:8px}
+#pftier .tbar{width:100%}.pfpg{display:block;font-size:20px;color:#999}
+.rkpg{display:flex;justify-content:space-between;align-items:baseline;font-size:22px;color:#999;margin-top:10px}.rkpg b{color:#fff;font-weight:400;font-family:var(--fd);font-size:26px}
+/* profile pop-up: no red, only white and greys */
+#acctmenu .tbar i{background:#fff}
+#acctmenu .tem{border-color:#fff;color:#fff}
+#acctmenu .pips i.loss,#acctmenu .hrow.loss b{background:#4a4a4a;color:#fff}
+#acctmenu .pips i.draw,#acctmenu .hrow.draw b{background:#999}
+#acctmenu .hrow em,#acctmenu #pfmsg{color:#ddd}
+#stage #acctmenu #pffr,#stage #acctmenu #pffr.pri{border-color:#fff;color:#fff;background:transparent}
