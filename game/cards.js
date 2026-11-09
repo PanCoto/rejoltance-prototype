@@ -1967,7 +1967,7 @@ const CARDS = [
     Name: "Echo Chamber",
     Type: "Unit",
     Subtypes: ["Aberration"],
-    Cost: 7,
+    Cost: 5,
     Attack: 2,
     Health: 2,
     Description: "When Played: Trigger every \"When Played\" effect of the cards You have played this game.",

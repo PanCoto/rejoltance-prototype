@@ -16,7 +16,7 @@ const CHANGELOG=`
 -  **Rustler** [NERF] : Cost 10 -> **12**
 - **The Pale** [REWORK] : "Silence all Units." -> "Summon an exact copy of a friendly unit that costs 4 or less in an empty lane of your choice."
 - **Excistion Conjure** [REWORK] : Cost 4 -> **2**, "All Enemy Units get -2 ATK." -> "Enemy Units here and in adjacent lanes get -2 ATK this round. Draw a Card."
-- **Echo Chamber** [NERFED] : Cost 4 -> **7**
+- **Echo Chamber** [NERFED] : Cost 4 -> **5**
 ### Fixes
 - Summoned / Transformed / Revived units with when played abilities will now do them correclty, letting the owner target the unit of their choosing if such targeting is required.
 `;
