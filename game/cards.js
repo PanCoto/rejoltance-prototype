@@ -289,15 +289,13 @@ const CARDS = [
     Name: "HellFire",
     Type: "Spell",
     Cost: 4,
-    Description: "Deal 2 damage and apply Burning 2 to all Units.",
+    Description: "Deal 3 damage and apply Burning 1 to all Units.",
     Effects: [
       {
         Trigger: "OnPlayed",
         Actions: [
           { Type: "ApplyStatus", Target: "AllUnitsOnBoard", StatusKeyword: "Burning" },
-          { Type: "DealDamage", Target: "AllUnitsOnBoard", Amount: 2 },
-	  { Type: "ApplyStatus", Target: "AllUnitsOnBoard", StatusKeyword: "Burning" },
-
+          { Type: "DealDamage", Target: "AllUnitsOnBoard", Amount: 3 },
         ],
       },
     ],
@@ -902,7 +900,7 @@ const CARDS = [
     Name: "Rustler",
     Type: "Unit",
     Subtypes: ["Human"],
-    Cost: 10,
+    Cost: 12,
     Attack: 6,
     Health: 6,
     Rule: "persistentGrowth",
@@ -1124,33 +1122,35 @@ const CARDS = [
   },
 
   {
-    Id: 57,
-    Name: "The Pale",
-    Type: "Spell",
-    Cost: 3,
-    Description: "Silence all Units.",
-    Effects: [
-      {
-        Trigger: "OnPlayed",
-        Actions: [
-          { Type: "Silence", Target: "AllUnitsOnBoard" },
-        ],
-      },
-    ],
-  },
+  Id: 57,
+  Name: "Pale Mirror",
+  Type: "Spell",
+  Cost: 3,
+  Description: "Summon an exact copy of a friendly unit that costs 4 or less in an empty lane of your choice.",
+  Effects: [
+    {
+      Trigger: "OnPlayed",
+      Targeting: "TargetFriendlyUnit",
+      Actions: [
+        { Type: "CopyUnit", Target: "SelectedTarget", Where: { MaxCost: 4 } }
+      ]
+    }
+  ]
+},
 
   {
     Id: 58,
     Name: "Excision Conjucture",
     Type: "Spell",
-    Cost: 3,
-    Description: "Enemy Units here and in adjacent lanes get -3 ATK this round. They regain 1 ATK at the start of the next round.",
+    Cost: 2,
+    Description: "Enemy Units here and in adjacent lanes get -2 ATK this round. Draw a Card.",
     Effects: [
       {
         Trigger: "OnPlayed",
         Targeting: "LaneChoice",
         Actions: [
-          { Type: "LaneDebuff", Target: "EnemyUnitsNearLane", Select: "P", Amount: 3, Regain: 1 },
+          { Type: "LaneDebuff", Target: "EnemyUnitsNearLane", Select: "P", Amount: 2, Regain: 2 },
+	  { Type: "DrawCard", Target: "FriendlyHero", Amount: 1 },
         ],
       },
     ],

@@ -55,7 +55,8 @@ function unitOK(u,f){if(!f||!u||u.h)return true;const d=u.d||CD[u.id];
  if(f.Damaged&&!(u.hp<u.mx))return false;if(f.Undamaged&&u.hp<u.mx)return false;
  if(f.Subtype&&!hasSub(d,f.Subtype))return false;if(f.Keyword&&!(u.kw&&u.kw.has(f.Keyword)))return false;if(f.NoKw&&u.kw&&u.kw.has(f.NoKw))return false;
  if(f.MinAtk!=null&&u.atk<f.MinAtk)return false;if(f.MaxAtk!=null&&u.atk>f.MaxAtk)return false;
- if(f.MinHp!=null&&u.hp<f.MinHp)return false;if(f.MaxHp!=null&&u.hp>f.MaxHp)return false;return true}
+ if(f.MinHp!=null&&u.hp<f.MinHp)return false;if(f.MaxHp!=null&&u.hp>f.MaxHp)return false;
+ const cs=d?d.Cost||0:0;if(f.Cost!=null&&cs!=f.Cost)return false;if(f.MinCost!=null&&cs<f.MinCost)return false;if(f.MaxCost!=null&&cs>f.MaxCost)return false;return true}
 function countOf(G,s,sp,c){const me=G.p[s.o!=null?s.o:0],op=G.p[1-me.i];c=c||{};
  const live=w=>w&&!w.gone&&w.hp>0&&w!==s&&(!sp.Subtype||hasSub(w.d||CD[w.id],sp.Subtype));
  const all=()=>[...units(me),...units(op)].filter(live);
@@ -331,6 +332,31 @@ function act(G,a,s,c){
   else if(!t.h&&T=='BuffStats'&&a.Amount==null)EV(G,Object.assign({k:'fx',t:'buff',a:a.BuffAtk||0,hp:a.BuffHp||0},b));
   else if(!t.h&&T=='Silence')EV(G,Object.assign({k:'fx',t:'sil'},b))});
  switch(T){
+ case'CopyUnit':{
+  const t=ts[0];
+  if(!t||t.h||t.gone||t.hp<=0||G.over)break;
+  let ls=[0,1,2,3].filter(i=>!me.ln[i]);
+  if(!ls.length)break;
+  const w=(c.lanes||[])[c.li||0];if(w!=null)c.li=(c.li||0)+1;   // lane chosen by the player (bots / sims / no pick: automatic fallback below)
+  let lane;
+  if(w!=null&&ls.includes(w))lane=w;
+  else{const safe=ls.filter(i=>!G.p[1-s.o].ln[i]);
+   ls=(safe.length?safe:ls).sort((a2,b)=>Math.abs(a2-t.lane)-Math.abs(b-t.lane));lane=ls[0]}
+  const nu=mk(t.id,s.o);
+  // exact copy: current stats (buffs, damage), keywords, statuses. Aura-given ATK / keywords are NOT copied, the copy's own auras give them again.
+  const auraKw=Object.keys(t.ag||{}).filter(k=>!(t.agc&&t.agc[k]));
+  nu.atk=t.atk-(t.aurA||0);nu.hp=t.hp;nu.mx=t.mx;nu.lh=t.hp;
+  nu.kw=new Set([...t.kw].filter(k=>!auraKw.includes(k)));
+  nu.sil=t.sil||0;nu.rg=t.rg||0;nu.cr=t.cr||0;nu.cba=t.cba||0;nu.paid=t.paid==null?null:t.paid;
+  nu.agc=Object.assign({},t.agc);nu.ag={};nu.agn=0;nu.sgd=0;
+  nu.sgn=Math.max(0,(t.sgn||0)-(t.agn||0));if((t.agn||0)>0&&nu.sgn<=0)nu.kw.delete('SoulGuard');
+  nu.bn=nu.kw.has('Burning')?(t.bn||0):0;
+  nu.placed=1;   // stats already include the global buffs: don't add them a second time in place()
+  place(G,me,nu,lane);
+  L(G,'Pale Mirror summons a copy of '+t.d.Name);
+  if(!c.sm&&!G.over)fire(G,'OnPlayed',nu,{tf:1,nosac:1,sm:1,ask:1});
+  if(RULES.summonTriggers&&!G.over)announce(G,nu);
+  break}
  case'DealDamage':{const n=a.Amount;
   ts.forEach(t=>dmg(G,t,n,s,2));break}
  case'Heal':if(ts.length)EV(G,{k:'snd',n:'heal'});ts.forEach(t=>{if(t.h)G.p[t.p].hp=Math.min(20,G.p[t.p].hp+a.Amount);else t.hp=Math.min(t.mx,t.hp+a.Amount)});break;
@@ -511,7 +537,7 @@ function picks(d,noSac){const out=[];out.f=[];let hasT=0,hasE=0,hasF=0,hasA=0;co
    const k=selKind(a,e);if(!k)continue;
    if(tt=='SelectedTarget'){if(hasT)continue;hasT=1}
    else if(k=='e'){if(hasE)continue;hasE=1}else if(k=='f'){if(hasF)continue;hasF=1}else{if(hasA)continue;hasA=1}
-   push(k,silBounceF(a))}}
+   push(k,silBounceF(a));if(T=='CopyUnit'&&!a.Auto)push('L')}}   // CopyUnit: pick the unit, then the empty lane for the copy
  return out}
 const NOSAC=-1;
 const optSac=d=>(d.Effects||[]).some(e=>e.Trigger=='OnPlayed'&&e.Actions.some(a=>a.Type=='SacrificeUnit'&&a.Optional));
@@ -532,7 +558,7 @@ function canPlay(G,p,ci,ln){const c=p.hand[ci];if(!c||G.over)return false;if(G.a
  const d=CD[c.id];if((G.allow=='U'&&d.Type!='Unit')||(G.allow=='A'&&d.Type!='Spell'))return false;
  if(cost(G,p,c)>p.b)return false;
  if(d.Type=='Unit'&&(ln==null||p.ln[ln]))return false;
- if(d.Type=='Spell'){const pk=picks(d);if(pk.includes('P')&&!units(G.p[1-p.i]).length)return false;if(pk.some((k,i)=>k!='L'&&!req(G,p,k,pk.f[i],null,true).length))return false}return true}
+ if(d.Type=='Spell'){const pk=picks(d);if(pk.includes('L')&&(d.Effects||[]).some(e=>(e.Actions||[]).some(a=>a.Type=='CopyUnit'))&&!p.ln.some(x=>!x))return false;if(pk.includes('P')&&!units(G.p[1-p.i]).length)return false;if(pk.some((k,i)=>k!='L'&&!req(G,p,k,pk.f[i],null,true).length))return false}return true}
 const playable=(G,p,i)=>{const c=p.hand[i];return c&&CD[c.id].Type=='Unit'?[0,1,2,3].some(l=>canPlay(G,p,i,l)):canPlay(G,p,i,null)};
 function play(G,p,ci,ln,pk){if(!canPlay(G,p,ci,ln))return false;
  const c=p.hand[ci],d=CD[c.id],ctx={};if((pk||[]).includes(NOSAC)&&!optSac(d))return false;
