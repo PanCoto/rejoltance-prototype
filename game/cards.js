@@ -1143,7 +1143,7 @@ const CARDS = [
     Id: 58,
     Name: "Excision Conjucture",
     Type: "Spell",
-    Cost: 4,
+    Cost: 3,
     Description: "Enemy Units here and in adjacent lanes get -3 ATK this round. They regain 1 ATK at the start of the next round.",
     Effects: [
       {
@@ -1967,7 +1967,7 @@ const CARDS = [
     Name: "Echo Chamber",
     Type: "Unit",
     Subtypes: ["Aberration"],
-    Cost: 4,
+    Cost: 5,
     Attack: 2,
     Health: 2,
     Description: "When Played: Trigger every \"When Played\" effect of the cards You have played this game.",
