@@ -710,3 +710,9 @@ body[data-font=dys] #menu .tile b{font-size:36px}body[data-font=dys] #menu .tile
 
 /* menus that never need to scroll: clip instead of showing a scrollbar */
 #stage #botmenu .panel,#stage #rkmenu .panel,#stage #frmenu .panel,#stage #mirmenu .panel,#stage #lobby .panel,#stage #dkpick .panel{overflow:hidden}
+
+/* player profile: sized to fit the pop-up, no scrolling */
+#stage #acctmenu .panel.prof{overflow:hidden;padding:18px 54px 20px;gap:6px}
+#stage #acctmenu .panel.prof .pfav{width:210px;height:210px}
+#stage #acctmenu .panel.prof .pfbody{grid-template-columns:260px minmax(0,1fr);gap:36px}
+.prb .pstar{width:24px;height:24px}

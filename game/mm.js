@@ -111,7 +111,7 @@ const avHTML=(id,name)=>id&&CD[id]?'<img src="'+artSrc(id)+'" alt="" draggable="
 const dispName=()=>{const a=getAcct();return myName()||(a&&a.name)||''};
 const setMyName=n=>{lsSet('rj_name',n)};
 function chipRefresh(){const me=MM.me,n=dispName();rk('pchipn').textContent=n||'Playerzacy';
- rk('pchips').textContent=me&&me.wins!=null?'Prestige '+prestigeOf(me.wins).lv+'  -  '+prestigeOf(me.wins).prog+'/'+PRESTIGE_WINS:'Your profile';
+ rk('pchips').textContent=me&&me.rating!=null?'Rating '+me.rating+(me.rank?'  -  #'+me.rank:''):'Your profile';
  rk('pchipav').innerHTML=avHTML(MM.me&&MM.me.avatar&&CD[MM.me.avatar]?MM.me.avatar:avId(),n)}
 function statsPush(me){if(!me||!cfg())return;const a=getAcct();if(!a)return;
  const ach=typeof achCount=='function'?achCount():me.ach||0,en=+lsGet('rj_endless_best')||0;
@@ -126,7 +126,7 @@ const ago=t=>{if(!t)return 'a while ago';const s=(Date.now()-t)/1000;return s<18
 // Prestige: every 100 ranked wins = +1 prestige level and the progress bar drops back to 0. Everything is derived from the server's win count.
 const PRESTIGE_WINS=100;
 function prestigeOf(wins){wins=Math.max(0,+wins||0);const lv=Math.floor(wins/PRESTIGE_WINS),prog=wins%PRESTIGE_WINS;return{lv,prog,left:PRESTIGE_WINS-prog,pct:100*prog/PRESTIGE_WINS}}
-const PSTAR='<svg class="pstar" viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M7 1h2v4h5v2h-2v2h2v2h-3v4H9v-3H7v3H4v-4H1V9h2V7H1V5h5z"/></svg>';
+const PSTAR='<svg class="pstar" viewBox="0 0 24 24"><path fill="currentColor" d="M12 1.5l3.1 7.2 7.7.7-5.8 5.1 1.7 7.6L12 18.1l-6.7 4 1.7-7.6-5.8-5.1 7.7-.7z"/></svg>';
 const prBadge=wins=>{const p=prestigeOf(wins);return'<span class="prb'+(p.lv?' on':'')+'" title="Prestige '+p.lv+'">'+PSTAR+'<b>'+p.lv+'</b></span>'};
 const HK='rj_rhist';
 function hist(){const a=getAcct();if(!a)return[];try{return(JSON.parse(lsGet(HK)||'[]')||[]).filter(h=>h&&h.u==a.uid)}catch(e){return[]}}
