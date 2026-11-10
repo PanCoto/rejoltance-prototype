@@ -9,8 +9,23 @@
 
    Also update GAME_VERSION below so the main menu label matches.
    ============================================================ */
-const GAME_STAGE='Pre-alpha',GAME_VERSION='1.0.0';
+const GAME_STAGE='Pre-alpha',GAME_VERSION='1.0.1';
 const CHANGELOG=`
+## v1.0.1 - 2026-11-10
+### Card Changes
+- **Echo Chamber** [BUFF] : Cost 5 -> **4**
+- **Shapeshifter** [BUFF] : ATK 1 -> **2**, HP 1 -> **2**
+- **Aura** [BUFF] : "When Played: Heal Your Hero and all Friendly Units for 2." -> "When Played: Increase Your Hero's Max HP by 2. Heal Your Hero and all Friendly Units for 2."
+- **Morsel** [REWORK] : Health 2 -> **1**, "When Played: Other Friendly Animals gain +1 HP." -> "When Played: Other Friendly Animals gain **+1 ATK**."
+- **Black Cat** [REWORK] : Cost 0 -> **1**, Attack 0 -> **1**, "When Sacrificed: Return to Your Hand instead." -> "When Sacrificed: Return to Your Hand instead. It costs 0 this turn."
+- **Pegasus** [REWORK] : "When Played: Do a Bonus Attack." -> "When Played: **Another** Friendly Animal does a Bonus Attack."
+- **Exploding Present** [REWORK] : Cost 2 -> **3**, "The Enemy Hero gains a copy of this card that costs 1 more." -> "The Enemy Hero gains a copy of this card that costs **2** more."
+- **Evolution** [NERF] : Cost 0 -> **1**
+
+### Fixes
+- **Echo Chamber** now supports sacrifice effects. Every "When Played: You may Sacrifice a Friendly Unit" card you have played can be replayed with **one** shared sacrifice: pick a Friendly Unit once and all of their sacrifice payouts (damage, stat gain, extra draws...) use it.
+- Units summoned by a replayed effect (for example a unit created by Echo Chamber replaying Attentive Parent) now trigger their own When Played, and you can choose to Sacrifice a unit for them.
+- Heroes now have a Max HP (20 by default), so heals and Lifesteal respect increases to it.
 ## v1.0.0 - 2026-11-09
 ### Card Changes
 -  **Rustler** [NERF] : Cost 10 -> **12**

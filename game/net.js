@@ -39,7 +39,7 @@ const mev=e=>{const x=Object.assign({},e);if(x.o!=null)x.o=1-x.o;if(x.h!=null)x.
 function snap(G){
  const uc=u=>{if(!u)return null;const x=Object.assign({},u);delete x.d;x.kw=[...u.kw];x.o=1-u.o;return x};
  const hid=c=>({uid:c.uid,id:0}),cp=c=>Object.assign({},c);
- const side=(p,own)=>({ac:own?p.ac:{un:[]},fk:p.ac?p.ac.fk:0,i:1-p.i,hp:p.hp,mb:p.mb,b:p.b,gb:p.gb,sp:p.sp,sc:p.sc,fat:p.fat||0,
+ const side=(p,own)=>({ac:own?p.ac:{un:[]},fk:p.ac?p.ac.fk:0,i:1-p.i,hp:p.hp,mhp:p.mhp,mb:p.mb,b:p.b,gb:p.gb,sp:p.sp,sc:p.sc,fat:p.fat||0,
   hand:own?p.hand.map(cp):p.hand.map(hid),
   deck:own?shuf(p.deck.map(cp)):p.deck.map(hid),
   disc:p.disc.map(cp),ln:p.ln.map(uc)});

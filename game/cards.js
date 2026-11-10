@@ -212,16 +212,16 @@ const CARDS = [
     Name: "Black Cat",
     Type: "Unit",
     Subtypes: ["Animal"],
-    Cost: 0,
-    Attack: 0,
+    Cost: 1,
+    Attack: 1,
     Health: 1,
-    Description: "When Sacrificed: Return to Your Hand instead.",
+    Description: "When Sacrificed: Return to Your Hand instead. It costs 0 this turn.",
     Effects: [
       {
         Trigger: "OnSacrificed",
         Zone: "Board",
         Actions: [
-          { Type: "ReturnToHand", Target: "Self" },
+          { Type: "ReturnToHand", Target: "Self", FreeThisTurn: true },
         ],
       },
     ],
@@ -530,14 +530,14 @@ const CARDS = [
     Id: 28,
     Name: "Exploding Present",
     Type: "Spell",
-    Cost: 2,
-    Description: "Deal 7 damage to an Enemy Unit. The Enemy Hero gains a copy of this card that costs 1 more.",
+    Cost: 3,
+    Description: "Deal 7 damage to an Enemy Unit. The Enemy Hero gains a copy of this card that costs 2 more.",
     Effects: [
       {
         Trigger: "OnPlayed",
         Actions: [
           { Type: "DealDamage", Target: "TargetEnemyUnit", Amount: 7 },
-          { Type: "GiveToOpponent", Target: "Self", CostChange: 1 },
+          { Type: "GiveToOpponent", Target: "Self", CostChange: 2 },
         ],
       },
     ],
@@ -792,12 +792,12 @@ const CARDS = [
     Attack: 3,
     Health: 2,
     Keywords: ["Flying"],
-    Description: "When Played: Do a Bonus Attack.",
+    Description: "When Played: Another Friendly Animal does a Bonus Attack.",
     Effects: [
       {
         Trigger: "OnPlayed",
         Actions: [
-          { Type: "BonusAttack", Target: "Self" },
+          { Type: "BonusAttack", Target: "TargetFriendlyUnit", Where: { Subtype: "Animal" } },
         ],
       },
     ],
@@ -1276,11 +1276,12 @@ const CARDS = [
     Cost: 3,
     Attack: 2,
     Health: 4,
-    Description: "When Played: Heal Your Hero and all Friendly Units for 2.",
+    Description: "When Played: Increase Your Hero's Max HP by 2. Heal Your Hero and all Friendly Units for 2.",
     Effects: [
       {
         Trigger: "OnPlayed",
         Actions: [
+          { Type: "IncreaseMaxHp", Target: "FriendlyHero", Amount: 2 },
           { Type: "Heal", Target: "FriendlyHero", Amount: 2 },
           { Type: "Heal", Target: "AllFriendlyUnits", Amount: 2 },
         ],
@@ -1563,13 +1564,13 @@ const CARDS = [
     Subtypes: ["Animal"],
     Cost: 1,
     Attack: 1,
-    Health: 2,
-    Description: "When Played: Other Friendly Animals gain +1 HP.",
+    Health: 1,
+    Description: "When Played: Other Friendly Animals gain +1 ATK.",
     Effects: [
       {
         Trigger: "OnPlayed",
         Actions: [
-          { Type: "BuffStats", Target: "OtherFriendlyUnits", Where: { Subtype: "Animal" }, BuffHp: 1 },
+          { Type: "BuffStats", Target: "OtherFriendlyUnits", Where: { Subtype: "Animal" }, BuffAtk: 1 },
         ],
       },
     ],
@@ -1639,8 +1640,8 @@ const CARDS = [
     Type: "Unit",
     Subtypes: ["Aberration"],
     Cost: 2,
-    Attack: 1,
-    Health: 1,
+    Attack: 2,
+    Health: 2,
     Description: "When Played: Transform into the last Aberration You played.",
     Effects: [
       {
@@ -1854,7 +1855,7 @@ const CARDS = [
     Id: 90,
     Name: "Evolution",
     Type: "Spell",
-    Cost: 0,
+    Cost: 1,
     Description: "Give a Friendly Unit Evolving.",
     Effects: [
       {
@@ -1967,7 +1968,7 @@ const CARDS = [
     Name: "Echo Chamber",
     Type: "Unit",
     Subtypes: ["Aberration"],
-    Cost: 5,
+    Cost: 4,
     Attack: 2,
     Health: 2,
     Description: "When Played: Trigger every \"When Played\" effect of the cards You have played this game.",
