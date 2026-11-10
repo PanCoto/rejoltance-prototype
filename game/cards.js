@@ -1009,7 +1009,7 @@ const CARDS = [
     Subtypes: ["Machine"],
     Cost: 1,
     Attack: 1,
-    Health: 1,
+    Health: 2,
     Description: "Whenever You play another Machine: Gain +1/+1.",
     Effects: [
       {

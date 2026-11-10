@@ -13,6 +13,7 @@ const GAME_STAGE='Pre-alpha',GAME_VERSION='1.0.1';
 const CHANGELOG=`
 ## v1.0.1 - 2026-11-10
 ### Card Changes
+- **Adaptive Unit** [BUFF] : Health 1 -> **2**
 - **Echo Chamber** [BUFF] : Cost 5 -> **4**
 - **Aura** [BUFF] : "When Played: Heal Your Hero and all Friendly Units for 2." -> "When Played: Increase Your Hero's Max HP by 2. Heal Your Hero and all Friendly Units for 2."
 - **Morsel** [REWORK] : Health 2 -> **1**, "When Played: Other Friendly Animals gain +1 HP." -> "When Played: Other Friendly Animals gain **+1 ATK**."
