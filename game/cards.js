@@ -880,16 +880,16 @@ const CARDS = [
     Name: "Tea Maid",
     Type: "Unit",
     Subtypes: ["Human"],
-    Cost: 2,
-    Attack: 2,
-    Health: 1,
-    Description: "While in Play: Your Spells cost 1 less.",
+    Cost: 3,
+    Attack: 1,
+    Health: 4,
+    Description: "While in Play: The first Action you play each round costs 2 less.",
     Effects: [
       {
         Trigger: "Passive",
         Zone: "Board",
         Actions: [
-          { Type: "BuffStats", Target: "FriendlySpellsInHand", Amount: -1 },
+          { Type: "ModifyCost", Side: "Friendly", Amount: -2, CardFilter: { Type: "Spell" }, FirstEachRound: true },
         ],
       },
     ],
@@ -904,7 +904,7 @@ const CARDS = [
     Attack: 6,
     Health: 6,
     Rule: "persistentGrowth",
-    Description: "While in Deck, Hand or Discard: Costs 1 less for each Spell You play. When Played: Do a Bonus Attack.",
+    Description: "While in Deck, Hand or Discard: Costs 1 less for each Action You play. When Played: Do a Bonus Attack.",
     DescriptionClassic: "While in Hand: Costs 1 less for each Spell You play. When Played: Do a Bonus Attack.",
     Effects: [
       {
@@ -1178,7 +1178,7 @@ const CARDS = [
     Health: 6,
     Keywords: ["SplashDamage"],
     KeywordParams: { SplashDamage: 6 },
-    Description: "While in Play: Enemy Spells cost 6 more.",
+    Description: "While in Play: Enemy Actions cost 6 more.",
     Effects: [
       {
         Trigger: "Passive",
@@ -1640,8 +1640,8 @@ const CARDS = [
     Type: "Unit",
     Subtypes: ["Aberration"],
     Cost: 2,
-    Attack: 2,
-    Health: 2,
+    Attack: 1,
+    Health: 1,
     Description: "When Played: Transform into the last Aberration You played.",
     Effects: [
       {
@@ -1756,16 +1756,15 @@ const CARDS = [
 
   {
     Id: 85,
-    Name: "Stunning Blow",
+    Name: "Knockback",
     Type: "Spell",
     Cost: 2,
-    Description: "Deal 2 damage to an Enemy Unit and Stun it.",
+    Description: "Return an Enemy Unit to its owner's Hand. It costs 1 more.",
     Effects: [
       {
         Trigger: "OnPlayed",
         Actions: [
-          { Type: "DealDamage", Target: "TargetEnemyUnit", Amount: 2 },
-          { Type: "ApplyStatus", Target: "TargetEnemyUnit", StatusKeyword: "Stunned" },
+          { Type: "ReturnToHand", Target: "TargetEnemyUnit", CostChange: 1 },
         ],
       },
     ],
@@ -1855,7 +1854,7 @@ const CARDS = [
     Id: 90,
     Name: "Evolution",
     Type: "Spell",
-    Cost: 1,
+    Cost: 0,
     Description: "Give a Friendly Unit Evolving.",
     Effects: [
       {
@@ -1895,13 +1894,13 @@ const CARDS = [
     Cost: 3,
     Attack: 2,
     Health: 4,
-    Description: "While in Play: Whenever an Enemy Unit is Played in another lane, Move it here. If it can't move, deal 2 damage to it instead.",
+    Description: "While in Play: Whenever an Enemy Unit is Played in another lane, Move it here. If it can't move, deal 2 damage to it instead (once each round).",
     Effects: [
       {
         Trigger: "OnEnemyUnitPlayed",
         Condition: { Condition: "Not", SubConditions: [{ Condition: "SameLane" }] },
         Actions: [
-          { Type: "MoveToSourceLane", Target: "EventUnit", Else: { Type: "DealDamage", Amount: 2 } },
+          { Type: "MoveToSourceLane", Target: "EventUnit", Else: { Type: "DealDamage", Amount: 2, OncePerTurn: true } },
         ],
       },
     ],
@@ -1912,11 +1911,12 @@ const CARDS = [
     Name: "Dual Wield",
     Type: "Spell",
     Cost: 2,
-    Description: "Your next Spell is played twice.",
+    Description: "Conjure a random Action. Your next Action is played twice.",
     Effects: [
       {
         Trigger: "OnPlayed",
         Actions: [
+          { Type: "AddCardToHand", Target: "FriendlyHero", Filter: { Type: "Spell", NotIds: [93] } },
           { Type: "PlayNextTwice", Target: "FriendlyHero" },
         ],
       },

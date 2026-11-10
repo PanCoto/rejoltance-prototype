@@ -39,7 +39,7 @@ const KNAME={SplashDamage:'Splash',BurnSource:'Burn Source',SilenceImmune:'Indom
 const kwNum=(d,k)=>(d.KeywordParams||{})[k]||(k=='Armored'||k=='SplashDamage'?1:'');
 const HIDDEN_KW=new Set(['BurnSource']); // internal keywords: work in the engine, never shown on cards
 const shownKw=a=>a.filter(k=>!HIDDEN_KW.has(k));
-const kwLabel=(d,k,u)=>k=='Armor2'?'Armored 2':k=='Burning'&&u&&(u.bn||0)>1?'Burning '+u.bn:k=='SoulGuard'&&u&&(u.sgn||0)>1?'SoulGuard '+u.sgn:(KNAME[k]||k)+(kwNum(d,k)!==''&&(k=='Armored'||k=='SplashDamage')?' '+kwNum(d,k):'');
+const kwLabel=(d,k,u)=>k=='Armor2'?'Armored 2':k=='Stunned'&&u&&(u.stn||0)>1?'Stunned '+u.stn:k=='Burning'&&u&&(u.bn||0)>1?'Burning '+u.bn:k=='SoulGuard'&&u&&(u.sgn||0)>1?'SoulGuard '+u.sgn:(KNAME[k]||k)+(kwNum(d,k)!==''&&(k=='Armored'||k=='SplashDamage')?' '+kwNum(d,k):'');
 const BAD=new Set(['Burning','Marked','Stunned']);
 const hl=t=>(t||'').replace(/\b(Sacrifice[d]?|Mark(?:ed)?|Stunned?|Burning|SoulGuard|Unkillable|Unactionable|Lifesteal|Taunt|Deadly|Evolving|Flying|Merge[sd]?)\b/g,'<span class="k u">$1</span>').replace(/(\d+ )?\bBlood\b/g,'<span class="k">$&</span>');
 const MISSING=new Set(),IMGX=window.RJ_IMG||{};

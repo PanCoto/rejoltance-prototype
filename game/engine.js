@@ -46,7 +46,7 @@ const canon=s=>SUBALIAS[s]||s;
 const hasSub=(d,s)=>!!d&&(d.Subtypes||[]).some(x=>canon(x)==canon(s));
 const isTok=d=>d.Id>=900||(d.Subtypes||[]).includes('Token');
 function cardOK(d,f){if(!f)return true;
- if(f.Id!=null&&d.Id!=f.Id)return false;if(f.Type&&d.Type!=(f.Type=='Action'?'Spell':f.Type))return false;
+ if(f.Id!=null&&d.Id!=f.Id)return false;if(f.NotIds&&f.NotIds.includes(d.Id))return false;if(f.Type&&d.Type!=(f.Type=='Action'?'Spell':f.Type))return false;
  if(f.Ids&&!f.Ids.includes(d.Id))return false;if(f.Subtype&&!hasSub(d,f.Subtype))return false;const cs=d.Cost||0;
  if(f.Cost!=null&&cs!=f.Cost)return false;if(f.MinCost!=null&&cs<f.MinCost)return false;if(f.MaxCost!=null&&cs>f.MaxCost)return false;
  if(f.Token!=null&&isTok(d)!=!!f.Token)return false;return true}
@@ -139,6 +139,7 @@ function costMods(G,p,c){const d=CD[c.id],out=[];
   else return;
   const mine=src.o==p.i;if((side=='Friendly'&&!mine)||(side=='Enemy'&&mine))return;
   if(!cardOK(d,flt)||!cond(e.Condition,src,{},G))return;
+  if(a.FirstEachRound&&(p.fr||{})[(flt&&flt.Type)||'Any']===G.turn)return;   // "first Spell/Unit/card you play each round": already used this round
   if(amt)out.push({src,amt})})})}));return out}
 function cost(G,p,c){const d=CD[c.id];if(c.z&&c.z===G.turn)return 0;let x=d.Cost;
  costMods(G,p,c).forEach(m=>x+=m.amt);
@@ -290,7 +291,6 @@ function tg0(G,a,s,c){const me=G.p[s.o],op=G.p[1-s.o];
  case'Sacrificer':{const w=c.by;return w&&!w.gone&&w.hp>0&&G.p[w.o].ln[w.lane]===w&&!shield(w,s)?[w]:[]}
  case'TargetEnemyUnit':case'SelectedTarget':case'TargetFriendlyUnit':case'TargetAnyUnit':case'TargetEnemyUnitOrHero':
   if(c.t)return shield(c.t,s)?[]:[c.t];
-  if(a.IncludeSelf&&a.Target=='TargetFriendlyUnit'&&s.uid&&!s.gone)return[s];   // no other valid pick (e.g. Pegasus with no other Animal): the source itself is the target
   if(a.Target=='TargetEnemyUnit'){const u=op.ln[s.lane],vs=units(op).filter(x=>!shield(x,s)),t=u&&!shield(u,s)?u:vs[R(vs.length)];return t?[t]:[]}
   return[]}
  return[]}
@@ -394,7 +394,7 @@ case'AddCardToHand':{
   const owners=ts.length&&ts[0].h?ts.filter(t=>t.h).map(t=>G.p[t.p]):[me];
   owners.forEach(pl=>{for(let i=0;i<(a.Count||1);i++){let id=a.ValueParam;if(a.Filter||id==null){const pp=poolOf(a.Filter);if(!pp.length)break;id=pp[R(pp.length)].Id}
    if(pl.hand.length<HAND_MAX){pl.hand.push({uid:UID++,id,tok:1,...(a.FreeThisTurn?{z:G.turn}:{})});gained(G,pl,'add')}}});break}
-case'ReturnToHand':unitsOnly.filter(t=>!t.gone&&(!a.IfAlive||t.hp>0)).forEach(t=>{const o=G.p[t.o];if(o.ln[t.lane]!==t)return;EV(G,{k:'bnc',id:t.id,atk:t.atk,hp:Math.max(t.hp,0),o:t.o,lane:t.lane});L(G,t.d.Name+' returned to hand');o.ln[t.lane]=null;t.gone=1;if((o.hand.length<HAND_MAX||RULES.fullHandRework)&&(t.id<900||RULES.tokensReturnToHand)){o.hand.push({uid:UID++,id:t.id,unk:t.kw.has('Unkillable')?1:0,...(t.cr?{red:t.cr}:{}),...(t.cba?{ba:t.cba}:{}),...(a.FreeThisTurn?{z:G.turn}:{})});gained(G,o,'bounce')}if(t.o!=me.i)acn(G,me,'bnc',1,3,'revolving')});break
+case'ReturnToHand':unitsOnly.filter(t=>!t.gone&&(!a.IfAlive||t.hp>0)).forEach(t=>{const o=G.p[t.o];if(o.ln[t.lane]!==t)return;EV(G,{k:'bnc',id:t.id,atk:t.atk,hp:Math.max(t.hp,0),o:t.o,lane:t.lane});L(G,t.d.Name+' returned to hand');o.ln[t.lane]=null;t.gone=1;if((o.hand.length<HAND_MAX||RULES.fullHandRework)&&(t.id<900||RULES.tokensReturnToHand)){o.hand.push({uid:UID++,id:t.id,unk:t.kw.has('Unkillable')?1:0,...((t.cr||a.CostChange)?{red:(t.cr||0)-(a.CostChange||0)}:{}),...(t.cba?{ba:t.cba}:{}),...(a.FreeThisTurn?{z:G.turn}:{})});gained(G,o,'bounce')}if(t.o!=me.i)acn(G,me,'bnc',1,3,'revolving')});break
  case'SacrificeUnits':{
   const list=(c.sacs||[]).filter(u=>u&&!u.gone&&u!==s&&u.o==s.o&&me.ln[u.lane]===u);let ga=0,gh=0;
   list.forEach(v=>{if(v.gone)return;c.last=v;c.sacd=1;const va=v.atk,vh=Math.max(0,v.hp);sacrifice(G,v,s);if(a.Absorb){ga+=va;gh+=vh}else{ga++;gh++}});
@@ -438,7 +438,7 @@ case'LoseHealth':ts.forEach(t=>{if(t.h)dmg(G,t,a.Amount||1,null,2);else{t.hp-=a.
  case'MoveToSourceLane':{
   ts.forEach(t=>{if(t.h||t.gone||t.hp<=0)return;const o=G.p[t.o],dest=s.lane;
    if(dest>=0&&dest!=t.lane&&!o.ln[dest]&&o.ln[t.lane]===t){o.ln[t.lane]=null;place(G,o,t,dest);L(G,t.d.Name+' is pulled into lane '+(dest+1))}
-   else if(a.Else&&a.Else.Amount)dmg(G,t,a.Else.Amount,s,2)});break}
+   else if(a.Else&&a.Else.Amount&&!(a.Else.OncePerTurn&&s.elT===G.turn)){if(a.Else.OncePerTurn)s.elT=G.turn;dmg(G,t,a.Else.Amount,s,2)}});break}
  case'GrantRule':if(a.Rule){me[a.Rule]=1;L(G,'Marking a Marked unit now destroys it')}break;
  case'PlayNextTwice':me.dw=1;L(G,'Your next action is played twice');break;
   case'ReplayPlayed':{
@@ -585,6 +585,7 @@ function play(G,p,ci,ln,pk){if(!canPlay(G,p,ci,ln))return false;
  if(!G.sim&&p.ac){p.ac.pl++;if(d.Cost>3)p.ac.big=1;acn(G,p,'spent',paid,10,'maxed');if(c.id==900&&ctx.t&&!ctx.t.h&&ctx.t.id==3)acu(G,p,'recursion')}
  const he={p:p.i,t:G.turn,id:c.id,tg:ctx.t?(ctx.t.h?'Hero':ctx.t.d.Name):ctx.sac?ctx.sac.d.Name:''};G.hist.push(he);
  if(!G.sim)costMods(G,p,c).forEach(m=>{if(m.amt>0||d.Cost-(c.red||0)>0)EV(G,{k:'trig',u:m.src.uid})});
+ p.fr=Object.assign({},p.fr,{[d.Type]:G.turn,Any:G.turn});
  if(d.Type=='Unit'){const u=mk(c.id,p.i);u.atk+=c.ba||0;u.paid=paid;u.cr=c.red||0;u.cba=c.ba||0;if(c.unk)u.kw.add('Unkillable');he.uid=u.uid;place(G,p,u,ln);L(G,(p.i?'Enemy':'You')+' play '+d.Name);
   fire(G,'OnPlayed',u,ctx);announce(G,u);
   resolve(G)}
