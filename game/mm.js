@@ -174,12 +174,13 @@ async function rkOpen(){
   if(err){rk('rksub').textContent='Could not load the ranking: '+err.message;return}
   MM.me=me||null;if(me&&me.avatar&&CD[me.avatar])lsSet('rj_avatar',String(me.avatar));chipRefresh();
   if(needDc()&&!(me&&me.discord)){rk('rkplay').textContent='Link Discord to play';rk('rksub').textContent='Ranked games require a linked Discord account (set up in your Profile).'}
-  rk('rkme').innerHTML=rkCard(me);LBROWS=lb;rk('rklist').innerHTML=rkRows(lb,me)}
+  rk('rkme').innerHTML=rkCard(me);LBROWS=lb;rk('rklist').innerHTML=rkRows(lb,me);if(window.RJ_EXP){rk('rkplay').disabled=true;rk('rksub').textContent='Ranked is disabled while Experimental changes are on (Settings).'}}
  finally{ldOff()}}
 rk('rkopen').onclick=rkOpen;rk('rkback').onclick=closePanels;
 rk('rkprof').onclick=()=>profOpen('',rkOpen);
 rk('rklist').onclick=e=>{const r=e.target.closest('.rkr[data-pid]');if(r&&r.dataset.pid)profView(r.dataset.pid,rkOpen)};
-rk('rkplay').onclick=()=>{if(needDc()&&!(MM.me&&MM.me.discord)){profOpen('Ranked games require a linked Discord account: '+(MM.me?'link Discord to this account':'log in with Discord')+' below.',rkOpen);return}
+rk('rkplay').onclick=()=>{if(window.RJ_EXP){rk('rksub').textContent='Ranked is disabled while Experimental changes are on (Settings).';return}
+ if(needDc()&&!(MM.me&&MM.me.discord)){profOpen('Ranked games require a linked Discord account: '+(MM.me?'link Discord to this account':'log in with Discord')+' below.',rkOpen);return}
  LB='rkmenu';startAudio();mmSearch('ranked')};
 
 // ---------- Profile (own account, or another player's card opened from the leaderboard) ----------

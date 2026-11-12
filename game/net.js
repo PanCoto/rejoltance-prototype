@@ -1,5 +1,5 @@
 const NETPRE='rejoltance-',ALPH='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const NETV=(()=>{let h=5381;const s=JSON.stringify(CARDS);for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return'v1-'+(h>>>0).toString(36)})();
+const NETV=(()=>{let h=5381;const s=JSON.stringify(CARDS);for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return(window.RJ_EXP?'v1x-':'v1-')+(h>>>0).toString(36)})();
 const STUN_ICE=[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:stun.cloudflare.com:3478','stun:global.stun.twilio.com:3478']}];
 // Last resort only: a shared public relay that may be rate-limited or discontinued. See net-config.js.
 const SHARED_TURN=[{urls:['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443','turn:openrelay.metered.ca:443?transport=tcp','turns:openrelay.metered.ca:443?transport=tcp'],username:'openrelayproject',credential:'openrelayproject'}];
@@ -93,7 +93,7 @@ function netLeave(keepLobby){const N=NET;NET=null;NETTK++;
  if(!keepLobby)$('lobby').style.display='none'}
 
 // Matched games (ranked / quick match via the server): the deck is only sent / read once the player presses Ready (mm.js), so it can be changed until then.
-function guestHello(N){if(NET!==N||N.hi)return;N.hi=1;pkResolve();netSend({t:'hello',v:NETV,name:myName(),deck:ALL[$('d0').value].c});lobby('Connected',{status:'Waiting for the host to start the game...',nodeck:1})}
+function guestHello(N){if(NET!==N||N.hi)return;N.hi=1;pkResolve();netSend({t:'hello',v:NETV,x:window.RJ_EXP?1:0,name:myName(),deck:ALL[$('d0').value].c});lobby('Connected',{status:'Waiting for the host to start the game...',nodeck:1})}
 function wire(N,c){
  c.on('open',()=>{if(NET!==N)return;if(!N.host){clearTimeout(N.to);N.up=1;if(N.mm&&!N.lr)return;guestHello(N)}});
  c.on('data',m=>{if(NET!==N||!m||!m.t)return;N.host?hostMsg(m):guestMsg(m)});
@@ -167,7 +167,7 @@ function tryBegin(){if(!NET.mull[0]||!NET.mull[1]||!NET.pref[0]||!NET.pref[1])re
 async function hostHandle(m){
  switch(m.t){
  case'hello':{
-  if(m.v!==NETV){netSend({t:'err',msg:'Version mismatch - the card data differs. Both players should reload the page (Ctrl+F5) and try again.'});break}
+  if(m.v!==NETV){netSend({t:'err',msg:(m.x?1:0)!==(window.RJ_EXP?1:0)?'Experimental changes mismatch - both players must have "Experimental changes" in Settings either on or off.':'Version mismatch - the card data differs. Both players should reload the page (Ctrl+F5) and try again.'});break}
   const dk=m.deck;if(!okDeck(dk)){netSend({t:'err',msg:'Your deck is not valid.'});break}
   OPN=cleanName(m.name).trim();NET.deckG=dk.map(Number);if(NET.mm&&!NET.lr){NET.hp=1;break}hostGo();break}
  case'mull':{if(!G||G.turn!=0||NET.mull[1])break;

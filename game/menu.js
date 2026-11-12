@@ -19,6 +19,10 @@ $('rndprem').checked=lsGet('rj_rndpool')!=='mine';
 $('rndprem').onchange=()=>lsSet('rj_rndpool',$('rndprem').checked?'all':'mine');
 $('hideprem').checked=lsGet('rj_hideprem')==='1';
 $('hideprem').onchange=()=>{lsSet('rj_hideprem',$('hideprem').checked?'1':'0');renderPickers()};
+$('expchg').checked=!!window.RJ_EXP;
+$('expchg').onchange=()=>{const on=$('expchg').checked;
+ if($('game').style.display=='block'&&!confirm('Changing this reloads the page and ends the current game. Continue?')){$('expchg').checked=!on;return}
+ lsSet('rj_exp',on?'1':'0');location.reload()};
 $('hotnum').checked=lsGet('rj_hotnum')==='1';document.body.classList.toggle('hn',$('hotnum').checked);
 $('hotnum').onchange=()=>{lsSet('rj_hotnum',$('hotnum').checked?'1':'0');document.body.classList.toggle('hn',$('hotnum').checked)};
 const pct=(id,key,def,apply)=>{const el=$(id),n=$(id.replace('v','n'));let v=lsGet(key);v=v===null||v===''||isNaN(+v)?def:Math.max(0,Math.min(100,+v));
@@ -28,7 +32,7 @@ const pct=(id,key,def,apply)=>{const el=$(id),n=$(id.replace('v','n'));let v=lsG
 pct('musv','rj_mus',100,musicSetVol);
 
 /* ---- build version label + changelog (data lives in changelog.js) ---- */
-$('mver').textContent=GAME_STAGE+' Build v. '+GAME_VERSION;
+$('mver').textContent=GAME_STAGE+' Build v. '+GAME_VERSION+(window.RJ_EXP?' [EXPERIMENTAL]':'');
 const clInline=(el,t)=>t.split(/\*\*(.+?)\*\*/).forEach((s,i)=>{if(!s)return;if(i%2){const b=document.createElement('b');b.textContent=s;el.appendChild(b)}else el.appendChild(document.createTextNode(s))});
 const renderChangelog=()=>{const box=$('cllist');box.textContent='';let ent=null,sec=null,ul=null,n=0;
  for(const raw of CHANGELOG.split('\n')){const l=raw.trim();if(!l)continue;let m;
