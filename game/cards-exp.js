@@ -475,7 +475,7 @@ const CARDS_EXP = [
     Name: "Bounty Hunter",
     Type: "Unit",
     Subtypes: ["Human"],
-    Cost: 4
+    Cost: 4,
     Attack: 3,
     Health: 3,
     Description: "Whenever an Enemy Unit is Marked: Stun it.",
