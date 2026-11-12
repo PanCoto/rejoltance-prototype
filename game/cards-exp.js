@@ -77,8 +77,8 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Human"],
     Cost: 2,
-    Attack: 2,
-    Health: 2,
+    Attack: 1,
+    Health: 3,
     Description: "When Played: Mark an Enemy Unit.",
     Effects: [
       {
