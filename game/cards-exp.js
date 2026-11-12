@@ -730,7 +730,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Human"],
     Cost: 3,
-    Attack: 2,
+    Attack: 1,
     Health: 4,
     Description: "Before Combat Here: Apply Burning to an Enemy Unit.",
     Effects: [
