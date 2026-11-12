@@ -15,13 +15,13 @@
    ============================================================ */
 const CARDS_EXP = [
   {
-    Id: 2,
+    Id: 1,
     Name: "Black Rabbitlings",
     Type: "Unit",
     Subtypes: ["Animal"],
-    Cost: 1,
-    Attack: 1,
-    Health: 20,
+    Cost: 2,
+    Attack: 2,
+    Health: 2,
     Description: "When Destroyed: Heal Your Hero for 3.",
     Effects: [
       {
@@ -77,7 +77,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Human"],
     Cost: 2,
-    Attack: 1,
+    Attack: 2,
     Health: 2,
     Description: "When Played: Mark an Enemy Unit.",
     Effects: [
@@ -96,7 +96,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Aberration", "Human"],
     Cost: 4,
-    Attack: 2,
+    Attack: 3,
     Health: 4,
     Description: "While in Play: Draw a card whenever a Friendly Unit is Destroyed.",
     Effects: [
@@ -115,8 +115,8 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Aberration"],
     Cost: 6,
-    Attack: 3,
-    Health: 3,
+    Attack: 4,
+    Health: 4,
     Description: "When Played: All Friendly Units get +1/+1 for the rest of the game.",
     Effects: [
       {
@@ -150,7 +150,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Machine"],
     Cost: 3,
-    Attack: 2,
+    Attack: 3,
     Health: 3,
     Keywords: ["Armored"],
     KeywordParams: { Armored: 1 },
@@ -163,7 +163,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Aberration"],
     Cost: 5,
-    Attack: 3,
+    Attack: 4,
     Health: 1,
     Description: "While in Hand: Whenever a Friendly Unit is Destroyed, Play this in its lane.",
     Effects: [
@@ -183,7 +183,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Animal"],
     Cost: 3,
-    Attack: 2,
+    Attack: 3,
     Health: 3,
     Description: "When Played: You may Sacrifice a Friendly Unit to gain its stats.",
     Effects: [
@@ -204,8 +204,8 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Animal"],
     Cost: 10,
-    Attack: 7,
-    Health: 7,
+    Attack: 8,
+    Health: 8,
     Keywords: ["Unkillable"],
     Rule: "persistentGrowth",
     Description: "While in Deck, Hand or Discard: Costs 1 less whenever You Sacrifice a Unit.",
@@ -265,8 +265,8 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Human"],
     Cost: 5,
-    Attack: 2,
-    Health: 3,
+    Attack: 3,
+    Health: 4,
     Keywords: ["SoulGuard"],
     Description: "While in Play: Other Friendly Units have SoulGuard.",
     Effects: [
@@ -322,7 +322,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Human"],
     Cost: 5,
-    Attack: 3,
+    Attack: 4,
     Health: 3,
     Keywords: ["SplashDamage", "BurnSource"],
     KeywordParams: { SplashDamage: 3 },
@@ -368,7 +368,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Human"],
     Cost: 5,
-    Attack: 3,
+    Attack: 4,
     Health: 4,
     Description: "When Played: Bounce a Unit.",
     Effects: [
@@ -388,7 +388,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Machine"],
     Cost: 5,
-    Attack: 4,
+    Attack: 5,
     Health: 2,
     Keywords: ["Armored"],
     KeywordParams: { Armored: 2 },
@@ -409,7 +409,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Aberration", "Human"],
     Cost: 3,
-    Attack: 2,
+    Attack: 3,
     Health: 2,
     Description: "Whenever an Enemy Unit is Played in this lane: Deal 2 damage to it.",
     Effects: [
@@ -429,7 +429,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Aberration"],
     Cost: 6,
-    Attack: 4,
+    Attack: 5,
     Health: 6,
     Keywords: ["SilenceImmune"],
     Description: "On Kill: Heal to full and gain +2 HP.",
@@ -450,7 +450,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Human"],
     Cost: 6,
-    Attack: 5,
+    Attack: 6,
     Health: 5,
     Description: "Whenever an Enemy Unit is Marked: Do a Bonus Attack.",
     Effects: [
@@ -476,7 +476,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Human"],
     Cost: 4,
-    Attack: 3,
+    Attack: 4,
     Health: 3,
     Description: "Whenever an Enemy Unit is Marked: Stun it.",
     Effects: [
@@ -502,7 +502,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Human"],
     Cost: 5,
-    Attack: 2,
+    Attack: 3,
     Health: 4,
     Description: "Before Combat Here: Mark an Enemy Unit.",
     Effects: [
@@ -521,7 +521,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Aberration"],
     Cost: 5,
-    Attack: 2,
+    Attack: 3,
     Health: 5,
     Description: "While in Play: Gain +1 ATK whenever You draw a card. Whenever this damages the Enemy Hero: Draw a card.",
     Effects: [
@@ -564,7 +564,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Aberration"],
     Cost: 7,
-    Attack: 6,
+    Attack: 7,
     Health: 6,
     Description: "On Kill: Move Right. If an Enemy Unit is in that lane, do a Bonus Attack.",
     Effects: [
@@ -582,9 +582,9 @@ const CARDS_EXP = [
     Name: "SharkCannon",
     Type: "Unit",
     Subtypes: ["Machine"],
-    Cost: 5,
-    Attack: 6,
-    Health: 7,
+    Cost: 6,
+    Attack: 0,
+    Health: 8,
     Description: "Before Combat Here: Deal 4 damage to the Enemy Hero.",
     Effects: [
       {
@@ -635,8 +635,8 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Machine"],
     Cost: 5,
-    Attack: 6,
-    Health: 6,
+    Attack: 5,
+    Health: 10,
     Keywords: ["Stunned"],
     Description: "Whenever this damages an Enemy: Stun this Unit.",
     Effects: [
@@ -662,7 +662,7 @@ const CARDS_EXP = [
     Subtypes: ["Human"],
     Cost: 3,
     Attack: 3,
-    Health: 1,
+    Health: 2,
     Description: "On Kill: Gain SoulGuard.",
     Effects: [
       {
@@ -680,7 +680,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Aberration"],
     Cost: 3,
-    Attack: 2,
+    Attack: 3,
     Health: 2,
     Description: "Whenever a Friendly Aberration damages the Enemy Hero: It gets +1/+1.",
     Effects: [
@@ -700,8 +700,8 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Aberration"],
     Cost: 7,
-    Attack: 3,
-    Health: 3,
+    Attack: 4,
+    Health: 4,
     Keywords: ["SoulGuard"],
     Rule: "hpOneTrigger",
     Description: "Whenever a Friendly Unit is Destroyed or drops to 1 HP: Deal 2 damage to the Enemy Hero.",
@@ -730,7 +730,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Human"],
     Cost: 3,
-    Attack: 1,
+    Attack: 2,
     Health: 4,
     Description: "Before Combat Here: Apply Burning to an Enemy Unit.",
     Effects: [
@@ -762,7 +762,7 @@ const CARDS_EXP = [
     Subtypes: ["Aberration", "Animal"],
     Cost: 2,
     Attack: 2,
-    Health: 1,
+    Health: 2,
     Description: "When Played: Both Heroes draw a card. You may Sacrifice a Friendly Unit to draw another.",
     Effects: [
       {
@@ -784,8 +784,8 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Animal"],
     Cost: 5,
-    Attack: 3,
-    Health: 3,
+    Attack: 4,
+    Health: 4,
     Description: "While in Play: Whenever an Enemy Unit damages a Friendly Animal, Stun it.",
     Effects: [
       {
@@ -805,7 +805,7 @@ const CARDS_EXP = [
     Subtypes: ["Animal"],
     Cost: 4,
     Attack: 3,
-    Health: 2,
+    Health: 3,
     Keywords: ["Flying"],
     Description: "When Played: Another Friendly Animal does a Bonus Attack.",
     Effects: [
@@ -825,7 +825,7 @@ const CARDS_EXP = [
     Subtypes: ["Human"],
     Cost: 2,
     Attack: 1,
-    Health: 1,
+    Health: 2,
     Description: "When Played: If You control a Machine, gain +2/+2.",
     Effects: [
       {
@@ -844,7 +844,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Aberration", "Machine"],
     Cost: 4,
-    Attack: 3,
+    Attack: 4,
     Health: 3,
     Keywords: ["Unactionable"],
     Description: "After this Attacks: Summon Royal Souldiers in the adjacent lanes.",
@@ -896,7 +896,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Human"],
     Cost: 4,
-    Attack: 1,
+    Attack: 2,
     Health: 4,
     Description: "While in Play: The first Action you play each round costs 2 less.",
     Effects: [
@@ -945,7 +945,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Animal"],
     Cost: 3,
-    Attack: 2,
+    Attack: 3,
     Health: 2,
     Description: "Whenever You Sacrifice a Unit: Gain +1/+1, or +2/+2 if it was a Human.",
     Effects: [
@@ -1005,7 +1005,7 @@ const CARDS_EXP = [
     Subtypes: ["Human"],
     Cost: 2,
     Attack: 2,
-    Health: 1,
+    Health: 2,
     Description: "When Played: Gain a Trap that costs 0 this turn.",
     Effects: [
       {
@@ -1023,7 +1023,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Machine"],
     Cost: 2,
-    Attack: 1,
+    Attack: 2,
     Health: 2,
     Description: "Whenever You play another Machine: Gain +1/+1.",
     Effects: [
@@ -1075,7 +1075,7 @@ const CARDS_EXP = [
     Subtypes: ["Machine"],
     Cost: 4,
     Attack: 0,
-    Health: 5,
+    Health: 6,
     Rule: "persistentGrowth",
     Description: "While in Deck, Hand or Discard: Gain +1 ATK whenever a Friendly Machine is Destroyed.",
     DescriptionClassic: "While in Hand: Gain +3 ATK whenever a Friendly Machine is Destroyed.",
@@ -1098,7 +1098,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Machine"],
     Cost: 7,
-    Attack: 5,
+    Attack: 6,
     Health: 4,
     Keywords: ["Unactionable", "Armored"],
     KeywordParams: { Armored: 3 },
@@ -1121,7 +1121,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Machine"],
     Cost: 8,
-    Attack: 3,
+    Attack: 4,
     Health: 7,
     Description: "When Played: Summon The Collection.",
     Effects: [
@@ -1177,7 +1177,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Animal", "Aberration"],
     Cost: 2,
-    Attack: 2,
+    Attack: 3,
     Health: 1,
     Keywords: ["Flying"],
     Description: "",
@@ -1232,7 +1232,7 @@ const CARDS_EXP = [
     Subtypes: ["Animal"],
     Cost: 2,
     Attack: 0,
-    Health: 4,
+    Health: 5,
     Description: "When Sacrificed: Gain 2 Blood this turn.",
     Effects: [
       {
@@ -1250,7 +1250,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Animal"],
     Cost: 3,
-    Attack: 1,
+    Attack: 2,
     Health: 4,
     Description: "Whenever You Sacrifice a Unit: Draw a card and Heal Your Hero for 1.",
     Effects: [
@@ -1271,7 +1271,7 @@ const CARDS_EXP = [
     Subtypes: ["Human"],
     Cost: 4,
     Attack: 3,
-    Health: 3,
+    Health: 4,
     Description: "Whenever this damages an Enemy Unit: Bounce it.",
     Effects: [
       {
@@ -1289,7 +1289,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Animal"],
     Cost: 4,
-    Attack: 2,
+    Attack: 3,
     Health: 4,
     Description: "When Played: Increase Your Hero's Max HP by 2. Heal Your Hero and all Friendly Units for 2.",
     Effects: [
@@ -1310,7 +1310,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Animal"],
     Cost: 5,
-    Attack: 3,
+    Attack: 4,
     Health: 3,
     Keywords: ["Flying"],
     Description: "When Played: You may Sacrifice any number of Friendly Units to gain their stats.",
@@ -1330,7 +1330,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Human"],
     Cost: 6,
-    Attack: 2,
+    Attack: 3,
     Health: 5,
 	Keywords: ["Breakthrough"],
     Description: "After Combat Here: Do a Bonus Attack. Whenever this damages a Unit: Bounce it.",
@@ -1502,7 +1502,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Machine"],
     Cost: 3,
-    Attack: 1,
+    Attack: 2,
     Health: 4,
     Description: "When Played: Fully heal a Friendly Unit. If You control another Machine, it also gets +0/+2.",
     Effects: [
@@ -1561,7 +1561,7 @@ const CARDS_EXP = [
     Subtypes: ["Aberration"],
     Cost: 3,
     Attack: 1,
-    Health: 5,
+    Health: 6,
     Description: "While in Play: Whenever the Enemy Hero gains a card, deal 1 damage to them.",
     Effects: [
       {
@@ -1580,7 +1580,7 @@ const CARDS_EXP = [
     Subtypes: ["Animal"],
     Cost: 2,
     Attack: 1,
-    Health: 1,
+    Health: 2,
     Description: "When Played: Other Friendly Animals gain +1 ATK.",
     Effects: [
       {
@@ -1599,7 +1599,7 @@ const CARDS_EXP = [
     Subtypes: ["Animal"],
     Cost: 2,
     Attack: 1,
-    Health: 2,
+    Health: 3,
     Description: "While in Play: Gains +1 ATK for each other Friendly Animal.",
     Effects: [
       {
@@ -1656,7 +1656,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Aberration"],
     Cost: 3,
-    Attack: 1,
+    Attack: 2,
     Health: 1,
     Description: "When Played: Transform into the last Aberration You played.",
     Effects: [
@@ -1676,7 +1676,7 @@ const CARDS_EXP = [
     Subtypes: ["Aberration"],
     Cost: 3,
     Attack: 0,
-    Health: 3,
+    Health: 4,
     Description: "While in Play: ATK equals the number of cards in Your Hand.",
     Effects: [
       {
@@ -1695,7 +1695,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Machine"],
     Cost: 3,
-    Attack: 2,
+    Attack: 3,
     Health: 3,
     Description: "Deals double damage to the Enemy Hero.",
     Effects: [
@@ -1716,7 +1716,7 @@ const CARDS_EXP = [
     Subtypes: ["Human"],
     Cost: 3,
     Attack: 2,
-    Health: 2,
+    Health: 3,
     Description: "When Played: Silence an Enemy Unit.",
     Effects: [
       {
@@ -1734,7 +1734,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Animal"],
     Cost: 3,
-    Attack: 1,
+    Attack: 2,
     Health: 1,
     Keywords: ["Flying"],
     Description: "When Played: Choose a card from Your Deck and add it to Your Hand, then shuffle.",
@@ -1756,7 +1756,7 @@ const CARDS_EXP = [
     Subtypes: ["Aberration"],
     Cost: 3,
     Attack: 1,
-    Health: 4,
+    Health: 5,
     Description: "Before Combat Here: Spend all Your Blood. Gain +1/+1 for each Blood spent.",
     Effects: [
       {
@@ -1809,7 +1809,7 @@ const CARDS_EXP = [
     Subtypes: ["Aberration"],
     Cost: 4,
     Attack: 4,
-    Health: 1,
+    Health: 2,
     Description: "When Played: Summon a random Aberration that costs 2 or less.",
     Effects: [
       {
@@ -1890,7 +1890,7 @@ const CARDS_EXP = [
     Subtypes: ["Machine"],
     Cost: 4,
     Attack: 2,
-    Health: 3,
+    Health: 4,
     Description: "End of Round: Summon a Mechanic.",
     Effects: [
       {
@@ -1908,7 +1908,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Human"],
     Cost: 4,
-    Attack: 2,
+    Attack: 3,
     Health: 4,
     Description: "While in Play: Whenever an Enemy Unit is Played in another lane, Move it here. If it can't move, deal 2 damage to it instead (once each round).",
     Effects: [
@@ -1945,7 +1945,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Machine", "Animal"],
     Cost: 5,
-    Attack: 3,
+    Attack: 4,
     Health: 3,
     Keywords: ["Flying"],
     Description: "When Destroyed: Summon Stormtroopers in the adjacent lanes.",
@@ -1965,7 +1965,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Human"],
     Cost: 4,
-    Attack: 1,
+    Attack: 2,
     Health: 4,
     Description: "While in Play: Friendly Humans have Deadly.",
     Effects: [
@@ -2005,7 +2005,7 @@ const CARDS_EXP = [
     Subtypes: ["Machine"],
     Cost: 2,
     Attack: 1,
-    Health: 2,
+    Health: 3,
     Description: "While in Play: Adjacent Machines get +1 ATK.",
     Effects: [
       {
@@ -2025,7 +2025,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Machine"],
     Cost: 4,
-    Attack: 2,
+    Attack: 3,
     Health: 4,
     Keywords: ["Taunt", "Armored"],
     Description: "",
@@ -2052,7 +2052,7 @@ const CARDS_EXP = [
     Name: "Alpha Wolf",
     Type: "Unit",
     Subtypes: ["Animal"],
-    Cost: 8,
+    Cost: 7,
     Attack: 6,
     Health: 6,
     Description: "When Played: Other Friendly Animals do a Bonus Attack. While in Play: Whenever a Friendly Animal destroys an Enemy Unit, it gains that Unit's ATK.",
@@ -2080,7 +2080,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Machine"],
     Cost: 5,
-    Attack: 3,
+    Attack: 4,
     Health: 7,
     Keywords: ["Unactionable"],
     Description: "When Played: If You control all 4 Titan Pieces, Merge them into The Titan. When Destroyed: Draw a random Titan Piece from Your Deck.",
@@ -2106,7 +2106,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Machine"],
     Cost: 4,
-    Attack: 2,
+    Attack: 3,
     Health: 5,
     Keywords: ["Unactionable"],
     Description: "When Played: If You control all 4 Titan Pieces, Merge them into The Titan. When Destroyed: Draw a random Titan Piece from Your Deck.",
@@ -2132,7 +2132,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Machine"],
     Cost: 2,
-    Attack: 2,
+    Attack: 3,
     Health: 1,
     Keywords: ["Unactionable"],
     Description: "When Played: If You control all 4 Titan Pieces, Merge them into The Titan. When Destroyed: Draw a random Titan Piece from Your Deck.",
@@ -2158,7 +2158,7 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Machine"],
     Cost: 3,
-    Attack: 2,
+    Attack: 3,
     Health: 3,
     Keywords: ["Unactionable"],
     Description: "When Played: If You control all 4 Titan Pieces, Merge them into The Titan. When Destroyed: Draw a random Titan Piece from Your Deck.",
