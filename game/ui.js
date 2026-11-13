@@ -560,8 +560,8 @@ const expand=m=>Object.keys(m).map(Number).sort((a,b)=>a-b).flatMap(id=>Array(m[
 const uniqName=base=>{const t=new Set(allDecks().map(d=>d.n));if(!t.has(base))return base;for(let i=2;;i++)if(!t.has(base+' ('+i+')'))return base+' ('+i+')'};
 const iconId=m=>{let b=null;Object.keys(m).forEach(k=>{const c=CD[k];if(!c||!m[k])return;
  if(!b||c.Cost>b.Cost||(c.Cost==b.Cost&&(c.Attack||0)+(c.Health||0)>(b.Attack||0)+(b.Health||0)))b=c});return b};
-const statsOf=m=>{let n=0,u=0,sp=0,sum=0;const cv=Array(8).fill(0);
- for(const k in m){const c=CD[k],q=m[k];if(!c)continue;n+=q;if(c.Type=='Unit')u+=q;else sp+=q;sum+=c.Cost*q;cv[Math.min(7,c.Cost)]+=q}
+const statsOf=m=>{let n=0,u=0,sp=0,sum=0;const cv=Array(10).fill(0);
+ for(const k in m){const c=CD[k],q=m[k];if(!c)continue;n+=q;if(c.Type=='Unit')u+=q;else sp+=q;sum+=c.Cost*q;cv[Math.min(9,Math.max(0,c.Cost-1))]+=q}
  return{n,u,sp,avg:n?sum/n:0,cv}};
 const imgTag=(id,cls)=>`<img ${cls?`class="${cls}" `:''}src="${artSrc(id)}" alt="" draggable="false" onerror="artErr(this,${id})">`;
 
@@ -635,12 +635,12 @@ function mkFilter(host,grid,els,tag){
  const S={q:'',type:'',costs:new Set(),subs:new Set()};
  host.innerHTML=`<div class="frow"><div class="sbox"><input class="fq" placeholder="Search name, text, subtype..." autocomplete="off" spellcheck="false"><button class="fx ghost" title="Clear search" hidden>&times;</button></div><button class="fsub ghost">Subtype</button><button class="frst ghost" hidden>Reset</button></div>
  <div class="frow"><div class="seg"><button data-t="">All</button><button data-t="Unit">Units</button><button data-t="Spell">Spells</button></div>
- <div class="chips">${[0,1,2,3,4,5,6,7].map(k=>`<button class="chip" data-k="${k}" title="${k==7?'Cost 7 or more':'Cost '+k}">${k==7?'7+':k}</button>`).join('')}</div><span class="fcnt"></span></div>
+ <div class="chips">${[1,2,3,4,5,6,7,8,9,10].map(k=>`<button class="chip" data-k="${k}" title="${k==10?'Cost 10 or more':'Cost '+k}">${k==10?'10+':k}</button>`).join('')}</div><span class="fcnt"></span></div>
  <div class="fhint">Tips: <b>c:3</b> <b>a&gt;=4</b> <b>hp&lt;3</b> <b>s:animal</b> <b>k:flying</b> <b>t:spell</b> <b>-word</b> to exclude</div>
  <div class="fpop">${SUBS.map(([s,n])=>`<button class="chip" data-s="${hesc(s)}">${hesc(s)} <small>${n}</small></button>`).join('')}</div>`;
  const q=host.querySelector('.fq'),fx=host.querySelector('.fx'),rst=host.querySelector('.frst'),fsub=host.querySelector('.fsub'),pop=host.querySelector('.fpop'),cnt=host.querySelector('.fcnt');
  function apply(top){const terms=parseQ(S.q.trim());let n=0;
-  els.forEach(({c,el,hay},i)=>{let ok=!(S.type&&c.Type!=S.type)&&(!S.costs.size||[...S.costs].some(k=>k==7?c.Cost>=7:c.Cost==k))&&(!S.subs.size||(c.Subtypes||[]).some(x=>S.subs.has(x)));
+  els.forEach(({c,el,hay},i)=>{let ok=!(S.type&&c.Type!=S.type)&&(!S.costs.size||[...S.costs].some(k=>k==10?c.Cost>=10:c.Cost==k))&&(!S.subs.size||(c.Subtypes||[]).some(x=>S.subs.has(x)));
    let sc=0;if(ok&&terms.length){sc=qScore(c,terms,hay);ok=sc>=0}
    el.hidden=!ok;el.style.order=ok?i-(terms.length?sc*1000:0):i;if(ok)n++});
   cnt.textContent=n+' / '+els.length+' cards';fx.hidden=!S.q;
@@ -738,8 +738,8 @@ function renderEdit(){
  $('bdef').classList.toggle('on',!!E.def);$('bdef').innerHTML=STAR+(E.def?' Default deck':' Make default');
  const mx=Math.max(1,...st.cv);
  $('ecurve').innerHTML=`<div class="cvh"><b>Deck curve</b><span>avg cost ${n?st.avg.toFixed(1):'-'} &middot; ${st.u} units &middot; ${st.sp} spells</span></div><div class="cv">`+
-  st.cv.map((q,k)=>{const pc=n&&q?Math.round(q/n*100):0;return`<div class="cvc${FE.S.costs.has(k)?' on':''}" data-k="${k}" title="${q} card${q==1?'':'s'} costing ${k==7?'7+':k}${pc?' ('+pc+'% of the deck)':''} - click to filter the list">
-   <span class="cvn">${q||''}</span><div class="cvb"><i style="height:${q/mx*100}%"></i></div><span class="cvl">${k==7?'7+':k}</span><span class="cvp">${pc?pc+'%':'-'}</span></div>`}).join('')+`</div><div class="cvk">cost &middot; share of deck</div>`;
+  st.cv.map((q,k)=>{const pc=n&&q?Math.round(q/n*100):0;const ck=k+1;return`<div class="cvc${FE.S.costs.has(ck)?' on':''}" data-k="${ck}" title="${q} card${q==1?'':'s'} costing ${ck==10?'10+':ck}${pc?' ('+pc+'% of the deck)':''} - click to filter the list">
+   <span class="cvn">${q||''}</span><div class="cvb"><i style="height:${q/mx*100}%"></i></div><span class="cvl">${ck==10?'10+':ck}</span><span class="cvp">${pc?pc+'%':'-'}</span></div>`}).join('')+`</div><div class="cvk">cost &middot; share of deck</div>`;
  if(!$('bi').classList.contains('bad'))hint(HINT0)}
 window.addEventListener('rj-filter',()=>{if(E&&bview=='edit'){$('ecurve').querySelectorAll('.cvc').forEach(c=>c.classList.toggle('on',FE.S.costs.has(+c.dataset.k)))}});
 $('ecurve').onclick=e=>{const c=e.target.closest('.cvc');if(c)FE.toggleCost(+c.dataset.k)};

@@ -1,44 +1,22 @@
 const CD={};CARDS.forEach(c=>{if(c.Type=='Action')c.Type='Spell';CD[c.Id]=c});
-// ===== RULE SWITCHES ==========================================================================
-// Flip any of these to false to get the old behaviour back (or call applyRules({name:false}) at runtime).
 const RULES={
- summonTriggers:true,   // Summoned / reanimated / "risen" units also notify "when a unit is played" listeners
-                        //   (Quickdraw Gun Man, Unitslinger, Adaptive Unit...) and a summoned Shapeshifter fires its new form's When Played.
- drawMeansGain:true,    // OnFriendlyCardDrawn / OnOpponentCardDrawn fire on ANY gain (draw, discard, tutor, add, gift) except bounce.
- persistentGrowth:true, // Thor / The Creature / Rustler keep growing in Deck, Hand AND Discard pile (ZoneClassic = Hand only).
- hpOneTrigger:true,     // OnFriendlyUnitHpOne fires when a friendly unit's HP reaches 1 (incl. Soul Guard breaking). Used by Death.
- onKillUnkillable:true, // On Kill (Blighteinstein, FireAxe Man...) also triggers when the victim is Unkillable (it is still destroyed - it just returns to hand).
- onKillSoulGuard:false, // On Kill also triggers on the hit that BREAKS a Soul Guard. Off: the unit survived, so it was not killed.
- tokensReturnToHand:true, // Token units (Brother, Royal Souldier...) go to your hand when bounced or when an Unkillable one is destroyed. OFF: they vanish.
-                        //   (Tokens that simply die still never go to the discard pile.)
- fullHandRework:true    // NEW full-hand rules (PvZ Heroes style). OFF = old behaviour.
-                        //   ON : drawing with a full hand is CANCELLED (the card stays on top of the deck, no fatigue).
-                        //        Bounced units and Unkillable returns ALWAYS go to hand, even over the limit (hand can read 11/8);
-                        //        you can't draw again until the hand is back under the limit (7/8 or less).
-                        //        Only "gain" cards (gift from the opponent) are lost to the discard pile when the hand is full.
-                        //   OFF: a card drawn into a full hand goes straight to the discard pile, and bounced / Unkillable cards
-                        //        that don't fit are discarded too.
+ summonTriggers:true, drawMeansGain:true, persistentGrowth:true, hpOneTrigger:true,
+ onKillUnkillable:true, onKillSoulGuard:false, tokensReturnToHand:true, fullHandRework:true
 };
 const HAND_MAX=8;
-// ===== ACHIEVEMENT TRACKING ====================================================================
-// Every player carries p.ac (per-game stats + p.ac.un = achievements earned this game). The UI (ach.js) reads p.ac.un and saves them.
-// Nothing is tracked inside bot look-ahead simulations (G.sim).
 const acNew=()=>({un:[],taken:0,lost:0,big:0,pl:0,spent:0,drawn:0,sac:0,unk:0,bnc:0,fk:0});
 function acu(G,p,id){if(G.sim||!p.ac)return;if(!p.ac.un.includes(id))p.ac.un.push(id)}
 function acn(G,p,k,n,lim,id){if(G.sim||!p.ac)return;p.ac[k]=(p.ac[k]||0)+n;if(lim&&p.ac[k]>=lim)acu(G,p,id)}
 function acHand(G,p){if(G.sim)return;if(p.hand.length>=12)acu(G,p,'hoard');const m={};for(const c of p.hand){m[c.id]=(m[c.id]||0)+1;if(m[c.id]>=4){acu(G,p,'quads');break}}}
-// Mirror Match UP: a random, playable 30-card deck (max 3 copies, sane curve), returned in a random order. Both players get this exact list in this exact order.
 function mirrorDeck(ban){const pool=CARDS.filter(c=>c.Id<900&&(c.Type=='Unit'||c.Type=='Spell'||c.Type=='Action')&&!(ban&&ban.includes(c.Id)));let best=null;
  for(let t=0;t<300;t++){const cnt={},dk=[];while(dk.length<30){const c=pool[R(pool.length)];if((cnt[c.Id]||0)>=3)continue;cnt[c.Id]=(cnt[c.Id]||0)+1;dk.push(c)}
   const cheap=dk.filter(c=>c.Cost<=2).length,big=dk.filter(c=>c.Cost>=6).length,un=dk.filter(c=>c.Type=='Unit').length;best=dk;
   if(cheap>=9&&big<=4&&un>=16&&un<=26)break}
  return shuf(best.map(c=>c.Id))}
-// Cards may carry DescriptionClassic (old text) next to Description (new text); Rule names the switch that picks between them.
 function applyRules(o){if(o)Object.assign(RULES,o);
  Object.values(CD).forEach(d=>{if(d.DescriptionClassic==null)return;if(d.DescriptionNew==null)d.DescriptionNew=d.Description;
   d.Description=RULES[d.Rule||'persistentGrowth']?d.DescriptionNew:d.DescriptionClassic})}
 applyRules();
-// Zone may be a string ("Hand") or an array (["Deck","Hand"]). ZoneClassic wins when persistentGrowth is off.
 const zoneOf=e=>(!RULES.persistentGrowth&&e.ZoneClassic)||e.Zone;
 const inZone=(e,z)=>{const v=zoneOf(e);return Array.isArray(v)?v.includes(z):v===z};
 const SUBALIAS={Automaton:'Machine',Aberation:'Aberration'};
@@ -67,10 +45,13 @@ function countOf(G,s,sp,c){const me=G.p[s.o!=null?s.o:0],op=G.p[1-me.i];c=c||{};
   case'CardsInHand':return me.hand.length;case'EnemyCardsInHand':return op.hand.length;
   case'Blood':return me.b;case'MaxBlood':return me.mb;case'DeckSize':return me.deck.length;case'DiscardSize':return me.disc.length;
   case'FriendlyHeroHp':return me.hp;case'EnemyHeroHp':return op.hp;
+  case'MissingHealth':return Math.max(0,(me.mhp||20)-me.hp);
   case'SacrificedAttack':return c.last?c.last.atk:0;case'SacrificedHealth':return c.last?Math.max(0,c.last.hp):0;case'Sacrificed':return c.sacd?1:0}
  return 0}
 function val(G,v,s,c){if(v==null||typeof v!='object')return v;
- let n=countOf(G,s,v,c)*(v.Mult!=null?v.Mult:1)+(v.Add||0);if(v.Min!=null)n=Math.max(v.Min,n);if(v.Max!=null)n=Math.min(v.Max,n);return n}
+ let n=countOf(G,s,v,c)*(v.Mult!=null?v.Mult:1)+(v.Add||0);
+ if(v.Div) n=Math.floor(n/v.Div);
+ if(v.Min!=null)n=Math.max(v.Min,n);if(v.Max!=null)n=Math.min(v.Max,n);return n}
 const TYPEALIAS={Conjure:'AddCardToHand',Summon:'MakeAUnit'};
 const NUMF=['Amount','BuffAtk','BuffHp','Min','Max','Count'];
 function ra(G,a,s,c){const b=Object.assign({},a);if(TYPEALIAS[b.Type])b.Type=TYPEALIAS[b.Type];
@@ -83,20 +64,15 @@ const H=(p)=>({h:1,p});
 const SELF=['OnKill','OnDamagedEnemyUnit','OnDamagedEnemyHero'];
 const EV=(G,o)=>G.ev.push(o);
 const kwp=(u,k,df)=>((u.d.KeywordParams||{})[k])||df||1;
-const burnN=u=>u&&u.kw&&u.kw.has('Burning')?Math.max(1,u.bn||0):0; // Burning stacks: N stacks = N damage at end of round
-const sgN=u=>u&&u.kw&&u.kw.has('SoulGuard')?Math.max(1,u.sgn||0):0; // SoulGuard stacks: each one saves the unit from a lethal hit (it survives at 1 HP)
+const burnN=u=>u&&u.kw&&u.kw.has('Burning')?Math.max(1,u.bn||0):0;
+const sgN=u=>u&&u.kw&&u.kw.has('SoulGuard')?Math.max(1,u.sgn||0):0;
 function mk(id,o){const d=CD[id];return{uid:UID++,id,d,o,atk:d.Attack||0,hp:d.Health||0,mx:d.Health||0,kw:new Set(d.Keywords||[]),lane:-1}}
-// FAIR HAND: the opening hand is 4 cards. The game first draws 3 at random. If at least one of them costs FAIR_MAXCOST or less, the 4th card is a normal random draw.
-// If none does, the 4th card is pulled from the deck's cheap cards instead (when the deck has one). Applies to BOTH players. Mulligans are NOT affected (a mulligan can lose the cheap card).
-// Not used in Mirror Match UP (both players must draw the identical order). Online games are fine: only the host builds the game, the guest receives a snapshot.
 const FAIR_HAND=true,FAIR_MAXCOST=1;
 function fairOpen(G,p){
  for(let k=0;k<3;k++)draw(G,p,1);
  const cheap=c=>CD[c.id].Cost<=FAIR_MAXCOST;
  if(!p.hand.some(cheap)){const i=p.deck.findIndex(cheap);if(i>=0){draw(G,p,1,i);return}}
  draw(G,p,1)}
-// opts.mir    = Mirror Match UP: both decks are used in EXACTLY the given order (no shuffle), so both players draw the same cards.
-// opts.endless = Endless Mode: player 1 is the Boss (see ENDLESS below).
 function newGame(a,b,opts){opts=opts||{};
  const G={turn:0,over:null,log:[],hist:[],ev:[],step:0,act:0,allow:'U',start:0,fp:R(2),mir:opts.mir?1:0,p:[a,b].map((dk,i)=>({i,hp:20,mhp:20,mb:0,b:0,hand:[],disc:[],ln:[null,null,null,null],gb:{a:0,h:0},mk:0,sp:0,sc:0,ac:acNew(),
   deck:opts.mir?dk.map(id=>({uid:UID++,id})):shuf(dk.map(id=>({uid:UID++,id})))}))};
@@ -110,18 +86,20 @@ function mulligan(G,p,ids){const out=p.hand.filter(c=>ids.includes(c.uid));p.han
  for(let i=0;i<out.length&&p.deck.length;i++)p.hand.push(p.deck.shift());p.deck.push(...out);if(!G.mir)shuf(p.deck)}
 function roundTrig(G,trig){if(G.over)return;
  [G.start,1-G.start].forEach(i=>G.p[i].ln.slice().forEach(u=>{if(u&&!u.gone&&u.hp>0&&!G.over)fire(G,trig,u,{u})}));resolve(G)}
-function startRound(G){G.turn++;G.start=(G.turn%2?0:1)^(G.fp|0);G.step=0;setStep(G);G.p.forEach(p=>{if(p.ac)Object.assign(p.ac,{spent:0,drawn:0,sac:0,unk:0,bnc:0});p.mb=Math.min(10,G.turn)+(G.en&&p.i==1?G.en.mod.mana:0);p.b=p.mb;if(G.turn>1){draw(G,p);if(G.en&&p.i==1)for(let k=0;k<G.en.mod.draw;k++)draw(G,p)}
+function startRound(G){G.turn++;G.start=(G.turn%2?0:1)^(G.fp|0);G.step=0;setStep(G);
+ G.p.forEach(p=>{if(p.ac)Object.assign(p.ac,{spent:0,drawn:0,sac:0,unk:0,bnc:0});p.mb=Math.min(10,G.turn)+(G.en&&p.i==1?G.en.mod.mana:0);p.b=p.mb;if(G.turn>1){draw(G,p);if(G.en&&p.i==1)for(let k=0;k<G.en.mod.draw;k++)draw(G,p)}
   if(p.dl&&p.dl.length){const q=p.dl;p.dl=[];L(G,(p.i?'Enemy':'You')+' draw'+(p.i?'s':'')+' '+q.length+' extra card'+(q.length>1?'s':'')+' (Expectancy)');
-   q.forEach(src=>{if(src=='Discard'){if(p.disc.length&&p.hand.length<HAND_MAX){p.hand.push(p.disc.pop());gained(G,p,'discard')}}else draw(G,p)})}});L(G,'— Round '+G.turn+' —');if(G.en)bossRound(G);regainAtk(G);roundTrig(G,'OnStartOfRound')}
-// Excision Conjucture: units that lost ATK to a lane debuff get part of it back (u.rg) when the next round starts.
+   q.forEach(src=>{if(src=='Discard'){if(p.disc.length&&p.hand.length<HAND_MAX){p.hand.push(p.disc.pop());gained(G,p,'discard')}}else draw(G,p)})}});
+ L(G,'— Round '+G.turn+' —');if(G.en)bossRound(G);regainAtk(G);roundTrig(G,'OnStartOfRound');
+ G.p.forEach(p=>fireHand(G,'OnStartOfRound',p,{}))}
 function regainAtk(G){G.p.forEach(p=>units(p).forEach(u=>{if(u.rg){u.atk+=u.rg;if(!G.sim){EV(G,{k:'fx',t:'buff',a:u.rg,hp:0,u:u.uid});EV(G,{k:'snd',n:'buff'})}u.rg=0}}))}
 function draw(G,p,quiet,idx){
  if(G.en&&p.i==1&&!p.deck.length){p.deck=mirrorDeck(BOSS_BAN).map(id=>({uid:UID++,id}));L(G,'Boss draws a brand new deck');EV(G,{k:'boss',h:'NEW DECK',t:'The Boss is out of cards - he gets a brand new deck!'})}
- if(RULES.fullHandRework&&p.hand.length>=HAND_MAX){L(G,(p.i?'Enemy hand':'Your hand')+' is full - draw cancelled');return}
- if(!p.deck.length){p.fat=(p.fat||0)+1;L(G,(p.i?'Enemy':'You')+' ha'+(p.i?'s':'ve')+' no cards - fatigue '+p.fat);EV(G,{k:'snd',n:'cardDrawn',o:p.i});dmg(G,H(p.i),p.fat,null,2);if(!G.sim&&p.ac&&p.hp<=0)p.ac.fk=1;return}
+ if(RULES.fullHandRework&&p.hand.length>=HAND_MAX){L(G,(p.i?'Enemy hand':'Your hand')+' is full - draw cancelled');p.lastDrawn=null;return}
+ if(!p.deck.length){p.fat=(p.fat||0)+1;L(G,(p.i?'Enemy':'You')+' ha'+(p.i?'s':'ve')+' no cards - fatigue '+p.fat);EV(G,{k:'snd',n:'cardDrawn',o:p.i});dmg(G,H(p.i),p.fat,null,2);if(!G.sim&&p.ac&&p.hp<=0)p.ac.fk=1;p.lastDrawn=null;return}
  const c=idx!=null?p.deck.splice(idx,1)[0]:p.deck.shift();
- if(p.hand.length>=HAND_MAX){p.disc.push(c);return}
- p.hand.push(c);acn(G,p,'drawn',1,10,'fast');aura(G);if(quiet)return;EV(G,{k:'snd',n:'cardDrawn',o:p.i});
+ if(p.hand.length>=HAND_MAX){p.disc.push(c);p.lastDrawn=null;return}
+ p.hand.push(c);p.lastDrawn=c;acn(G,p,'drawn',1,10,'fast');aura(G);if(quiet)return;EV(G,{k:'snd',n:'cardDrawn',o:p.i});
  if(!RULES.drawMeansGain)p.ln.forEach(u=>u&&fire(G,'OnFriendlyCardDrawn',u,{}));
  if(!RULES.drawMeansGain)G.p[1-p.i].ln.forEach(u=>u&&fire(G,'OnOpponentCardDrawn',u,{}));
  gained(G,p,'draw')}
@@ -139,25 +117,19 @@ function costMods(G,p,c){const d=CD[c.id],out=[];
   else return;
   const mine=src.o==p.i;if((side=='Friendly'&&!mine)||(side=='Enemy'&&mine))return;
   if(!cardOK(d,flt)||!cond(e.Condition,src,{},G))return;
-  if(a.FirstEachRound&&(p.fr||{})[(flt&&flt.Type)||'Any']===G.turn)return;   // "first Spell/Unit/card you play each round": already used this round
+  if(a.FirstEachRound&&(p.fr||{})[(flt&&flt.Type)||'Any']===G.turn)return;
   if(amt)out.push({src,amt})})})}));return out}
 function cost(G,p,c){const d=CD[c.id];if(c.z&&c.z===G.turn)return 0;let x=d.Cost;
  costMods(G,p,c).forEach(m=>x+=m.amt);
  x-=(c.red||0);return Math.max(0,x)}
-// Game-over check. Both heroes at 0 or less (at the same time) is a DRAW: {win:-1,draw:1}.
-// Surrender / disconnect results are final and never overwritten.
 function chk(G){if(G.en&&G.p[1].hp<=0)G.p[1].hp+=20*Math.ceil((1-G.p[1].hp)/20);
  if(G.over&&!G.over.hpWin)return;
  const dead=G.p.filter(p=>p.hp<=0);
  if(dead.length>=2)G.over={win:-1,draw:1,hpWin:1};
  else if(dead.length==1&&!G.over)G.over={win:1-dead[0].i,hpWin:1}}
-// ===== ENDLESS MODE ===========================================================================
-// Player 1 is the Boss. His hero never dies: whenever his HP would hit 0 it refills by 20 (one "life bar" lost).
-// G.en.dealt = total damage dealt to the Boss hero = the run's SCORE. Every 20 damage the Boss gets the next upgrade (applied at the start of a round).
-// Boss deck never runs out: when it is empty he gets a completely NEW random deck (see draw()). His starting deck is random too (see start() in ui.js).
 const BOSS_TIERS=['conj','draw','stat','mana','pulse','conj'],BOSS_CYCLE=['stat','draw','pulse','conj','mana','stat'];
 const BOSS_MANA_CAP=3;
-const BOSS_BAN=[31,57,82]; // card Ids the Endless Boss can never have in his deck or conjure: 31 = Silence (add 57 The Pale / 82 Librarian here to ban those too)
+const BOSS_BAN=[31,57,82];
 const bossTierKind=n=>n<=BOSS_TIERS.length?BOSS_TIERS[n-1]:BOSS_CYCLE[(n-BOSS_TIERS.length-1)%BOSS_CYCLE.length];
 const BOSS_TXT={conj:'conjures an extra random card every round',draw:'draws an extra card every round',stat:'units enter with +1/+1',mana:'gains +1 mana',pulse:'pulses 1 more damage at the start of each round'};
 const bossNext=G=>(G.en.tier+1)*20;
@@ -175,13 +147,10 @@ function cond(c,u,x,G){if(!c)return true;const sub=(c.SubConditions||[]).map(k=>
  case'IsSubtype':return!!x.u&&hasSub(x.u.d||CD[x.u.id],P);
  case'IsStatus':return x.st==P;case'IsEnemy':return!!x.u&&x.u.o!=u.o;case'IsFriendly':return!!x.u&&x.u.o==u.o;
  case'HasSubtypeOnBoard':return G.p[u.o].ln.some(w=>w&&w!==u&&hasSub(w.d,P));
+ case'FromHistory':return!!x.u&&G.hist.some(h=>h.uid===x.u.uid);
+ case'NotFromHistory':return!x.u||!G.hist.some(h=>h.uid===x.u.uid);
  case'Compare':{const n=countOf(G,u,c,x),v=c.Value!=null?c.Value:0;switch(c.Op||'>='){case'>':return n>v;case'>=':return n>=v;case'<':return n<v;case'<=':return n<=v;case'==':return n==v;case'!=':return n!=v}return false}}
  return true}
-// ===== PLAYER-CHOSEN TARGETS FOR "WHEN PLAYED" EFFECTS THAT HAPPEN WITHOUT PLAYING THE CARD FROM HAND ================
-// Summoned / reanimated / transformed / evolved units, Echo Chamber replays and the 2nd cast of Dual Wield used to pick random targets.
-// Now, when the human player (askOn(G,pi) is defined in ui.js) owns the effect and it needs a choice, it is parked in G.pq instead of being run.
-// The UI then asks the player (same pick flow as a normal card) and calls runItem(G,item,picks). Bots, simulations and the online guest's side never queue: they keep auto-picking.
-// G.pq is non-enumerable so snapshots / JSON copies of G never see it.
 const askOnE=(G,pi)=>!G.sim&&typeof askOn=='function'&&askOn(G,pi);
 function pq(G){if(!G.pq)Object.defineProperty(G,'pq',{value:[],writable:true,enumerable:false,configurable:true});return G.pq}
 function deferEff(G,u,e,ctx){if(u.gone||!askOnE(G,u.o))return false;
@@ -196,7 +165,6 @@ function deferRp(G,s,h,e,acts){if(s.gone||!askOnE(G,s.o))return false;
 function pickCtx(ks,pk,ctx){ks.forEach((k,i)=>{const v=(pk||[])[i];if(v==null)return;
  if(k=='S'){if(v===NOSAC)ctx.nosac=1;else ctx.sac=v}else if(k=='M')ctx.sacs=v;else if(k=='D')ctx.tut=v;else if(k=='C')ctx.ch=v;else if(k=='P')ctx.pl=v;
  else if(k=='L')(ctx.lanes=ctx.lanes||[]).push(v);else if(!ctx.t)ctx.t=v;else ctx.t2=v});return ctx}
-// Echo Chamber: the one sacrificed unit v pays out every replayed \"sacrifice\" card (stat gain + \"if you did\" effects). Effects that need a target are queued like any other.
 function runChain(G,s,list,v){list.forEach(({h,e,acts})=>{if(G.over||s.gone||s.hp<=0)return;
  const e2=Object.assign({},e,{Targeting:e.Targeting=='Choice'?null:e.Targeting,ChoiceLabels:null,Actions:acts}),cx={rp:1,tf:1,sm:1,sac:v,sacd:1,last:v},
   d={Name:s.d.Name+' ('+CD[h.id].Name+')',Id:s.id,Type:'Unit',Effects:[e2],ExU:s};
@@ -208,14 +176,14 @@ function runItem(G,it,pk){pk=pk||[];if(G.over)return;
   L(G,'Dual Wield - '+d.Name+' is played again');fire(G,'OnPlayed',{d,o:p.i,sp:1,lane:-1,uid:0},ctx);resolve(G);return}
  const u=it.u;if(!u||u.gone||u.hp<=0)return;
  const p=G.p[u.o],ks=apicks(G,p,it.d,pk,null),ctx=Object.assign({},it.ctx),hasS=ks.includes('S');delete ctx.ask;
- if(hasS)delete ctx.nosac;pickCtx(ks,pk,ctx);if(hasS&&!ctx.sac)ctx.nosac=1;   // the player decided about the optional sacrifice (or ran out of time: no sacrifice)
+ if(hasS)delete ctx.nosac;pickCtx(ks,pk,ctx);if(hasS&&!ctx.sac)ctx.nosac=1;
  if(it.rp)it.e.Actions.forEach(a=>act(G,a,u,ctx));else fire(G,'OnPlayed',u,Object.assign(ctx,{only:it.e}));
  if(it.chainFx&&ctx.sacd&&ctx.last&&!ctx.nosac)runChain(G,u,it.chainFx,ctx.last);
  resolve(G)}
-// Lane (0-3) where an Excision Conjucture hits the most enemy ATK (used by the bot and as the fallback when no lane was chosen).
 function bestLane(G,o){const op=G.p[1-o];let b=0,bs=-1;
  for(let l=0;l<4;l++){let s=R(100)/1000;units(op).forEach(u=>{if(Math.abs(u.lane-l)<=1)s+=Math.min(3,u.atk)});if(s>bs){bs=s;b=l}}return b}
 function fire(G,trig,u,ctx){if(!u||u.sil||G.over)return;ctx=ctx||{};
+ if(trig=='OnPlayed'){const me=G.p[u.o];if(me)me.lastDrawn=null}
  (u.d.Effects||[]).forEach(e=>{if(e.Trigger!=trig||(zoneOf(e)&&!inZone(e,'Board')))return;if(ctx.only&&ctx.only!==e)return;
   if(trig=='OnPlayed'&&inZone(e,'Board')!=!!ctx.lis)return;
   if(SELF.includes(trig)&&!e.Condition&&ctx.u&&ctx.u!==u)return;
@@ -228,10 +196,14 @@ function fire(G,trig,u,ctx){if(!u||u.sil||G.over)return;ctx=ctx||{};
 function gsig(G){return G.p.map(p=>[p.hp,p.mhp,p.b,p.hand.length,p.deck.length,p.disc.length,p.hand.reduce((a,c)=>a+(c.red||0)+(c.ba||0),0),
  p.ln.map(w=>w?w.uid+':'+w.atk+'/'+w.hp+':'+[...w.kw].join(','):'-').join('|')].join(';')).join('#')}
 function fireHand(G,trig,p,ctx){
- // Runs "While in Hand" / "While in Deck" effects. Supported actions: BuffStats (cost via Amount, ATK via BuffAtk) and SummonUnit (hand only).
  const run=(c,zone)=>{if(c.used||(c.nf&&ctx.u&&c.nf===ctx.u.uid))return;(CD[c.id].Effects||[]).forEach(e=>{
   if(e.Trigger!=trig||!inZone(e,zone)||!cond(e.Condition,{o:p.i},ctx,G))return;
-  e.Actions.forEach(a=>{if(a.Type=='BuffStats'){if(a.Amount!=null)c.red=(c.red||0)-a.Amount;else c.ba=(c.ba||0)+(a.BuffAtk||0);if(zone=='Hand')EV(G,{k:'hand',c:c.uid})}
+  e.Actions.forEach(a=>{
+   if(a.Type=='BuffStats'){if(a.Amount!=null)c.red=(c.red||0)-a.Amount;else c.ba=(c.ba||0)+(a.BuffAtk||0);if(zone=='Hand')EV(G,{k:'hand',c:c.uid})}
+   else if(a.Type=='AddCardToHand'&&zone=='Hand'){
+    let id=a.ValueParam;
+    if(a.Filter||id==null){const pp=poolOf(a.Filter);if(!pp.length)return;id=pp[R(pp.length)].Id}
+    if(p.hand.length<HAND_MAX){p.hand.push({uid:UID++,id,tok:1,...(a.FreeThisTurn?{z:G.turn}:{}),...(a.CostChange?{red:-(a.CostChange)}:{})});gained(G,p,'add')}}
    else if(a.Type=='SummonUnit'&&zone=='Hand'&&ctx.lane!=null&&!p.ln[ctx.lane]&&!G.over){c.used=1;p.hand=p.hand.filter(x=>x!==c);
     const u=mk(c.id,p.i);u.atk+=c.ba||0;if(c.unk)u.kw.add('Unkillable');place(G,p,u,ctx.lane);L(G,CD[c.id].Name+' rises');fire(G,'OnPlayed',u,{ask:1});
     if(RULES.summonTriggers&&!G.over)announce(G,u)}})})};
@@ -253,7 +225,6 @@ function aura(G){
  G.p.forEach(p=>units(p).forEach(u=>{u.ag=u.ag||{};const w=want.get(u.uid)||new Map();
   w.forEach((srcUid,k)=>{if(u.sil||u.kw.has(k)||(u.agc&&u.agc[k]))return;u.kw.add(k);u.ag[k]=1;EV(G,{k:'trig',u:srcUid})});
   Object.keys(u.ag).forEach(k=>{if(!w.has(k)){if(!(u.agc&&u.agc[k]))u.kw.delete(k);if(k=='Burning')u.bn=0;delete u.ag[k]}});
-  // SoulGuard from auras stacks: every aura source gives 1, minus the aura stacks this unit has already used up (u.sgd)
   {const tgt=u.sil?0:Math.max(0,(sgw.get(u.uid)||0)-(u.sgd||0)),dl=tgt-(u.agn||0);
    if(dl){const had=sgN(u);u.agn=tgt;u.sgn=Math.max(0,had+dl);if(u.sgn>0)u.kw.add('SoulGuard');else u.kw.delete('SoulGuard');if(dl>0&&sgs.has(u.uid))EV(G,{k:'trig',u:sgs.get(u.uid)})}}}));
  const bonus=new Map();
@@ -266,13 +237,10 @@ function aura(G){
    n+=(a.Amount!=null?a.Amount:1)*countOf(G,u,{Count:per,Subtype:a.PerSubtype||a.Subtype},{})})});
   if(n!==(u.aurA||0)){u.atk=Math.max(0,u.atk+n-(u.aurA||0));u.aurA=n}}))}
 const units=(p)=>p.ln.filter(Boolean);
-// UNACTIONABLE: an ENEMY SPELL can neither target nor affect this unit (single-target AND whole-board spells like HellFire / Excision Conjucture).
-// Everything else still works on it: your own spells, your own unit abilities (Therapist...), enemy UNIT abilities (Informer...), combat.
 const unact=u=>!!u&&!u.h&&!!u.kw&&u.kw.has('Unactionable');
 const shield=(u,s)=>unact(u)&&!!s&&!!s.sp&&s.o!=u.o;
 const aoeOK=(u,s)=>!shield(u,s);
 function tg(G,a,s,c){c=c||{};let r=tg0(G,a,s,c);
- // The Titan: can't be silenced / bounced
  if(a.Type=='Silence')r=r.filter(x=>x.h||!x.kw.has('SilenceImmune'));
  if(a.Type=='ReturnToHand')r=r.filter(x=>x.h||!x.kw.has('BounceImmune'));
  return a.Where?r.filter(x=>x.h||unitOK(x,a.Where)):r}
@@ -280,6 +248,7 @@ function tg0(G,a,s,c){const me=G.p[s.o],op=G.p[1-s.o];
  switch(a.Target){
  case'AllFriendlyUnits':return units(me).filter(x=>aoeOK(x,s));
  case'EventUnit':return c.u&&!c.u.gone&&!c.u.h&&!shield(c.u,s)?[c.u]:[];
+ case'EventUnitAndAdjacent':{if(!c.t||c.t.gone||c.t.h)return[];const o=G.p[c.t.o];return o.ln.filter((w,i)=>w&&Math.abs(i-c.t.lane)<=1&&aoeOK(w,s))}
  case'RandomEnemyUnit':{const vs=units(op).filter(x=>!shield(x,s));return vs.length?[vs[R(vs.length)]]:[]}
  case'RandomFriendlyUnit':{const vs=units(me).filter(x=>x!==s&&!shield(x,s));return vs.length?[vs[R(vs.length)]]:[]}
  case'Self':return[s];case'FriendlyHero':return[H(s.o)];case'EnemyHero':return[H(1-s.o)];
@@ -329,6 +298,7 @@ function status(G,t,k,s){if(t.h)return;
 function act(G,a,s,c){
  c=c||{};a=ra(G,a,s,c); if(a.Condition&&!cond(a.Condition,s,{},G))return;
  if((a.OnlyIfSacrificed&&!c.sacd)||(a.OnlyIfNoSacrifice&&c.sacd))return;
+ if(a.OnlyIfDrawnSubtype){const ld=G.p[s.o].lastDrawn;if(!ld||!hasSub(CD[ld.id],a.OnlyIfDrawnSubtype))return}
  const T=a.Type,me=G.p[s.o],ts=tg(G,a,s,c);
  const unitsOnly=ts.filter(x=>!x.h);
  const area=['AllEnemyUnits','AllUnitsOnBoard','AllOtherUnitsOnBoard','OtherFriendlyUnits'].includes(a.Target);
@@ -345,13 +315,12 @@ function act(G,a,s,c){
   if(!t||t.h||t.gone||t.hp<=0||G.over)break;
   let ls=[0,1,2,3].filter(i=>!me.ln[i]);
   if(!ls.length)break;
-  const w=(c.lanes||[])[c.li||0];if(w!=null)c.li=(c.li||0)+1;   // lane chosen by the player (bots / sims / no pick: automatic fallback below)
+  const w=(c.lanes||[])[c.li||0];if(w!=null)c.li=(c.li||0)+1;
   let lane;
   if(w!=null&&ls.includes(w))lane=w;
   else{const safe=ls.filter(i=>!G.p[1-s.o].ln[i]);
    ls=(safe.length?safe:ls).sort((a2,b)=>Math.abs(a2-t.lane)-Math.abs(b-t.lane));lane=ls[0]}
   const nu=mk(t.id,s.o);
-  // exact copy: current stats (buffs, damage), keywords, statuses. Aura-given ATK / keywords are NOT copied, the copy's own auras give them again.
   const auraKw=Object.keys(t.ag||{}).filter(k=>!(t.agc&&t.agc[k]));
   nu.atk=t.atk-(t.aurA||0);nu.hp=t.hp;nu.mx=t.mx;nu.lh=t.hp;
   nu.kw=new Set([...t.kw].filter(k=>!auraKw.includes(k)));
@@ -359,7 +328,7 @@ function act(G,a,s,c){
   nu.agc=Object.assign({},t.agc);nu.ag={};nu.agn=0;nu.sgd=0;
   nu.sgn=Math.max(0,(t.sgn||0)-(t.agn||0));if((t.agn||0)>0&&nu.sgn<=0)nu.kw.delete('SoulGuard');
   nu.bn=nu.kw.has('Burning')?(t.bn||0):0;
-  nu.placed=1;   // stats already include the global buffs: don't add them a second time in place()
+  nu.placed=1;
   place(G,me,nu,lane);
   L(G,'Pale Mirror summons a copy of '+t.d.Name);
   if((!c.sm||c.rp)&&!G.over)fire(G,'OnPlayed',nu,{tf:1,nosac:1,sm:1,nr:1,ask:1});
@@ -373,7 +342,16 @@ function act(G,a,s,c){
  case'DrawCard':{if((a.OnlyIfNoSacrifice&&c.sacd)||(a.OnlyIfSacrificed&&!c.sacd))break;
   const one=pl=>{if(!a.Filter){draw(G,pl);return}const ix=pl.deck.findIndex(x=>cardOK(CD[x.id],a.Filter)&&!(a.Filter.NotOnBoard&&pl.ln.some(u=>u&&u.id==x.id)));if(ix>=0)draw(G,pl,0,ix)};
   ts.forEach(t=>{for(let i=0;i<(a.Amount||1);i++)one(G.p[t.p!=null?t.p:s.o])});if(!ts.length)one(me);if(a.Later)me.dl=(me.dl||[]).concat('Deck');break}
- case'BuffStats':if(a.Amount!=null)break;if(unitsOnly.length)EV(G,{k:'snd',n:(a.BuffAtk||0)<0||(a.BuffHp||0)<0?'debuff':'buff'});unitsOnly.forEach(t=>{t.atk+=a.BuffAtk||0;t.hp+=a.BuffHp||0;t.mx+=a.BuffHp||0;if(t.atk<0)t.atk=0});break;
+ case'BuffStats':if(a.Amount!=null)break;
+  if(unitsOnly.length)EV(G,{k:'snd',n:(a.BuffAtk||0)<0||(a.BuffHp||0)<0?'debuff':'buff'});
+  unitsOnly.forEach(t=>{
+    const gA=a.BuffAtk||0,gH=a.BuffHp||0;
+    t.atk+=gA;t.hp+=gH;t.mx+=gH;if(t.atk<0)t.atk=0;
+    if((gA>0||gH>0)&&t.o!=null&&G.p[1-t.o]){
+      G.p[1-t.o].ln.slice().forEach(w=>w&&!w.gone&&fire(G,'OnEnemyUnitGainedStats',w,{u:w,t}))
+    }
+  });
+  break;
  case'ApplyStatus':unitsOnly.forEach(t=>status(G,t,a.StatusKeyword,s));break;
  case'DestroyUnit':unitsOnly.forEach(t=>{t.hp=0});break;
  case'Silence':if(unitsOnly.length)EV(G,{k:'snd',n:'silence'});unitsOnly.forEach(t=>{t.sil=1;t.rg=0;t.sgn=0;t.agn=0;t.aurA=0;t.ag={};t.bn=0;t.kw=new Set();t.atk=t.d.Attack||0;t.mx=t.d.Health||0;t.hp=Math.min(t.hp,t.mx||1)});break;
@@ -391,9 +369,26 @@ function act(G,a,s,c){
    const nu=mk(id,s.o);place(G,me,nu,i);if((!c.sm||c.rp)&&!G.over)fire(G,'OnPlayed',nu,{tf:RULES.summonTriggers?0:1,nosac:1,sm:1,nr:1,ask:1});
     if(RULES.summonTriggers&&!G.over)announce(G,nu)});break}
 case'AddCardToHand':{
+  let flt=a.Filter;
+  if(a.FilterFrom==='TargetSubtype'&&c.t&&c.t.d&&c.t.d.Subtypes&&c.t.d.Subtypes.length){
+    flt=Object.assign({},a.Filter,{Subtype:c.t.d.Subtypes[0]})
+  }
   const owners=ts.length&&ts[0].h?ts.filter(t=>t.h).map(t=>G.p[t.p]):[me];
-  owners.forEach(pl=>{for(let i=0;i<(a.Count||1);i++){let id=a.ValueParam;if(a.Filter||id==null){const pp=poolOf(a.Filter);if(!pp.length)break;id=pp[R(pp.length)].Id}
-   if(pl.hand.length<HAND_MAX){pl.hand.push({uid:UID++,id,tok:1,...(a.FreeThisTurn?{z:G.turn}:{})});gained(G,pl,'add')}}});break}
+  owners.forEach(pl=>{for(let i=0;i<(a.Count||1);i++){let id=a.ValueParam;
+   if(flt||id==null){const pp=poolOf(flt);if(!pp.length)break;id=pp[R(pp.length)].Id}
+   if(pl.hand.length<HAND_MAX){
+     pl.hand.push({uid:UID++,id,tok:1,...(a.FreeThisTurn?{z:G.turn}:{}),...(a.CostChange?{red:-(a.CostChange)}:{})});
+     gained(G,pl,'add')
+   }
+  }});break}
+ case'AddCardToEnemyDeck':{
+  const op=G.p[1-s.o];
+  for(let i=0;i<(a.Count||1);i++){
+    let id=a.ValueParam;
+    if(a.Filter||id==null){const pp=poolOf(a.Filter);if(!pp.length)break;id=pp[R(pp.length)].Id}
+    op.deck.push({uid:UID++,id});
+  }
+  shuf(op.deck);break}
 case'ReturnToHand':unitsOnly.filter(t=>!t.gone&&(!a.IfAlive||t.hp>0)).forEach(t=>{const o=G.p[t.o];if(o.ln[t.lane]!==t)return;EV(G,{k:'bnc',id:t.id,atk:t.atk,hp:Math.max(t.hp,0),o:t.o,lane:t.lane});L(G,t.d.Name+' returned to hand');o.ln[t.lane]=null;t.gone=1;if((o.hand.length<HAND_MAX||RULES.fullHandRework)&&(t.id<900||RULES.tokensReturnToHand)){o.hand.push({uid:UID++,id:t.id,unk:t.kw.has('Unkillable')?1:0,...((t.cr||a.CostChange)?{red:(t.cr||0)-(a.CostChange||0)}:{}),...(t.cba?{ba:t.cba}:{}),...(a.FreeThisTurn?{z:G.turn}:{})});gained(G,o,'bounce')}if(t.o!=me.i)acn(G,me,'bnc',1,3,'revolving')});break
  case'SacrificeUnits':{
   const list=(c.sacs||[]).filter(u=>u&&!u.gone&&u!==s&&u.o==s.o&&me.ln[u.lane]===u);let ga=0,gh=0;
@@ -402,7 +397,7 @@ case'ReturnToHand':unitsOnly.filter(t=>!t.gone&&(!a.IfAlive||t.hp>0)).forEach(t=
 case'LoseHealth':ts.forEach(t=>{if(t.h)dmg(G,t,a.Amount||1,null,2);else{t.hp-=a.Amount||1;EV(G,{k:'dmg',u:t.uid,n:a.Amount||1})}});break;
  case'ModifyGlobalBuff':EV(G,{k:'snd',n:'buff'});if(!G.sim&&units(me).length)EV(G,{k:'aoe',T:'BuffStats',st:'',pos:1,o:me.i,us:units(me).map(x=>({u:x.uid,o:x.o,l:x.lane}))});me.gb.a+=a.BuffAtk||0;me.gb.h+=a.BuffHp||0;units(me).forEach(u=>{u.atk+=a.BuffAtk||0;u.hp+=a.BuffHp||0;u.mx+=a.BuffHp||0});break;
  case'BonusAttack':unitsOnly.forEach(t=>strike(G,t));break;
- case'LaneDebuff':{const n=a.Amount||3,rg=a.Regain||0;let any=0;   // -n ATK now; they get back min(Regain, ATK actually lost) at the start of the next round
+ case'LaneDebuff':{const n=a.Amount||3,rg=a.Regain||0;let any=0;
   unitsOnly.forEach(t=>{const lost=Math.min(n,t.atk);if(lost<=0)return;any=1;t.atk-=lost;const back=Math.min(rg,lost);if(back)t.rg=(t.rg||0)+back;
    if(!G.sim)EV(G,{k:'fx',t:'buff',a:-lost,hp:0,u:t.uid})});
   if(any)EV(G,{k:'snd',n:'debuff'});break}
@@ -428,7 +423,7 @@ case'LoseHealth':ts.forEach(t=>{if(t.h)dmg(G,t,a.Amount||1,null,2);else{t.hp-=a.
   else{const need=(a.Pieces||[]).slice(),k=need.indexOf(s.id);if(k<0)break;need.splice(k,1);
    for(const id of need){const w=units(me).find(x=>x!==s&&x.id==id&&x.hp>0&&!x.gone&&!rest.includes(x));if(!w)break;rest.push(w)}
    if(rest.length<need.length)break}
-  const all=[s,...rest],anc=(a.At!=null&&all.find(x=>x.id==a.At))||s;   // the merged unit appears where the anchor piece (Titan Torso) stands
+  const all=[s,...rest],anc=(a.At!=null&&all.find(x=>x.id==a.At))||s;
   const names=all.map(x=>x.d.Name).join(' + ');
   const base=x=>x.atk-(x.aurA||0),sA=all.reduce((t,x)=>t+base(x),0),sH=all.reduce((t,x)=>t+Math.max(0,x.hp),0),sM=all.reduce((t,x)=>t+x.mx,0);
   const bA=a.AddAtk||0,bH=a.AddHp||0;
@@ -447,7 +442,6 @@ case'LoseHealth':ts.forEach(t=>{if(t.h)dmg(G,t,a.Amount||1,null,2);else{t.hp-=a.
    (CD[h.id].Effects||[]).forEach(e=>{if(e.Trigger!='OnPlayed'||e.Zone||!cond(e.Condition,s,{},G))return;
     const acts=e.Targeting=='Choice'&&e.ChoiceLabels?[e.Actions[0]]:e.Actions;
     const ra2=acts.filter(a2=>!SKIP.includes(a2.Type)&&!a2.OnlyIfSacrificed);
-    // the sacrifice-dependent part of this card (stat gain, \"if you did\" payouts) waits for the ONE shared sacrifice choice below
     if(askOnE(G,s.o)&&acts.some(a2=>a2.Type=='SacrificeUnit')){const ex=acts.filter(a2=>a2.Type=='AbsorbStats'||a2.OnlyIfSacrificed);if(ex.length)chainFx.push({h,e,acts:ex})}
     if(deferRp(G,s,h,e,ra2))return;ra2.forEach(a2=>act(G,a2,s,{rp:1,tf:1,nosac:1,sm:1}))})});
   if(chainFx.length&&!G.over&&!s.gone&&s.hp>0){
@@ -460,11 +454,6 @@ case'LoseHealth':ts.forEach(t=>{if(t.h)dmg(G,t,a.Amount||1,null,2);else{t.hp-=a.
   else unitsOnly.forEach(t=>{let into=a.Into;if(a.IntoFrom=='LastPlayed'){const e=lastPlayed(G,t.o,a.Filter,t.uid);if(!e)return;into=e.id}
    if(into==null||!CD[into])return;transformUnit(G,t,into);if(a.FirePlayed!==false)transPlay(G,t,c,t===s)});break}}
  resolve(G)}
-// A unit has just TRANSFORMED into another card (Transform action, Evolving...). It now counts as a card that was played:
-//  1) it is logged in G.hist (so Echo Chamber / Shapeshifter see the new form),
-//  2) the new form's "When Played" effects fire (not when chained from another transform: c.tf stops endless loops),
-//  3) everyone who listens for "a unit is played" is notified (Adaptive Unit, Quickdraw Gun Man...). Skipped when `self` is set, because the unit is in the middle of
-//     being played/summoned right now and play()/summon announces it afterwards with its new form.
 function transPlay(G,u,c,self){if(!u||u.gone||u.hp<=0||G.over)return;c=c||{};
  G.hist.push({p:u.o,t:G.turn,id:u.id,tg:'',uid:u.uid,tf:1});
  if(!c.tf)fire(G,'OnPlayed',u,{tf:1,nosac:1,sm:c.sm,ask:1});
@@ -476,18 +465,16 @@ function transformUnit(G,u,id){const d=CD[id],p=G.p[u.o],from=u.id,oa=u.atk,oh=u
 function place(G,p,u,i){EV(G,{k:'in',u:u.uid});u.lane=i;u.o=p.i;u.gone=0;p.ln[i]=u;if(!u.placed){u.placed=1;u.atk+=p.gb.a;u.hp+=p.gb.h;u.mx+=p.gb.h;u.lh=u.hp;
   if(G.en&&p.i==1&&G.en.mod.stat){u.atk+=G.en.mod.stat;u.hp+=G.en.mod.stat;u.mx+=G.en.mod.stat;u.lh=u.hp}}
  if(!G.sim&&p.ln.some(w=>w&&w.id==907&&!w.gone)&&p.ln.some(w=>w&&w.id==908&&!w.gone))acu(G,p,'reunion')}
-// A unit has entered the board (played OR summoned): tell everyone who listens for that.
 function announce(G,u){if(G.over||!u)return;const p=G.p[u.o];
  p.ln.slice().forEach(w=>w&&w!==u&&fire(G,'OnPlayed',w,{u,lis:1}));
  p.ln.slice().forEach(w=>w&&w!==u&&fire(G,'OnFriendlyUnitPlayed',w,{u}));
  G.p[1-u.o].ln.slice().forEach(w=>w&&fire(G,'OnEnemyUnitPlayed',w,{u}))}
-// A friendly unit's HP just became 1 (damage, Soul Guard breaking, ...): tell its owner's units.
 function hpOne(G,u){if(!RULES.hpOneTrigger||G.over||!u||u.gone)return;
  G.p[u.o].ln.slice().forEach(w=>w&&!w.gone&&fire(G,'OnFriendlyUnitHpOne',w,{u}))}
 function killUnit(G,u,lane){const p=G.p[u.o],unk=u.kw.has('Unkillable')&&!u.sil;if(!G.sim&&!u.sacF&&p.ac)p.ac.lost++;
  EV(G,{k:'die',id:u.id,atk:u.atk,hp:Math.max(u.hp,0),o:p.i,lane,uid:u.uid,bt:G.bt?1:0});
  p.ln[lane]=null;u.gone=1;
- if(!unk&&u.id<900)p.disc.push({uid:UID++,id:u.id,nf:u.uid,unk:u.kw.has('Unkillable')?1:0,...(u.cr?{red:u.cr}:{}),...(u.cba?{ba:u.cba}:{})}); // keep what the card had grown before it was played (Thor's ATK, The Creature's / Rustler's cost)
+ if(!unk&&u.id<900)p.disc.push({uid:UID++,id:u.id,nf:u.uid,unk:u.kw.has('Unkillable')?1:0,...(u.cr?{red:u.cr}:{}),...(u.cba?{ba:u.cba}:{})});
  fire(G,'OnDeath',u,{u});units(p).forEach(o=>fire(G,'OnFriendlyUnitDied',o,{u}));fireHand(G,'OnFriendlyUnitDied',p,{u,lane});
  if(unk){L(G,u.d.Name+' is Unkillable - back to hand');
   if(u.id<900||RULES.tokensReturnToHand){const card={uid:UID++,id:u.id,nf:u.uid,unk:1,...(u.cr?{red:u.cr}:{}),...(u.cba?{ba:u.cba}:{})};if(p.hand.length<HAND_MAX||RULES.fullHandRework){p.hand.push(card);gained(G,p,'unkillable');acn(G,p,'unk',1,3,'deathsticks')}else if(u.id<900)p.disc.push(card)}}}
@@ -501,7 +488,6 @@ function resolve(G){aura(G);
    if(u.kw.has('SoulGuard')){const n=sgN(u);if(u.agn>0){u.agn--;u.sgd=(u.sgd||0)+1}u.sgn=n-1;if(u.sgn<=0){u.sgn=0;u.kw.delete('SoulGuard')}u.hp=1;u.lh=1;L(G,u.d.Name+' soul guard breaks');hpOne(G,u);continue}
    killUnit(G,u,i);if(!u.kw.has('Unkillable'))L(G,u.d.Name+' destroyed')}
   if(!ch)break}
- // HP-reaches-1 detection: a unit that was above 1 HP at the last check and sits at exactly 1 now.
  const hit=[];G.p.forEach(p=>units(p).forEach(u=>{if(u.hp>0){if(u.lh>1&&u.hp===1)hit.push(u);u.lh=u.hp}}));
  hit.forEach(u=>{if(!G.over&&!u.gone&&u.hp===1)hpOne(G,u)});
  aura(G);chk(G)}
@@ -518,7 +504,6 @@ function preTargets(G,u){if(!u||u.sil)return null;
  const t=units(G.p[1-u.o]);return e&&t.length?t:null}
 function lane(G,i,pre){pre=pre||{};
  [0,1].forEach(o=>{const u=G.p[o].ln[i];if(!u)return;let t=pre[o];if(!t&&preTargets(G,u))t=botPick(G,G.p[o],'e');
-  // Pre-combat effects of both lanes are simultaneous: if the first one already killed a hero, the second still happens (and may make it a draw).
   if(o==1&&G.over&&G.over.hpWin){G.over=null;fire(G,'OnPreCombatLine',u,{t});chk(G)}else fire(G,'OnPreCombatLine',u,{t})});resolve(G);
  const A=G.p[0].ln[i],B=G.p[1].ln[i];if(!A&&!B)return;
  const sa=A&&A.kw.has('Stunned'),sb=B&&B.kw.has('Stunned'),aa=A?A.atk:0,ba=B?B.atk:0;
@@ -539,13 +524,12 @@ function selKind(a,e){const tt=a.Target,T=a.Type;if(a.Select)return a.Select;
  if(SELKIND[tt])return SELKIND[tt];if(tt!='SelectedTarget')return null;
  if(e&&SELKIND[e.Targeting])return SELKIND[e.Targeting];
  return T=='DealDamage'?'eh':(T=='DestroyUnit'||T=='Silence'||(T=='ApplyStatus'&&DEBUFF_ST.includes(a.StatusKeyword)))?'e':T=='ReturnToHand'?'a':'f'}
-// Silence / Bounce can't pick a unit that is immune to them (The Titan).
 const silBounceF=a=>a.Type=='Silence'?Object.assign({},a.Where,{NoKw:'SilenceImmune'}):a.Type=='ReturnToHand'?Object.assign({},a.Where,{NoKw:'BounceImmune'}):a.Where;
 function picks(d,noSac){const out=[];out.f=[];let hasT=0,hasE=0,hasF=0,hasA=0;const push=(k,f)=>{out.push(k);out.f.push(f||null)};
  for(const e of d.Effects||[]){if(e.Trigger!='OnPlayed')continue;
   if(e.Targeting=='Choice'&&e.ChoiceLabels&&e.ChoiceLabels.length==e.Actions.length){push('C');continue}
   for(const a0 of e.Actions){const a=TYPEALIAS[a0.Type]?Object.assign({},a0,{Type:TYPEALIAS[a0.Type]}):a0,T=a.Type,tt=a.Target;if(T=='AbsorbStats'||(noSac&&a.OnlyIfSacrificed))continue;
-   if(a.Select=='P'){push('P');continue}   // 'P' = pick any lane (0-3), see Excision Conjucture
+   if(a.Select=='P'){push('P');continue}
    if(T=='TutorCard'){push('D');continue}
    if(T=='SacrificeUnits'){push('M');continue}
    if((T=='MakeAUnit'||T=='Reanimate')&&a.StringParam!='AdjacentLanes'&&!a.Auto){for(let n=0;n<(a.Count||1);n++)push('L');continue}
@@ -553,7 +537,7 @@ function picks(d,noSac){const out=[];out.f=[];let hasT=0,hasE=0,hasF=0,hasA=0;co
    const k=selKind(a,e);if(!k)continue;
    if(tt=='SelectedTarget'){if(hasT)continue;hasT=1}
    else if(k=='e'){if(hasE)continue;hasE=1}else if(k=='f'){if(hasF)continue;hasF=1}else{if(hasA)continue;hasA=1}
-   push(k,silBounceF(a));if(T=='CopyUnit'&&!a.Auto)push('L')}}   // CopyUnit: pick the unit, then the empty lane for the copy
+   push(k,silBounceF(a));if(T=='CopyUnit'&&!a.Auto)push('L')}}
  return out}
 const NOSAC=-1;
 const optSac=d=>(d.Effects||[]).some(e=>e.Trigger=='OnPlayed'&&e.Actions.some(a=>a.Type=='SacrificeUnit'&&a.Optional));
@@ -591,7 +575,7 @@ function play(G,p,ci,ln,pk){if(!canPlay(G,p,ci,ln))return false;
   resolve(G)}
  else{L(G,(p.i?'Enemy':'You')+' cast '+d.Name);const s={d,o:p.i,sp:1,lane:-1,uid:0};
   const twice=!!p.dw;if(twice){p.dw=0;L(G,'Dual Wield - '+d.Name+' is played twice')}
-  const twice2=twice&&askOnE(G,p.i);   // the human player picks the targets of the 2nd cast himself (queued, see runItem)
+  const twice2=twice&&askOnE(G,p.i);
   fire(G,'OnPlayed',s,ctx);resolve(G);
   if(twice2&&!G.over)pq(G).push({k:'spell2',pi:p.i,d});
   else if(twice&&!G.over){

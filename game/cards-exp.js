@@ -1,35 +1,29 @@
 /* ============================================================
-   EXPERIMENTAL CARDS - a full, independent copy of cards.js.
-   Edit anything here (stats, costs, Effects, triggers, descriptions,
-   add or remove cards). It is used INSTEAD of cards.js only when
-   "Experimental changes" is ticked in Settings (localStorage rj_exp).
-   cards.js is never touched.
-
-   Notes:
-   - Keep Description in sync with Effects by hand (it is only text).
-   - Tokens / generated cards (Id 900+) must stay in this file too.
-   - New cards need art in img/ (+ regenerate img-index.js).
-   - cards-live.js patches are not applied in experimental mode.
-   - Online: only players who also have the option on can meet you
-     (the option is part of the version check NETV).
+   EXPERIMENTAL CARDS - full rewrite matching the xlsx spreadsheet.
+   - IDs 1-100 keep cards.js IDs.
+   - New cards from xlsx: 101-110.
+   - Original tokens: 900-912. New tokens: 913-924.
+   - [KEYWORD] no longer in descriptions (engine renders them).
+   - Subtypes balanced ~23 per type.
+   - "Sacrifice:" in description = "When Played: You may sacrifice
+     a friendly unit; if you do, [Y]". Spells with sacrifice are
+     mandatory; Units are optional.
    ============================================================ */
 const CARDS_EXP = [
+
+  // ==================== COST 1 ====================
   {
     Id: 1,
     Name: "Black Rabbitlings",
     Type: "Unit",
     Subtypes: ["Animal"],
     Cost: 2,
-    Attack: 2,
-    Health: 2,
+    Attack: 1,
+    Health: 3,
     Description: "When Destroyed: Heal Your Hero for 3.",
     Effects: [
-      {
-        Trigger: "OnDeath",
-        Actions: [
-          { Type: "Heal", Target: "FriendlyHero", Amount: 3 },
-        ],
-      },
+      { Trigger: "OnDeath",
+        Actions: [{ Type: "Heal", Target: "FriendlyHero", Amount: 3 }] },
     ],
   },
 
@@ -43,12 +37,8 @@ const CARDS_EXP = [
     Health: 1,
     Description: "When Destroyed: Deal 2 damage to the Enemy Hero.",
     Effects: [
-      {
-        Trigger: "OnDeath",
-        Actions: [
-          { Type: "DealDamage", Target: "EnemyHero", Amount: 2 },
-        ],
-      },
+      { Trigger: "OnDeath",
+        Actions: [{ Type: "DealDamage", Target: "EnemyHero", Amount: 2 }] },
     ],
   },
 
@@ -62,12 +52,8 @@ const CARDS_EXP = [
     Health: 1,
     Description: "When Destroyed: Gain The Tempting Goblet.",
     Effects: [
-      {
-        Trigger: "OnDeath",
-        Actions: [
-          { Type: "AddCardToHand", Target: "FriendlyHero", ValueParam: 900 },
-        ],
-      },
+      { Trigger: "OnDeath",
+        Actions: [{ Type: "AddCardToHand", Target: "FriendlyHero", ValueParam: 900 }] },
     ],
   },
 
@@ -76,17 +62,13 @@ const CARDS_EXP = [
     Name: "Scout",
     Type: "Unit",
     Subtypes: ["Human"],
-    Cost: 2,
+    Cost: 1,
     Attack: 1,
-    Health: 3,
+    Health: 1,
     Description: "When Played: Mark an Enemy Unit.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
-        Actions: [
-          { Type: "ApplyStatus", Target: "TargetEnemyUnit", StatusKeyword: "Marked" },
-        ],
-      },
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "ApplyStatus", Target: "TargetEnemyUnit", StatusKeyword: "Marked" }] },
     ],
   },
 
@@ -94,18 +76,14 @@ const CARDS_EXP = [
     Id: 5,
     Name: "Queen of Cards",
     Type: "Unit",
-    Subtypes: ["Aberration", "Human"],
+    Subtypes: ["Human"],
     Cost: 4,
-    Attack: 3,
+    Attack: 2,
     Health: 4,
-    Description: "While in Play: Draw a card whenever a Friendly Unit is Destroyed.",
+    Description: "While in Play: When a Friendly Unit is Destroyed, Draw a Card.",
     Effects: [
-      {
-        Trigger: "OnFriendlyUnitDied",
-        Actions: [
-          { Type: "DrawCard", Target: "FriendlyHero" },
-        ],
-      },
+      { Trigger: "OnFriendlyUnitDied",
+        Actions: [{ Type: "DrawCard", Target: "FriendlyHero" }] },
     ],
   },
 
@@ -115,16 +93,12 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Aberration"],
     Cost: 6,
-    Attack: 4,
-    Health: 4,
+    Attack: 3,
+    Health: 3,
     Description: "When Played: All Friendly Units get +1/+1 for the rest of the game.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
-        Actions: [
-          { Type: "ModifyGlobalBuff", Target: "FriendlyHero", BuffAtk: 1, BuffHp: 1 },
-        ],
-      },
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "ModifyGlobalBuff", Target: "FriendlyHero", BuffAtk: 1, BuffHp: 1 }] },
     ],
   },
 
@@ -135,22 +109,18 @@ const CARDS_EXP = [
     Cost: 2,
     Description: "Deal 3 damage to an Enemy Unit.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
-        Actions: [
-          { Type: "DealDamage", Target: "TargetEnemyUnit", Amount: 3 },
-        ],
-      },
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "DealDamage", Target: "TargetEnemyUnit", Amount: 3 }] },
     ],
   },
 
   {
     Id: 8,
-    Name: "Clockwork Knight",
+    Name: "Knight",
     Type: "Unit",
-    Subtypes: ["Machine"],
+    Subtypes: ["Human"],
     Cost: 3,
-    Attack: 3,
+    Attack: 2,
     Health: 3,
     Keywords: ["Armored"],
     KeywordParams: { Armored: 1 },
@@ -162,18 +132,14 @@ const CARDS_EXP = [
     Name: "Corpse Eater",
     Type: "Unit",
     Subtypes: ["Aberration"],
-    Cost: 5,
-    Attack: 4,
+    Cost: 4,
+    Attack: 3,
     Health: 1,
-    Description: "While in Hand: Whenever a Friendly Unit is Destroyed, Play this in its lane.",
+    Description: "While in Hand: When a Friendly Unit is Destroyed, Play this in its place.",
     Effects: [
-      {
-        Trigger: "OnFriendlyUnitDied",
+      { Trigger: "OnFriendlyUnitDied",
         Zone: "Hand",
-        Actions: [
-          { Type: "SummonUnit", Target: "Self" },
-        ],
-      },
+        Actions: [{ Type: "SummonUnit", Target: "Self" }] },
     ],
   },
 
@@ -183,18 +149,16 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Animal"],
     Cost: 3,
-    Attack: 3,
+    Attack: 2,
     Health: 3,
-    Description: "When Played: You may Sacrifice a Friendly Unit to gain its stats.",
+    Description: "Sacrifice: Absorb the Stats of the Unit Sacrificed.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
+      { Trigger: "OnPlayed",
         Targeting: "OtherFriendlyUnits",
         Actions: [
           { Type: "AbsorbStats", Target: "SelectedTarget" },
           { Type: "SacrificeUnit", Target: "SelectedTarget", Optional: true },
-        ],
-      },
+        ] },
     ],
   },
 
@@ -204,21 +168,17 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Animal"],
     Cost: 10,
-    Attack: 8,
-    Health: 8,
+    Attack: 7,
+    Health: 7,
     Keywords: ["Unkillable"],
     Rule: "persistentGrowth",
     Description: "While in Deck, Hand or Discard: Costs 1 less whenever You Sacrifice a Unit.",
     DescriptionClassic: "While in Hand: Costs 1 less whenever You Sacrifice a Unit.",
     Effects: [
-      {
-        Trigger: "OnOtherUnitSacrificed",
+      { Trigger: "OnOtherUnitSacrificed",
         Zone: ["Deck", "Hand", "Discard"],
         ZoneClassic: "Hand",
-        Actions: [
-          { Type: "BuffStats", Target: "Self", Amount: -1 },
-        ],
-      },
+        Actions: [{ Type: "BuffStats", Target: "Self", Amount: -1 }] },
     ],
   },
 
@@ -232,13 +192,9 @@ const CARDS_EXP = [
     Health: 1,
     Description: "When Sacrificed: Return to Your Hand instead. It costs 0 this turn.",
     Effects: [
-      {
-        Trigger: "OnSacrificed",
+      { Trigger: "OnSacrificed",
         Zone: "Board",
-        Actions: [
-          { Type: "ReturnToHand", Target: "Self", FreeThisTurn: true },
-        ],
-      },
+        Actions: [{ Type: "ReturnToHand", Target: "Self", FreeThisTurn: true }] },
     ],
   },
 
@@ -247,15 +203,13 @@ const CARDS_EXP = [
     Name: "Seek",
     Type: "Spell",
     Cost: 1,
-    Description: "Choose a card from Your Deck and add it to Your Hand, then shuffle.",
+    Description: "Choose a Card from Your Deck and add it to your hand.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
+      { Trigger: "OnPlayed",
         Actions: [
           { Type: "TutorCard", Target: "Self" },
           { Type: "ShuffleDeck", Target: "Self" },
-        ],
-      },
+        ] },
     ],
   },
 
@@ -265,18 +219,14 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Human"],
     Cost: 5,
-    Attack: 3,
+    Attack: 2,
     Health: 4,
     Keywords: ["SoulGuard"],
-    Description: "While in Play: Other Friendly Units have SoulGuard.",
+    Description: "While in Play: All Friendly Units have Soul Guard.",
     Effects: [
-      {
-        Trigger: "Passive",
+      { Trigger: "Passive",
         Zone: "Board",
-        Actions: [
-          { Type: "ApplyStatus", Target: "OtherFriendlyUnits", StatusKeyword: "SoulGuard" },
-        ],
-      },
+        Actions: [{ Type: "ApplyStatus", Target: "OtherFriendlyUnits", StatusKeyword: "SoulGuard" }] },
     ],
   },
 
@@ -285,17 +235,15 @@ const CARDS_EXP = [
     Name: "Expectancy",
     Type: "Spell",
     Cost: 3,
-    Description: "Draw a card from Your Deck or Discard. At the start of next round, draw another from the same place.",
+    Description: "Draw a Card from Your Deck or Your Discard pile now and at the start of the next round.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
+      { Trigger: "OnPlayed",
         Targeting: "Choice",
         ChoiceLabels: ["Draw from Deck", "Draw from Discard"],
         Actions: [
           { Type: "DrawCard", Amount: 1, Target: "FriendlyHero", Later: true },
           { Type: "DrawFromDiscard", Amount: 1, Target: "FriendlyHero", Later: true },
-        ],
-      },
+        ] },
     ],
   },
 
@@ -304,15 +252,15 @@ const CARDS_EXP = [
     Name: "HellFire",
     Type: "Spell",
     Cost: 5,
-    Description: "Deal 3 damage and apply Burning 1 to all Units.",
+    Description: "Deal 3 Damage and Apply Burn 3 to all Units on Board.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
+      { Trigger: "OnPlayed",
         Actions: [
-          { Type: "ApplyStatus", Target: "AllUnitsOnBoard", StatusKeyword: "Burning" },
           { Type: "DealDamage", Target: "AllUnitsOnBoard", Amount: 3 },
-        ],
-      },
+          { Type: "ApplyStatus", Target: "AllUnitsOnBoard", StatusKeyword: "Burning" },
+          { Type: "ApplyStatus", Target: "AllUnitsOnBoard", StatusKeyword: "Burning" },
+          { Type: "ApplyStatus", Target: "AllUnitsOnBoard", StatusKeyword: "Burning" },
+        ] },
     ],
   },
 
@@ -322,11 +270,11 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Human"],
     Cost: 5,
-    Attack: 4,
+    Attack: 3,
     Health: 3,
     Keywords: ["SplashDamage", "BurnSource"],
     KeywordParams: { SplashDamage: 3 },
-    Description: "Whenever this damages an Enemy Unit: Apply Burning to it.",
+    Description: "When this Does Damage to the Enemy Unit: Apply Burning to it.",
   },
 
   {
@@ -336,13 +284,11 @@ const CARDS_EXP = [
     Cost: 2,
     Description: "Sacrifice a Friendly Unit. Deal 4 damage to an Enemy Unit.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
+      { Trigger: "OnPlayed",
         Actions: [
           { Type: "SacrificeUnit", Target: "TargetFriendlyUnit" },
           { Type: "DealDamage", Target: "TargetEnemyUnit", Amount: 4 },
-        ],
-      },
+        ] },
     ],
   },
 
@@ -353,12 +299,8 @@ const CARDS_EXP = [
     Cost: 3,
     Description: "A Friendly Unit does a Bonus Attack.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
-        Actions: [
-          { Type: "BonusAttack", Target: "TargetFriendlyUnit" },
-        ],
-      },
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "BonusAttack", Target: "TargetFriendlyUnit" }] },
     ],
   },
 
@@ -368,17 +310,13 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Human"],
     Cost: 5,
-    Attack: 4,
-    Health: 4,
+    Attack: 3,
+    Health: 3,
     Description: "When Played: Bounce a Unit.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
+      { Trigger: "OnPlayed",
         Targeting: "SelectedTarget",
-        Actions: [
-          { Type: "ReturnToHand", Target: "SelectedTarget" },
-        ],
-      },
+        Actions: [{ Type: "ReturnToHand", Target: "SelectedTarget" }] },
     ],
   },
 
@@ -388,18 +326,14 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Machine"],
     Cost: 5,
-    Attack: 5,
+    Attack: 4,
     Health: 2,
     Keywords: ["Armored"],
     KeywordParams: { Armored: 2 },
-    Description: "Whenever this damages an Enemy Unit: Deal 2 damage to the Enemy Hero.",
+    Description: "When this Hurts an Enemy Unit: Deal 2 Damage to the Enemy Hero.",
     Effects: [
-      {
-        Trigger: "OnDamagedEnemyUnit",
-        Actions: [
-          { Type: "DealDamage", Target: "EnemyHero", Amount: 2 },
-        ],
-      },
+      { Trigger: "OnDamagedEnemyUnit",
+        Actions: [{ Type: "DealDamage", Target: "EnemyHero", Amount: 2 }] },
     ],
   },
 
@@ -409,17 +343,13 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Aberration", "Human"],
     Cost: 3,
-    Attack: 3,
+    Attack: 2,
     Health: 2,
     Description: "Whenever an Enemy Unit is Played in this lane: Deal 2 damage to it.",
     Effects: [
-      {
-        Trigger: "OnEnemyUnitPlayed",
+      { Trigger: "OnEnemyUnitPlayed",
         Condition: { Condition: "SameLane" },
-        Actions: [
-          { Type: "DealDamage", Target: "EventUnit", Amount: 2 },
-        ],
-      },
+        Actions: [{ Type: "DealDamage", Target: "EventUnit", Amount: 2 }] },
     ],
   },
 
@@ -427,20 +357,18 @@ const CARDS_EXP = [
     Id: 23,
     Name: "Chainsaw Guy",
     Type: "Unit",
-    Subtypes: ["Aberration"],
+    Subtypes: ["Human"],
     Cost: 6,
     Attack: 5,
-    Health: 6,
+    Health: 5,
     Keywords: ["SilenceImmune"],
-    Description: "On Kill: Heal to full and gain +2 HP.",
+    Description: "On Kill: Heal to Full, gain +2 HP.",
     Effects: [
-      {
-        Trigger: "OnKill",
+      { Trigger: "OnKill",
         Actions: [
           { Type: "HealToFull", Target: "Self" },
           { Type: "BuffStats", Target: "Self", BuffHp: 2 },
-        ],
-      },
+        ] },
     ],
   },
 
@@ -450,23 +378,18 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Human"],
     Cost: 6,
-    Attack: 6,
+    Attack: 5,
     Health: 5,
-    Description: "Whenever an Enemy Unit is Marked: Do a Bonus Attack.",
+    Description: "While in Play: When You mark an Enemy Unit, do a Bonus Attack.",
     Effects: [
-      {
-        Trigger: "OnStatusApplied",
+      { Trigger: "OnStatusApplied",
         Condition: {
           Condition: "And",
           SubConditions: [
             { Condition: "IsStatus", TargetParam: "Marked" },
             { Condition: "IsEnemy" },
-          ],
-        },
-        Actions: [
-          { Type: "BonusAttack", Target: "Self" },
-        ],
-      },
+          ] },
+        Actions: [{ Type: "BonusAttack", Target: "Self" }] },
     ],
   },
 
@@ -476,23 +399,18 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Human"],
     Cost: 4,
-    Attack: 4,
+    Attack: 3,
     Health: 3,
-    Description: "Whenever an Enemy Unit is Marked: Stun it.",
+    Description: "While in Play: Whenever You mark an Enemy Unit, Stun it.",
     Effects: [
-      {
-        Trigger: "OnStatusApplied",
+      { Trigger: "OnStatusApplied",
         Condition: {
           Condition: "And",
           SubConditions: [
             { Condition: "IsStatus", TargetParam: "Marked" },
             { Condition: "IsEnemy" },
-          ],
-        },
-        Actions: [
-          { Type: "ApplyStatus", Target: "SelectedTarget", StatusKeyword: "Stunned" },
-        ],
-      },
+          ] },
+        Actions: [{ Type: "ApplyStatus", Target: "SelectedTarget", StatusKeyword: "Stunned" }] },
     ],
   },
 
@@ -502,16 +420,12 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Human"],
     Cost: 5,
-    Attack: 3,
+    Attack: 2,
     Health: 4,
-    Description: "Before Combat Here: Mark an Enemy Unit.",
+    Description: "Before Combat: Mark an Enemy Unit.",
     Effects: [
-      {
-        Trigger: "OnPreCombatLine",
-        Actions: [
-          { Type: "ApplyStatus", Target: "TargetEnemyUnit", StatusKeyword: "Marked" },
-        ],
-      },
+      { Trigger: "OnPreCombatLine",
+        Actions: [{ Type: "ApplyStatus", Target: "TargetEnemyUnit", StatusKeyword: "Marked" }] },
     ],
   },
 
@@ -519,25 +433,17 @@ const CARDS_EXP = [
     Id: 27,
     Name: "Drawing Raptor",
     Type: "Unit",
-    Subtypes: ["Aberration"],
-    Cost: 5,
-    Attack: 3,
-    Health: 5,
-    Description: "While in Play: Gain +1 ATK whenever You draw a card. Whenever this damages the Enemy Hero: Draw a card.",
+    Subtypes: ["Animal", "Aberration"],
+    Cost: 4,
+    Attack: 2,
+    Health: 4,
+    Description: "While in Play: When You draw a Card, gain +1 ATK. When this Hurt an Enemy Hero, Draw a Card.",
     Effects: [
-      {
-        Trigger: "OnDamagedEnemyHero",
+      { Trigger: "OnDamagedEnemyHero",
         Condition: { Condition: "IsSelf" },
-        Actions: [
-          { Type: "DrawCard", Target: "FriendlyHero" },
-        ],
-      },
-      {
-        Trigger: "OnFriendlyCardDrawn",
-        Actions: [
-          { Type: "BuffStats", Target: "Self", BuffAtk: 1 },
-        ],
-      },
+        Actions: [{ Type: "DrawCard", Target: "FriendlyHero" }] },
+      { Trigger: "OnFriendlyCardDrawn",
+        Actions: [{ Type: "BuffStats", Target: "Self", BuffAtk: 1 }] },
     ],
   },
 
@@ -545,16 +451,14 @@ const CARDS_EXP = [
     Id: 28,
     Name: "Exploding Present",
     Type: "Spell",
-    Cost: 3,
-    Description: "Deal 7 damage to an Enemy Unit. The Enemy Hero gains a copy of this card that costs 2 more.",
+    Cost: 4,
+    Description: "Deal 7 Damage to the Enemy Unit. The Enemy Hero gains a copy of this card that costs 2 more.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
+      { Trigger: "OnPlayed",
         Actions: [
           { Type: "DealDamage", Target: "TargetEnemyUnit", Amount: 7 },
           { Type: "GiveToOpponent", Target: "Self", CostChange: 2 },
-        ],
-      },
+        ] },
     ],
   },
 
@@ -565,15 +469,11 @@ const CARDS_EXP = [
     Subtypes: ["Aberration"],
     Cost: 7,
     Attack: 7,
-    Health: 6,
+    Health: 5,
     Description: "On Kill: Move Right. If an Enemy Unit is in that lane, do a Bonus Attack.",
     Effects: [
-      {
-        Trigger: "OnKill",
-        Actions: [
-          { Type: "MoveRight", Target: "Self", ThenAttack: true },
-        ],
-      },
+      { Trigger: "OnKill",
+        Actions: [{ Type: "MoveRight", Target: "Self", ThenAttack: true }] },
     ],
   },
 
@@ -584,15 +484,11 @@ const CARDS_EXP = [
     Subtypes: ["Machine"],
     Cost: 6,
     Attack: 0,
-    Health: 8,
-    Description: "Before Combat Here: Deal 4 damage to the Enemy Hero.",
+    Health: 7,
+    Description: "Before Combat: Deal 4 Damage to the Enemy Hero.",
     Effects: [
-      {
-        Trigger: "OnPreCombatLine",
-        Actions: [
-          { Type: "DealDamage", Target: "EnemyHero", Amount: 4 },
-        ],
-      },
+      { Trigger: "OnPreCombatLine",
+        Actions: [{ Type: "DealDamage", Target: "EnemyHero", Amount: 4 }] },
     ],
   },
 
@@ -601,14 +497,10 @@ const CARDS_EXP = [
     Name: "Silence",
     Type: "Spell",
     Cost: 2,
-    Description: "Silence a Unit.",
+    Description: "Silence an Enemy Unit.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
-        Actions: [
-          { Type: "Silence", Target: "TargetAnyUnit" },
-        ],
-      },
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "Silence", Target: "TargetEnemyUnit" }] },
     ],
   },
 
@@ -617,15 +509,13 @@ const CARDS_EXP = [
     Name: "Marked for Death",
     Type: "Spell",
     Cost: 2,
-    Description: "Mark an Enemy Unit and draw a card.",
+    Description: "Mark an Enemy Unit. Draw a Card.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
+      { Trigger: "OnPlayed",
         Actions: [
           { Type: "ApplyStatus", Target: "TargetEnemyUnit", StatusKeyword: "Marked" },
           { Type: "DrawCard", Target: "FriendlyHero" },
-        ],
-      },
+        ] },
     ],
   },
 
@@ -633,25 +523,17 @@ const CARDS_EXP = [
     Id: 33,
     Name: "Mouse",
     Type: "Unit",
-    Subtypes: ["Machine"],
+    Subtypes: ["Animal", "Machine"],
     Cost: 5,
     Attack: 5,
-    Health: 10,
+    Health: 12,
     Keywords: ["Stunned"],
-    Description: "Whenever this damages an Enemy: Stun this Unit.",
+    Description: "When this Does Damage: Stun It.",
     Effects: [
-      {
-        Trigger: "OnDamagedEnemyUnit",
-        Actions: [
-          { Type: "ApplyStatus", Target: "Self", StatusKeyword: "Stunned" },
-        ],
-      },
-      {
-        Trigger: "OnDamagedEnemyHero",
-        Actions: [
-          { Type: "ApplyStatus", Target: "Self", StatusKeyword: "Stunned" },
-        ],
-      },
+      { Trigger: "OnDamagedEnemyUnit",
+        Actions: [{ Type: "ApplyStatus", Target: "Self", StatusKeyword: "Stunned" }] },
+      { Trigger: "OnDamagedEnemyHero",
+        Actions: [{ Type: "ApplyStatus", Target: "Self", StatusKeyword: "Stunned" }] },
     ],
   },
 
@@ -659,18 +541,14 @@ const CARDS_EXP = [
     Id: 34,
     Name: "Maid Mask",
     Type: "Unit",
-    Subtypes: ["Human"],
+    Subtypes: ["Human", "Aberration"],
     Cost: 3,
     Attack: 3,
-    Health: 2,
-    Description: "On Kill: Gain SoulGuard.",
+    Health: 1,
+    Description: "On Kill: Gain Soul Guard.",
     Effects: [
-      {
-        Trigger: "OnKill",
-        Actions: [
-          { Type: "ApplyStatus", Target: "Self", StatusKeyword: "SoulGuard" },
-        ],
-      },
+      { Trigger: "OnKill",
+        Actions: [{ Type: "ApplyStatus", Target: "Self", StatusKeyword: "SoulGuard" }] },
     ],
   },
 
@@ -680,17 +558,13 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Aberration"],
     Cost: 3,
-    Attack: 3,
+    Attack: 2,
     Health: 2,
-    Description: "Whenever a Friendly Aberration damages the Enemy Hero: It gets +1/+1.",
+    Description: "While in Play: Whenever a Friendly Aberration hurts the Enemy Hero, that Unit gains +1/+1.",
     Effects: [
-      {
-        Trigger: "OnDamagedEnemyHero",
+      { Trigger: "OnDamagedEnemyHero",
         Condition: { Condition: "IsSubtype", TargetParam: "Aberration" },
-        Actions: [
-          { Type: "BuffStats", Target: "SelectedTarget", BuffAtk: 1, BuffHp: 1 },
-        ],
-      },
+        Actions: [{ Type: "BuffStats", Target: "SelectedTarget", BuffAtk: 1, BuffHp: 1 }] },
     ],
   },
 
@@ -698,29 +572,19 @@ const CARDS_EXP = [
     Id: 36,
     Name: "Death",
     Type: "Unit",
-    Subtypes: ["Aberration"],
+    Subtypes: ["Human", "Aberration"],
     Cost: 7,
     Attack: 4,
     Health: 4,
     Keywords: ["SoulGuard"],
     Rule: "hpOneTrigger",
-    Description: "Whenever a Friendly Unit is Destroyed or drops to 1 HP: Deal 2 damage to the Enemy Hero.",
-    DescriptionClassic: "Whenever a Friendly Unit is Destroyed: Deal 2 damage to the Enemy Hero.",
+    Description: "Whenever a Friendly Unit is Destroyed or Drops to 1 HP: Deal 3 Damage to the Enemy Hero.",
+    DescriptionClassic: "Whenever a Friendly Unit is Destroyed: Deal 3 Damage to the Enemy Hero.",
     Effects: [
-      {
-        Trigger: "OnFriendlyUnitDied",
-        Actions: [
-          { Type: "DealDamage", Target: "EnemyHero", Amount: 2 },
-        ],
-      },
-      {
-        // New: also fires when a friendly unit's HP becomes 1 (damage, or a Soul Guard breaking).
-        // Turn off with RULES.hpOneTrigger = false in engine.js.
-        Trigger: "OnFriendlyUnitHpOne",
-        Actions: [
-          { Type: "DealDamage", Target: "EnemyHero", Amount: 2 },
-        ],
-      },
+      { Trigger: "OnFriendlyUnitDied",
+        Actions: [{ Type: "DealDamage", Target: "EnemyHero", Amount: 3 }] },
+      { Trigger: "OnFriendlyUnitHpOne",
+        Actions: [{ Type: "DealDamage", Target: "EnemyHero", Amount: 3 }] },
     ],
   },
 
@@ -732,14 +596,10 @@ const CARDS_EXP = [
     Cost: 3,
     Attack: 1,
     Health: 4,
-    Description: "Before Combat Here: Apply Burning to an Enemy Unit.",
+    Description: "Before Combat: Apply Burning to an Enemy Unit.",
     Effects: [
-      {
-        Trigger: "OnPreCombatLine",
-        Actions: [
-          { Type: "ApplyStatus", Target: "TargetEnemyUnit", StatusKeyword: "Burning" },
-        ],
-      },
+      { Trigger: "OnPreCombatLine",
+        Actions: [{ Type: "ApplyStatus", Target: "TargetEnemyUnit", StatusKeyword: "Burning" }] },
     ],
   },
 
@@ -748,8 +608,8 @@ const CARDS_EXP = [
     Name: "Inhuman Torch",
     Type: "Unit",
     Subtypes: ["Aberration"],
-    Cost: 1,
-    Attack: 2,
+    Cost: 2,
+    Attack: 3,
     Health: 2,
     Keywords: ["Burning"],
     Description: "",
@@ -763,18 +623,15 @@ const CARDS_EXP = [
     Cost: 2,
     Attack: 2,
     Health: 2,
-    Description: "When Played: Both Heroes draw a card. You may Sacrifice a Friendly Unit to draw another.",
+    Description: "When Played: Both Heroes Draw a Card. Sacrifice: Draw a Card.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
-        Targeting: "TargetFriendlyUnit",
+      { Trigger: "OnPlayed",
         Actions: [
-          { Type: "SacrificeUnit", Target: "SelectedTarget", Optional: true },
           { Type: "DrawCard", Target: "FriendlyHero", Amount: 1 },
           { Type: "DrawCard", Target: "EnemyHero", Amount: 1 },
+          { Type: "SacrificeUnit", Target: "TargetFriendlyUnit", Optional: true },
           { Type: "DrawCard", Target: "FriendlyHero", Amount: 1, OnlyIfSacrificed: true },
-        ],
-      },
+        ] },
     ],
   },
 
@@ -786,15 +643,11 @@ const CARDS_EXP = [
     Cost: 5,
     Attack: 4,
     Health: 4,
-    Description: "While in Play: Whenever an Enemy Unit damages a Friendly Animal, Stun it.",
+    Description: "While in Play: Whenever an Enemy Unit hurts a Friendly Animal, Stun that Unit.",
     Effects: [
-      {
-        Trigger: "OnFriendlyUnitDamaged",
+      { Trigger: "OnFriendlyUnitDamaged",
         Condition: { Condition: "IsSubtype", TargetParam: "Animal" },
-        Actions: [
-          { Type: "ApplyStatus", Target: "SelectedTarget", StatusKeyword: "Stunned" },
-        ],
-      },
+        Actions: [{ Type: "ApplyStatus", Target: "SelectedTarget", StatusKeyword: "Stunned" }] },
     ],
   },
 
@@ -805,36 +658,28 @@ const CARDS_EXP = [
     Subtypes: ["Animal"],
     Cost: 4,
     Attack: 3,
-    Health: 3,
+    Health: 2,
     Keywords: ["Flying"],
     Description: "When Played: Another Friendly Animal does a Bonus Attack.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
-        Actions: [
-          { Type: "BonusAttack", Target: "TargetFriendlyUnit", Where: { Subtype: "Animal" } },
-        ],
-      },
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "BonusAttack", Target: "TargetFriendlyUnit", Where: { Subtype: "Animal" } }] },
     ],
   },
 
   {
     Id: 42,
-    Name: "Mechanic",
+    Name: "Artificer",
     Type: "Unit",
     Subtypes: ["Human"],
     Cost: 2,
     Attack: 1,
-    Health: 2,
+    Health: 1,
     Description: "When Played: If You control a Machine, gain +2/+2.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
+      { Trigger: "OnPlayed",
         Condition: { Condition: "HasSubtypeOnBoard", TargetParam: "Machine" },
-        Actions: [
-          { Type: "BuffStats", Target: "Self", BuffAtk: 2, BuffHp: 2 },
-        ],
-      },
+        Actions: [{ Type: "BuffStats", Target: "Self", BuffAtk: 2, BuffHp: 2 }] },
     ],
   },
 
@@ -844,17 +689,12 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Aberration", "Machine"],
     Cost: 4,
-    Attack: 4,
+    Attack: 3,
     Health: 3,
-    Keywords: ["Unactionable"],
-    Description: "After this Attacks: Summon Royal Souldiers in the adjacent lanes.",
+    Description: "When this Does Damage: Summon Souldiers in Adjacent Lanes.",
     Effects: [
-      {
-        Trigger: "OnAttackDone",
-        Actions: [
-          { Type: "MakeAUnit", ValueParam: 901, StringParam: "AdjacentLanes" },
-        ],
-      },
+      { Trigger: "OnAttackDone",
+        Actions: [{ Type: "MakeAUnit", ValueParam: 901, StringParam: "AdjacentLanes" }] },
     ],
   },
 
@@ -863,11 +703,11 @@ const CARDS_EXP = [
     Name: "Area Drone",
     Type: "Unit",
     Subtypes: ["Machine"],
-    Cost: 3,
-    Attack: 2,
+    Cost: 2,
+    Attack: 1,
     Health: 2,
     Keywords: ["SplashDamage"],
-    KeywordParams: { SplashDamage: 2 },
+    KeywordParams: { SplashDamage: 1 },
     Description: "",
   },
 
@@ -876,17 +716,10 @@ const CARDS_EXP = [
     Name: "Dagger Throw",
     Type: "Spell",
     Cost: 1,
-    Description: "Deal 2 damage to an Enemy Unit or the Enemy Hero.",
+    Description: "Deal 2 Damage to a Unit.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
-        Targeting: "Choice",
-        ChoiceLabels: ["Target Enemy Unit", "Enemy Hero"],
-        Actions: [
-          { Type: "DealDamage", Target: "TargetEnemyUnit", Amount: 2 },
-          { Type: "DealDamage", Target: "EnemyHero", Amount: 2 },
-        ],
-      },
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "DealDamage", Target: "TargetEnemyUnit", Amount: 2 }] },
     ],
   },
 
@@ -896,17 +729,13 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Human"],
     Cost: 4,
-    Attack: 2,
+    Attack: 1,
     Health: 4,
-    Description: "While in Play: The first Action you play each round costs 2 less.",
+    Description: "While in Play: The First Action You play each Round costs 3 less.",
     Effects: [
-      {
-        Trigger: "Passive",
+      { Trigger: "Passive",
         Zone: "Board",
-        Actions: [
-          { Type: "ModifyCost", Side: "Friendly", Amount: -2, CardFilter: { Type: "Spell" }, FirstEachRound: true },
-        ],
-      },
+        Actions: [{ Type: "ModifyCost", Side: "Friendly", Amount: -3, CardFilter: { Type: "Spell" }, FirstEachRound: true }] },
     ],
   },
 
@@ -915,53 +744,37 @@ const CARDS_EXP = [
     Name: "Rustler",
     Type: "Unit",
     Subtypes: ["Human"],
-    Cost: 12,
+    Cost: 13,
     Attack: 6,
     Health: 6,
     Rule: "persistentGrowth",
-    Description: "While in Deck, Hand or Discard: Costs 1 less for each Action You play. When Played: Do a Bonus Attack.",
-    DescriptionClassic: "While in Hand: Costs 1 less for each Spell You play. When Played: Do a Bonus Attack.",
+    Description: "While in Deck, Hand or Discard: Costs 1 Less for each Action You played. When Played: Do a Bonus Attack.",
+    DescriptionClassic: "While in Hand: Costs 1 Less for each Action You played. When Played: Do a Bonus Attack.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
-        Actions: [
-          { Type: "BonusAttack", Target: "Self" },
-        ],
-      },
-      {
-        Trigger: "OnFriendlyActionPlayed",
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "BonusAttack", Target: "Self" }] },
+      { Trigger: "OnFriendlyActionPlayed",
         Zone: ["Deck", "Hand", "Discard"],
         ZoneClassic: "Hand",
-        Actions: [
-          { Type: "BuffStats", Target: "Self", Amount: -1 },
-        ],
-      },
+        Actions: [{ Type: "BuffStats", Target: "Self", Amount: -1 }] },
     ],
   },
 
   {
     Id: 48,
-    Name: "Butcher of Gluttony",
+    Name: "Butcher",
     Type: "Unit",
     Subtypes: ["Animal"],
     Cost: 3,
-    Attack: 3,
-    Health: 2,
-    Description: "Whenever You Sacrifice a Unit: Gain +1/+1, or +2/+2 if it was a Human.",
+    Attack: 1,
+    Health: 3,
+    Description: "While in Play: Each time You Sacrifice a Unit, gain +1/+1 or +2/+2 if it was a Human instead.",
     Effects: [
-      {
-        Trigger: "OnOtherUnitSacrificed",
-        Actions: [
-          { Type: "BuffStats", Target: "Self", BuffAtk: 1, BuffHp: 1 },
-        ],
-      },
-      {
-        Trigger: "OnOtherUnitSacrificed",
+      { Trigger: "OnOtherUnitSacrificed",
+        Actions: [{ Type: "BuffStats", Target: "Self", BuffAtk: 1, BuffHp: 1 }] },
+      { Trigger: "OnOtherUnitSacrificed",
         Condition: { Condition: "IsSubtype", TargetParam: "Human" },
-        Actions: [
-          { Type: "BuffStats", Target: "Self", BuffAtk: 1, BuffHp: 1 },
-        ],
-      },
+        Actions: [{ Type: "BuffStats", Target: "Self", BuffAtk: 1, BuffHp: 1 }] },
     ],
   },
 
@@ -970,14 +783,10 @@ const CARDS_EXP = [
     Name: "Farewell",
     Type: "Spell",
     Cost: 5,
-    Description: "Destroy an Enemy Unit.",
+    Description: "Destroy a Unit.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
-        Actions: [
-          { Type: "DestroyUnit", Target: "TargetEnemyUnit" },
-        ],
-      },
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "DestroyUnit", Target: "TargetEnemyUnit" }] },
     ],
   },
 
@@ -988,13 +797,9 @@ const CARDS_EXP = [
     Cost: 1,
     Description: "A Friendly Unit gets +1/+3.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
+      { Trigger: "OnPlayed",
         Targeting: "TargetFriendlyUnit",
-        Actions: [
-          { Type: "BuffStats", Target: "SelectedTarget", BuffAtk: 1, BuffHp: 3 },
-        ],
-      },
+        Actions: [{ Type: "BuffStats", Target: "SelectedTarget", BuffAtk: 1, BuffHp: 3 }] },
     ],
   },
 
@@ -1005,15 +810,11 @@ const CARDS_EXP = [
     Subtypes: ["Human"],
     Cost: 2,
     Attack: 2,
-    Health: 2,
-    Description: "When Played: Gain a Trap that costs 0 this turn.",
+    Health: 1,
+    Description: "When Played: Gain a Trap. It costs 0 this turn.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
-        Actions: [
-          { Type: "AddCardToHand", Target: "FriendlyHero", ValueParam: 903, FreeThisTurn: true },
-        ],
-      },
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "AddCardToHand", Target: "FriendlyHero", ValueParam: 903, FreeThisTurn: true }] },
     ],
   },
 
@@ -1023,30 +824,20 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Machine"],
     Cost: 2,
-    Attack: 2,
+    Attack: 1,
     Health: 2,
-    Description: "Whenever You play another Machine: Gain +1/+1.",
+    Description: "While in Play: Each time You play another Machine gain +1/+1.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
+      { Trigger: "OnPlayed",
         Condition: {
           Condition: "And",
           SubConditions: [
             { Condition: "IsFriendly" },
             { Condition: "IsSubtype", TargetParam: "Machine" },
-            {
-              Condition: "Not",
-              SubConditions: [
-                { Condition: "IsSelf" },
-              ],
-            },
-          ],
-        },
+            { Condition: "Not", SubConditions: [{ Condition: "IsSelf" }] },
+          ] },
         Zone: "Board",
-        Actions: [
-          { Type: "BuffStats", Target: "Self", BuffAtk: 1, BuffHp: 1 },
-        ],
-      },
+        Actions: [{ Type: "BuffStats", Target: "Self", BuffAtk: 1, BuffHp: 1 }] },
     ],
   },
 
@@ -1054,17 +845,15 @@ const CARDS_EXP = [
     Id: 53,
     Name: "The Curtain Call",
     Type: "Spell",
-    Cost: 8,
-    Description: "For the rest of the game, Marking a Marked Unit Destroys it. Mark all Enemy Units, then deal 1 damage to them.",
+    Cost: 7,
+    Description: "For the Rest of The Game, Marking a Marked Unit Destroys it. Mark all Enemy Units, then Deal 2 Damage to Them.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
+      { Trigger: "OnPlayed",
         Actions: [
           { Type: "GrantRule", Rule: "mk" },
           { Type: "ApplyStatus", Target: "AllEnemyUnits", StatusKeyword: "Marked" },
-          { Type: "DealDamage", Target: "AllEnemyUnits", Amount: 1 },
-        ],
-      },
+          { Type: "DealDamage", Target: "AllEnemyUnits", Amount: 2 },
+        ] },
     ],
   },
 
@@ -1073,22 +862,18 @@ const CARDS_EXP = [
     Name: "Thor",
     Type: "Unit",
     Subtypes: ["Machine"],
-    Cost: 4,
+    Cost: 5,
     Attack: 0,
     Health: 6,
     Rule: "persistentGrowth",
-    Description: "While in Deck, Hand or Discard: Gain +1 ATK whenever a Friendly Machine is Destroyed.",
-    DescriptionClassic: "While in Hand: Gain +3 ATK whenever a Friendly Machine is Destroyed.",
+    Description: "While in Hand, Deck, Discard or on Board: Gain +1 ATK whenever a Friendly Machine is Destroyed.",
+    DescriptionClassic: "While in Hand: Gain +1 ATK whenever a Friendly Machine is Destroyed.",
     Effects: [
-      {
-        Trigger: "OnFriendlyUnitDied",
-        Zone: ["Deck", "Hand", "Discard"],
+      { Trigger: "OnFriendlyUnitDied",
+        Zone: ["Deck", "Hand", "Discard", "Board"],
         ZoneClassic: "Hand",
         Condition: { Condition: "IsSubtype", TargetParam: "Machine" },
-        Actions: [
-          { Type: "BuffStats", Target: "Self", BuffAtk: 1 },
-        ],
-      },
+        Actions: [{ Type: "BuffStats", Target: "Self", BuffAtk: 1 }] },
     ],
   },
 
@@ -1104,13 +889,9 @@ const CARDS_EXP = [
     KeywordParams: { Armored: 3 },
     Description: "While in Play: Other Friendly Machines get +2 ATK.",
     Effects: [
-      {
-        Trigger: "Passive",
+      { Trigger: "Passive",
         Zone: "Board",
-        Actions: [
-          { Type: "AuraBuff", Target: "OtherFriendlyUnits", Where: { Subtype: "Machine" }, BuffAtk: 2 },
-        ],
-      },
+        Actions: [{ Type: "AuraBuff", Target: "OtherFriendlyUnits", Where: { Subtype: "Machine" }, BuffAtk: 2 }] },
     ],
   },
 
@@ -1121,37 +902,31 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Machine"],
     Cost: 8,
-    Attack: 4,
+    Attack: 3,
     Health: 7,
     Description: "When Played: Summon The Collection.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
+      { Trigger: "OnPlayed",
         Actions: [
           { Type: "MakeAUnit", ValueParam: 904 },
           { Type: "MakeAUnit", ValueParam: 905 },
           { Type: "MakeAUnit", ValueParam: 906 },
-        ],
-      },
+        ] },
     ],
   },
 
   {
-  Id: 57,
-  Name: "Pale Mirror",
-  Type: "Spell",
-  Cost: 4,
-  Description: "Summon an exact copy of a friendly unit that costs 4 or less in an empty lane of your choice.",
-  Effects: [
-    {
-      Trigger: "OnPlayed",
-      Targeting: "TargetFriendlyUnit",
-      Actions: [
-        { Type: "CopyUnit", Target: "SelectedTarget", Where: { MaxCost: 4 } }
-      ]
-    }
-  ]
-},
+    Id: 57,
+    Name: "Pale Mirror",
+    Type: "Spell",
+    Cost: 4,
+    Description: "Summon an Exact copy of a Friendly Unit that costs 4 or less in an empty lane of Your choice.",
+    Effects: [
+      { Trigger: "OnPlayed",
+        Targeting: "TargetFriendlyUnit",
+        Actions: [{ Type: "CopyUnit", Target: "SelectedTarget", Where: { MaxCost: 4 } }] },
+    ],
+  },
 
   {
     Id: 58,
@@ -1160,14 +935,12 @@ const CARDS_EXP = [
     Cost: 3,
     Description: "Enemy Units here and in adjacent lanes get -2 ATK this round. Draw a Card.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
+      { Trigger: "OnPlayed",
         Targeting: "LaneChoice",
         Actions: [
           { Type: "LaneDebuff", Target: "EnemyUnitsNearLane", Select: "P", Amount: 2, Regain: 2 },
-	  { Type: "DrawCard", Target: "FriendlyHero", Amount: 1 },
-        ],
-      },
+          { Type: "DrawCard", Target: "FriendlyHero", Amount: 1 },
+        ] },
     ],
   },
 
@@ -1175,9 +948,9 @@ const CARDS_EXP = [
     Id: 59,
     Name: "Gargoyle",
     Type: "Unit",
-    Subtypes: ["Animal", "Aberration"],
+    Subtypes: ["Aberration", "Animal"],
     Cost: 2,
-    Attack: 3,
+    Attack: 2,
     Health: 1,
     Keywords: ["Flying"],
     Description: "",
@@ -1187,287 +960,17 @@ const CARDS_EXP = [
     Id: 60,
     Name: "Wyvern",
     Type: "Unit",
-    Subtypes: ["Aberration"],
+    Subtypes: ["Aberration", "Animal"],
     Cost: 9,
-    Attack: 7,
-    Health: 7,
+    Attack: 6,
+    Health: 6,
     Keywords: ["SplashDamage"],
-    KeywordParams: { SplashDamage: 7 },
-    Description: "While in Play: Enemy Actions cost 7 more.",
+    KeywordParams: { SplashDamage: 6 },
+    Description: "While in Play: Enemy Actions cost 6 more.",
     Effects: [
-      {
-        Trigger: "Passive",
+      { Trigger: "Passive",
         Zone: "Board",
-        Actions: [
-          { Type: "BuffStats", Target: "EnemySpellsInHand", Amount: 7 },
-        ],
-      },
-    ],
-  },
-
-  {
-    Id: 63,
-    Name: "Uncle Menel",
-    Type: "Unit",
-    Subtypes: ["Human", "Animal"],
-    Cost: 1,
-    Attack: 1,
-    Health: 1,
-    Description: "When Played: You may Sacrifice a Friendly Unit to deal 2 damage to an Enemy Unit.",
-    Effects: [
-      {
-        Trigger: "OnPlayed",
-        Actions: [
-          { Type: "SacrificeUnit", Target: "TargetFriendlyUnit", Optional: true },
-          { Type: "DealDamage", Target: "TargetEnemyUnit", Amount: 2, OnlyIfSacrificed: true },
-        ],
-      },
-    ],
-  },
-
-  {
-    Id: 64,
-    Name: "Black Dog",
-    Type: "Unit",
-    Subtypes: ["Animal"],
-    Cost: 2,
-    Attack: 0,
-    Health: 5,
-    Description: "When Sacrificed: Gain 2 Blood this turn.",
-    Effects: [
-      {
-        Trigger: "OnSacrificed",
-        Actions: [
-          { Type: "AddResource", Target: "FriendlyHero", Amount: 2 },
-        ],
-      },
-    ],
-  },
-
-  {
-    Id: 65,
-    Name: "Ritualist",
-    Type: "Unit",
-    Subtypes: ["Animal"],
-    Cost: 3,
-    Attack: 2,
-    Health: 4,
-    Description: "Whenever You Sacrifice a Unit: Draw a card and Heal Your Hero for 1.",
-    Effects: [
-      {
-        Trigger: "OnOtherUnitSacrificed",
-        Actions: [
-          { Type: "DrawCard", Target: "FriendlyHero", Amount: 1 },
-          { Type: "Heal", Target: "FriendlyHero", Amount: 1 },
-        ],
-      },
-    ],
-  },
-
-  {
-    Id: 66,
-    Name: "Bouncer",
-    Type: "Unit",
-    Subtypes: ["Human"],
-    Cost: 4,
-    Attack: 3,
-    Health: 4,
-    Description: "Whenever this damages an Enemy Unit: Bounce it.",
-    Effects: [
-      {
-        Trigger: "OnDamagedEnemyUnit",
-        Actions: [
-          { Type: "ReturnToHand", Target: "SelectedTarget", IfAlive: true },
-        ],
-      },
-    ],
-  },
-
-  {
-    Id: 67,
-    Name: "Aura",
-    Type: "Unit",
-    Subtypes: ["Animal"],
-    Cost: 4,
-    Attack: 3,
-    Health: 4,
-    Description: "When Played: Increase Your Hero's Max HP by 2. Heal Your Hero and all Friendly Units for 2.",
-    Effects: [
-      {
-        Trigger: "OnPlayed",
-        Actions: [
-          { Type: "IncreaseMaxHp", Target: "FriendlyHero", Amount: 2 },
-          { Type: "Heal", Target: "FriendlyHero", Amount: 2 },
-          { Type: "Heal", Target: "AllFriendlyUnits", Amount: 2 },
-        ],
-      },
-    ],
-  },
-
-  {
-    Id: 68,
-    Name: "Angel Bird",
-    Type: "Unit",
-    Subtypes: ["Animal"],
-    Cost: 5,
-    Attack: 4,
-    Health: 3,
-    Keywords: ["Flying"],
-    Description: "When Played: You may Sacrifice any number of Friendly Units to gain their stats.",
-    Effects: [
-      {
-        Trigger: "OnPlayed",
-        Actions: [
-          { Type: "SacrificeUnits", Target: "OtherFriendlyUnits", Absorb: true },
-        ],
-      },
-    ],
-  },
-
-  {
-    Id: 69,
-    Name: "Evo Neighbour",
-    Type: "Unit",
-    Subtypes: ["Human"],
-    Cost: 6,
-    Attack: 3,
-    Health: 5,
-	Keywords: ["Breakthrough"],
-    Description: "After Combat Here: Do a Bonus Attack. Whenever this damages a Unit: Bounce it.",
-    Effects: [
-      {
-        Trigger: "OnPostCombatLine",
-        Actions: [
-          { Type: "BonusAttack", Target: "Self" },
-        ],
-      },
-      {
-        Trigger: "OnDamagedEnemyUnit",
-        Actions: [
-          { Type: "ReturnToHand", Target: "SelectedTarget", IfAlive: true },
-        ],
-      },
-    ],
-  },
-
-  {
-    Id: 900,
-    Name: "The Tempting Goblet",
-    Type: "Spell",
-    Subtypes: ["Token"],
-    Cost: 1,
-    Description: "Give a Friendly Unit Unkillable, then Sacrifice it.",
-    Effects: [
-      {
-        Trigger: "OnPlayed",
-        Targeting: "TargetFriendlyUnit",
-        Actions: [
-          { Type: "ApplyStatus", Target: "SelectedTarget", StatusKeyword: "Unkillable" },
-          { Type: "SacrificeUnit", Target: "SelectedTarget" },
-        ],
-      },
-    ],
-  },
-
-  {
-    Id: 901,
-    Name: "Royal Souldier",
-    Type: "Unit",
-    Subtypes: ["Aberration", "Token"],
-    Cost: 1,
-    Attack: 1,
-    Health: 1,
-    Description: "",
-  },
-
-  {
-    Id: 902,
-    Name: "Sacrificial Dagger",
-    Type: "Spell",
-    Subtypes: ["Token"],
-    Cost: 0,
-    Description: "Sacrifice a Friendly Unit. Draw a Card.",
-    Effects: [
-      {
-        Trigger: "OnPlayed",
-        Targeting: "TargetFriendlyUnit",
-        Actions: [
-          { Type: "SacrificeUnit", Target: "SelectedTarget" },
-          { Type: "DrawCard", Target: "FriendlyHero", Amount: 1},
-        ],
-      },
-    ],
-  },
-
-  {
-    Id: 903,
-    Name: "Trap",
-    Type: "Unit",
-    Subtypes: ["Machine", "Token"],
-    Cost: 1,
-    Attack: 0,
-    Health: 1,
-    Description: "When Destroyed: Stun the Enemy Unit opposite it.",
-    Effects: [
-      {
-        Trigger: "OnDeath",
-        Actions: [
-          { Type: "ApplyStatus", Target: "OppositeEnemyUnit", StatusKeyword: "Stunned" },
-        ],
-      },
-    ],
-  },
-
-  {
-    Id: 904,
-    Name: "SE",
-    Type: "Unit",
-    Subtypes: ["Machine", "Token"],
-    Cost: 3,
-    Attack: 1,
-    Health: 3,
-    Keywords: ["Taunt"],
-    Description: "While in Play: All Friendly Units have Armored 1.",
-    Effects: [
-      {
-        Trigger: "Passive",
-        Zone: "Board",
-        Actions: [
-          { Type: "GrantKeyword", Target: "AllFriendlyUnits", Keyword: "Armored" },
-        ],
-      },
-    ],
-  },
-
-  {
-    Id: 905,
-    Name: "Janal",
-    Type: "Unit",
-    Subtypes: ["Machine", "Token"],
-    Cost: 3,
-    Attack: 2,
-    Health: 2,
-    Keywords: ["Lifesteal"],
-    Description: "",
-  },
-
-  {
-    Id: 906,
-    Name: "Front Man",
-    Type: "Unit",
-    Subtypes: ["Machine", "Token"],
-    Cost: 3,
-    Attack: 3,
-    Health: 1,
-    Description: "While in Play: All Friendly Units get +1 ATK.",
-    Effects: [
-      {
-        Trigger: "Passive",
-        Zone: "Board",
-        Actions: [
-          { Type: "AuraBuff", Target: "AllFriendlyUnits", BuffAtk: 1 },
-        ],
-      },
+        Actions: [{ Type: "BuffStats", Target: "EnemySpellsInHand", Amount: 6 }] },
     ],
   },
 
@@ -1481,77 +984,224 @@ const CARDS_EXP = [
     Health: 1,
     Description: "When Destroyed: Gain an Iron Claw.",
     Effects: [
-      {
-        Trigger: "OnDeath",
-        Actions: [
-          { Type: "AddCardToHand", Target: "FriendlyHero", ValueParam: 911 },
-        ],
-      },
-      {
-        Trigger: "OnPlayed",
-        Actions: [
-          { Type: "Transform", Target: "Self", Into: 907, Partner: 62, PartnerInto: 908 },
-        ],
-      },
+      { Trigger: "OnDeath",
+        Actions: [{ Type: "AddCardToHand", Target: "FriendlyHero", ValueParam: 911 }] },
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "Transform", Target: "Self", Into: 907, Partner: 62, PartnerInto: 908 }] },
     ],
   },
 
   {
     Id: 62,
-    Name: "Therapist",
+    Name: "Synth-Medic",
     Type: "Unit",
     Subtypes: ["Machine"],
     Cost: 3,
-    Attack: 2,
+    Attack: 1,
     Health: 4,
-    Description: "When Played: Fully heal a Friendly Unit. If You control another Machine, it also gets +0/+2.",
+    Description: "When Played: Fully heal a Friendly Unit. If You control another Machine, it also gets +2 HP.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
+      { Trigger: "OnPlayed",
         Targeting: "TargetFriendlyUnit",
         Actions: [
           { Type: "HealToFull", Target: "TargetFriendlyUnit" },
           { Type: "BuffStats", Target: "TargetFriendlyUnit", BuffHp: 2, Condition: { Condition: "HasSubtypeOnBoard", TargetParam: "Machine" } },
-        ],
-      },
-      {
-        Trigger: "OnPlayed",
-        Actions: [
-          { Type: "Transform", Target: "Self", Into: 908, Partner: 61, PartnerInto: 907 },
-        ],
-      },
+        ] },
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "Transform", Target: "Self", Into: 908, Partner: 61, PartnerInto: 907 }] },
     ],
   },
 
   {
-    Id: 907,
-    Name: "Brother",
+    Id: 63,
+    Name: "Uncle Menel",
     Type: "Unit",
-    Subtypes: ["Machine", "Token"],
-    Cost: 1,
-    Attack: 1,
-    Health: 1,
-    Description: "When Destroyed: Gain a Solid Iron Claw.",
-    Effects: [
-      {
-        Trigger: "OnDeath",
-        Actions: [
-          { Type: "AddCardToHand", Target: "FriendlyHero", ValueParam: 910 },
-        ],
-      },
-    ],
-  },
-
-  {
-    Id: 908,
-    Name: "Sister",
-    Type: "Unit",
-    Subtypes: ["Machine", "Token"],
+    Subtypes: ["Human", "Animal"],
     Cost: 2,
+    Attack: 2,
+    Health: 2,
+    Description: "Sacrifice: Deal 2 Damage to an Enemy Unit.",
+    Effects: [
+      { Trigger: "OnPlayed",
+        Actions: [
+          { Type: "SacrificeUnit", Target: "TargetFriendlyUnit", Optional: true },
+          { Type: "DealDamage", Target: "TargetEnemyUnit", Amount: 2, OnlyIfSacrificed: true },
+        ] },
+    ],
+  },
+
+  {
+    Id: 64,
+    Name: "Black Goat",
+    Type: "Unit",
+    Subtypes: ["Animal"],
+    Cost: 2,
+    Attack: 0,
+    Health: 4,
+    Keywords: ["Taunt"],
+    Description: "When Sacrificed: Gain +2 Blood this turn.",
+    Effects: [
+      { Trigger: "OnSacrificed",
+        Actions: [{ Type: "AddResource", Target: "FriendlyHero", Amount: 2 }] },
+    ],
+  },
+
+  {
+    Id: 65,
+    Name: "Cuckooist",
+    Type: "Unit",
+    Subtypes: ["Animal"],
+    Cost: 3,
     Attack: 1,
     Health: 4,
-    Keywords: ["Lifesteal"],
-    Description: "",
+    Description: "While in Play: Each time You Sacrifice a Unit, Draw a Card and Heal 1.",
+    Effects: [
+      { Trigger: "OnOtherUnitSacrificed",
+        Actions: [
+          { Type: "DrawCard", Target: "FriendlyHero", Amount: 1 },
+          { Type: "Heal", Target: "FriendlyHero", Amount: 1 },
+        ] },
+    ],
+  },
+
+  {
+    Id: 66,
+    Name: "Bouncer",
+    Type: "Unit",
+    Subtypes: ["Human"],
+    Cost: 3,
+    Attack: 2,
+    Health: 3,
+    Description: "When this Damages an Enemy Unit: Bounce it.",
+    Effects: [
+      { Trigger: "OnDamagedEnemyUnit",
+        Actions: [{ Type: "ReturnToHand", Target: "SelectedTarget", IfAlive: true }] },
+    ],
+  },
+
+  {
+    Id: 67,
+    Name: "Aura",
+    Type: "Unit",
+    Subtypes: ["Animal"],
+    Cost: 4,
+    Attack: 2,
+    Health: 4,
+    Description: "When Played: Increase Your Hero's Max HP by 2. Heal Your Hero and all Friendly Units for 2.",
+    Effects: [
+      { Trigger: "OnPlayed",
+        Actions: [
+          { Type: "IncreaseMaxHp", Target: "FriendlyHero", Amount: 2 },
+          { Type: "Heal", Target: "FriendlyHero", Amount: 2 },
+          { Type: "Heal", Target: "AllFriendlyUnits", Amount: 2 },
+        ] },
+    ],
+  },
+
+  {
+    Id: 68,
+    Name: "Angel Bird",
+    Type: "Unit",
+    Subtypes: ["Animal"],
+    Cost: 6,
+    Attack: 4,
+    Health: 4,
+    Keywords: ["Flying"],
+    Description: "Sacrifice: You may Choose as Many Friendly Units as You want and absorb their stats.",
+    Effects: [
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "SacrificeUnits", Target: "OtherFriendlyUnits", Absorb: true }] },
+    ],
+  },
+
+  {
+    Id: 69,
+    Name: "Evo Neighbour",
+    Type: "Unit",
+    Subtypes: ["Human"],
+    Cost: 6,
+    Attack: 2,
+    Health: 6,
+    Keywords: ["Breakthrough"],
+    Description: "After Combat Here, do a Bonus Attack. Whenever this Damages a Unit: Bounce it.",
+    Effects: [
+      { Trigger: "OnPostCombatLine",
+        Actions: [{ Type: "BonusAttack", Target: "Self" }] },
+      { Trigger: "OnDamagedEnemyUnit",
+        Actions: [{ Type: "ReturnToHand", Target: "SelectedTarget", IfAlive: true }] },
+    ],
+  },
+
+  {
+    Id: 70,
+    Name: "Titan's Head",
+    Type: "Unit",
+    Subtypes: ["Machine"],
+    Cost: 5,
+    Attack: 3,
+    Health: 7,
+    Keywords: ["Unactionable"],
+    Description: "When Destroyed: Draw a Random Titan Card from Your Deck. When Played: If You control all 4 Titan Pieces, Merge The Titan here.",
+    Effects: [
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "Merge", Target: "Self", Pieces: [70, 71, 72, 73], Into: 909, At: 71, SumStats: true, AddAtk: 1, AddHp: 1 }] },
+      { Trigger: "OnDeath",
+        Actions: [{ Type: "DrawCard", Target: "FriendlyHero", Filter: { Ids: [70, 71, 72, 73], NotOnBoard: true } }] },
+    ],
+  },
+
+  {
+    Id: 71,
+    Name: "Titan's Torso",
+    Type: "Unit",
+    Subtypes: ["Machine"],
+    Cost: 4,
+    Attack: 2,
+    Health: 5,
+    Keywords: ["Unactionable"],
+    Description: "When Destroyed: Draw a Random Titan Card from Your Deck. When Played: If You control all 4 Titan Pieces, Merge The Titan here.",
+    Effects: [
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "Merge", Target: "Self", Pieces: [70, 71, 72, 73], Into: 909, At: 71, SumStats: true, AddAtk: 1, AddHp: 1 }] },
+      { Trigger: "OnDeath",
+        Actions: [{ Type: "DrawCard", Target: "FriendlyHero", Filter: { Ids: [70, 71, 72, 73], NotOnBoard: true } }] },
+    ],
+  },
+
+  {
+    Id: 72,
+    Name: "Titan's Left Arm",
+    Type: "Unit",
+    Subtypes: ["Machine"],
+    Cost: 2,
+    Attack: 2,
+    Health: 1,
+    Keywords: ["Unactionable"],
+    Description: "When Destroyed: Draw a Random Titan Card from Your Deck. When Played: If You control all 4 Titan Pieces, Merge The Titan here.",
+    Effects: [
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "Merge", Target: "Self", Pieces: [70, 71, 72, 73], Into: 909, At: 71, SumStats: true, AddAtk: 1, AddHp: 1 }] },
+      { Trigger: "OnDeath",
+        Actions: [{ Type: "DrawCard", Target: "FriendlyHero", Filter: { Ids: [70, 71, 72, 73], NotOnBoard: true } }] },
+    ],
+  },
+
+  {
+    Id: 73,
+    Name: "Titan's Right Arm",
+    Type: "Unit",
+    Subtypes: ["Machine"],
+    Cost: 3,
+    Attack: 2,
+    Health: 3,
+    Keywords: ["Unactionable"],
+    Description: "When Destroyed: Draw a Random Titan Card from Your Deck. When Played: If You control all 4 Titan Pieces, Merge The Titan here.",
+    Effects: [
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "Merge", Target: "Self", Pieces: [70, 71, 72, 73], Into: 909, At: 71, SumStats: true, AddAtk: 1, AddHp: 1 }] },
+      { Trigger: "OnDeath",
+        Actions: [{ Type: "DrawCard", Target: "FriendlyHero", Filter: { Ids: [70, 71, 72, 73], NotOnBoard: true } }] },
+    ],
   },
 
   {
@@ -1561,15 +1211,11 @@ const CARDS_EXP = [
     Subtypes: ["Aberration"],
     Cost: 3,
     Attack: 1,
-    Health: 6,
-    Description: "While in Play: Whenever the Enemy Hero gains a card, deal 1 damage to them.",
+    Health: 5,
+    Description: "While in Play: Whenever the Enemy Hero gains a Card, deal 1 Damage to Them.",
     Effects: [
-      {
-        Trigger: "OnOpponentCardGained",
-        Actions: [
-          { Type: "DealDamage", Target: "EnemyHero", Amount: 1 },
-        ],
-      },
+      { Trigger: "OnOpponentCardGained",
+        Actions: [{ Type: "DealDamage", Target: "EnemyHero", Amount: 1 }] },
     ],
   },
 
@@ -1583,12 +1229,8 @@ const CARDS_EXP = [
     Health: 2,
     Description: "When Played: Other Friendly Animals gain +1 ATK.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
-        Actions: [
-          { Type: "BuffStats", Target: "OtherFriendlyUnits", Where: { Subtype: "Animal" }, BuffAtk: 1 },
-        ],
-      },
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "BuffStats", Target: "OtherFriendlyUnits", Where: { Subtype: "Animal" }, BuffAtk: 1 }] },
     ],
   },
 
@@ -1598,55 +1240,43 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Animal"],
     Cost: 2,
-    Attack: 1,
-    Health: 3,
-    Description: "While in Play: Gains +1 ATK for each other Friendly Animal.",
+    Attack: 2,
+    Health: 2,
+    Description: "While in Play: Gain +1 ATK for each Animal You control.",
     Effects: [
-      {
-        Trigger: "Passive",
+      { Trigger: "Passive",
         Zone: "Board",
-        Actions: [
-          { Type: "ScaleAttack", Target: "Self", PerSubtype: "Animal", Side: "Friendly", Amount: 1 },
-        ],
-      },
+        Actions: [{ Type: "ScaleAttack", Target: "Self", PerSubtype: "Animal", Side: "Friendly", Amount: 1 }] },
     ],
   },
 
   {
     Id: 77,
-    Name: "Black Widow Spider",
+    Name: "Black Spider",
     Type: "Unit",
     Subtypes: ["Animal"],
     Cost: 1,
     Attack: 1,
     Health: 1,
-    Description: "When Sacrificed: Draw a card that costs 5 or more from Your Deck.",
+    Description: "When Sacrificed: Draw a Card from Your deck that costs 5 or more.",
     Effects: [
-      {
-        Trigger: "OnSacrificed",
-        Actions: [
-          { Type: "DrawCard", Target: "FriendlyHero", Amount: 1, Filter: { MinCost: 5 } },
-        ],
-      },
+      { Trigger: "OnSacrificed",
+        Actions: [{ Type: "DrawCard", Target: "FriendlyHero", Amount: 1, Filter: { MinCost: 5 } }] },
     ],
   },
 
   {
     Id: 78,
-    Name: "Acolyte",
+    Name: "Cultist",
     Type: "Unit",
-    Subtypes: ["Animal"],
+    Subtypes: ["Human"],
     Cost: 1,
     Attack: 1,
     Health: 1,
     Description: "When Played: Gain a Sacrificial Dagger.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
-        Actions: [
-          { Type: "AddCardToHand", Target: "FriendlyHero", ValueParam: 902 },
-        ],
-      },
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "AddCardToHand", Target: "FriendlyHero", ValueParam: 902 }] },
     ],
   },
 
@@ -1654,18 +1284,14 @@ const CARDS_EXP = [
     Id: 79,
     Name: "Shapeshifter",
     Type: "Unit",
-    Subtypes: ["Aberration"],
+    Subtypes: ["Aberration", "Animal"],
     Cost: 3,
     Attack: 2,
-    Health: 1,
-    Description: "When Played: Transform into the last Aberration You played.",
+    Health: 2,
+    Description: "When Played: Transform into the last Aberration You Played.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
-        Actions: [
-          { Type: "Transform", Target: "Self", IntoFrom: "LastPlayed", Filter: { Subtype: "Aberration" } },
-        ],
-      },
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "Transform", Target: "Self", IntoFrom: "LastPlayed", Filter: { Subtype: "Aberration" } }] },
     ],
   },
 
@@ -1675,17 +1301,13 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Aberration"],
     Cost: 3,
-    Attack: 0,
-    Health: 4,
-    Description: "While in Play: ATK equals the number of cards in Your Hand.",
+    Attack: 1,
+    Health: 2,
+    Description: "While in Play: It gains ATK equal to the number of cards in Your Hand.",
     Effects: [
-      {
-        Trigger: "Passive",
+      { Trigger: "Passive",
         Zone: "Board",
-        Actions: [
-          { Type: "ScaleAttack", Target: "Self", Amount: 1, Per: "CardsInHand" },
-        ],
-      },
+        Actions: [{ Type: "ScaleAttack", Target: "Self", Amount: 1, Per: "CardsInHand" }] },
     ],
   },
 
@@ -1694,37 +1316,29 @@ const CARDS_EXP = [
     Name: "Double Tap",
     Type: "Unit",
     Subtypes: ["Machine"],
-    Cost: 3,
+    Cost: 4,
     Attack: 3,
     Health: 3,
-    Description: "Deals double damage to the Enemy Hero.",
+    Description: "Deals Double the Damage to the Enemy Hero.",
     Effects: [
-      {
-        Trigger: "Passive",
+      { Trigger: "Passive",
         Zone: "Board",
-        Actions: [
-          { Type: "ModifyDamage", Against: "EnemyHero", Multiplier: 2 },
-        ],
-      },
+        Actions: [{ Type: "ModifyDamage", Against: "EnemyHero", Multiplier: 2 }] },
     ],
   },
 
   {
     Id: 82,
-    Name: "Librarian",
+    Name: "Mindstrucker",
     Type: "Unit",
-    Subtypes: ["Human"],
-    Cost: 3,
+    Subtypes: ["Animal"],
+    Cost: 4,
     Attack: 2,
     Health: 3,
     Description: "When Played: Silence an Enemy Unit.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
-        Actions: [
-          { Type: "Silence", Target: "TargetEnemyUnit" },
-        ],
-      },
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "Silence", Target: "TargetEnemyUnit" }] },
     ],
   },
 
@@ -1734,18 +1348,16 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Animal"],
     Cost: 3,
-    Attack: 2,
+    Attack: 1,
     Health: 1,
     Keywords: ["Flying"],
-    Description: "When Played: Choose a card from Your Deck and add it to Your Hand, then shuffle.",
+    Description: "When Played: Choose a Card from Your Deck and add it to your hand.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
+      { Trigger: "OnPlayed",
         Actions: [
           { Type: "TutorCard", Target: "Self" },
           { Type: "ShuffleDeck", Target: "Self" },
-        ],
-      },
+        ] },
     ],
   },
 
@@ -1756,49 +1368,38 @@ const CARDS_EXP = [
     Subtypes: ["Aberration"],
     Cost: 3,
     Attack: 1,
-    Health: 5,
-    Description: "Before Combat Here: Spend all Your Blood. Gain +1/+1 for each Blood spent.",
+    Health: 4,
+    Description: "Before Combat Here: Spend all Your Blood. Gain +1/+1 for each Blood Spent.",
     Effects: [
-      {
-        Trigger: "OnPreCombatLine",
+      { Trigger: "OnPreCombatLine",
         Actions: [
-          { Type: "BuffStats", Target: "Self", BuffAtk: { Count: "Blood" }, BuffHP: { Count: "Blood" }},
- 	  { Type: "SpendBlood", Target: "FriendlyHero" },
-
-        ],
-      },
+          { Type: "BuffStats", Target: "Self", BuffAtk: { Count: "Blood" }, BuffHp: { Count: "Blood" } },
+          { Type: "SpendBlood", Target: "FriendlyHero" },
+        ] },
     ],
   },
 
   {
     Id: 85,
-    Name: "Knockback",
+    Name: "Knock-out",
     Type: "Spell",
-    Cost: 2,
-    Description: "Return an Enemy Unit to its owner's Hand. It costs 1 more.",
+    Cost: 3,
+    Description: "Return a Unit to its owner's Hand. It costs 1 more.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
-        Actions: [
-          { Type: "ReturnToHand", Target: "TargetEnemyUnit", CostChange: 1 },
-        ],
-      },
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "ReturnToHand", Target: "TargetEnemyUnit", CostChange: 1 }] },
     ],
   },
 
   {
     Id: 86,
-    Name: "Disintergrade",
+    Name: "Disintegrade",
     Type: "Spell",
     Cost: 1,
     Description: "Destroy a Damaged Unit.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
-        Actions: [
-          { Type: "DestroyUnit", Target: "TargetAnyUnit", Where: { Damaged: true } },
-        ],
-      },
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "DestroyUnit", Target: "TargetAnyUnit", Where: { Damaged: true } }] },
     ],
   },
 
@@ -1806,63 +1407,49 @@ const CARDS_EXP = [
     Id: 87,
     Name: "Attentive Parent",
     Type: "Unit",
-    Subtypes: ["Aberration"],
+    Subtypes: ["Aberration", "Animal"],
     Cost: 4,
     Attack: 4,
-    Health: 2,
-    Description: "When Played: Summon a random Aberration that costs 2 or less.",
+    Health: 1,
+    Description: "When Played: Summon a Random Aberration that costs 2 or less.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
-        Actions: [
-          { Type: "MakeAUnit", Filter: { MaxCost: 2, Subtype: "Aberration" } },
-        ],
-      },
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "MakeAUnit", Filter: { MaxCost: 2, Subtype: "Aberration" } }] },
     ],
   },
 
   {
     Id: 88,
-    Name: "FireGirl",
+    Name: "Fireplant",
     Type: "Unit",
-    Subtypes: ["Animal", "Human"],
-    Cost: 4,
+    Subtypes: ["Animal"],
+    Cost: 5,
     Attack: 2,
     Health: 4,
-    Description: "When Played: Apply Burning to all Enemy Units. While in Play: Gains +1 ATK for each Burning Unit on the board.",
+    Description: "When Played: Apply Burning to Each Enemy Unit. While in Play: Gain ATK equal to the Number of Burning Units on Board.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
-        Actions: [
-          { Type: "ApplyStatus", Target: "AllEnemyUnits", StatusKeyword: "Burning" },
-        ],
-      },
-      {
-        Trigger: "Passive",
-        Actions: [
-          { Type: "ScaleAttack", Target: "Self", Per: "BurningUnits", Amount: 1 },
-        ],
-      },
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "ApplyStatus", Target: "AllEnemyUnits", StatusKeyword: "Burning" }] },
+      { Trigger: "Passive",
+        Actions: [{ Type: "ScaleAttack", Target: "Self", Per: "BurningUnits", Amount: 1 }] },
     ],
   },
 
   {
     Id: 89,
-    Name: "Bloodblob",
+    Name: "Bloodblot",
     Type: "Unit",
     Subtypes: ["Aberration"],
     Cost: 1,
     Attack: 1,
     Health: 1,
-    Description: "When Played: Spend all Your Blood. Gain +1/+1 for each Blood spent.",
+    Description: "When Played: Spend all Your Blood. Gain +1/+1 for Each Blood Spent.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
+      { Trigger: "OnPlayed",
         Actions: [
           { Type: "BuffStats", Target: "Self", BuffAtk: { Count: "Blood" }, BuffHp: { Count: "Blood" } },
           { Type: "SpendBlood", Target: "FriendlyHero" },
-        ],
-      },
+        ] },
     ],
   },
 
@@ -1873,32 +1460,24 @@ const CARDS_EXP = [
     Cost: 1,
     Description: "Give a Friendly Unit Evolving.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
+      { Trigger: "OnPlayed",
         Targeting: "TargetFriendlyUnit",
-        Actions: [
-          { Type: "ApplyStatus", Target: "SelectedTarget", StatusKeyword: "Evolving" },
-        ],
-      },
+        Actions: [{ Type: "ApplyStatus", Target: "SelectedTarget", StatusKeyword: "Evolving" }] },
     ],
   },
 
   {
     Id: 91,
-    Name: "Factory",
+    Name: "Factoid Factory",
     Type: "Unit",
     Subtypes: ["Machine"],
     Cost: 4,
-    Attack: 2,
+    Attack: 1,
     Health: 4,
-    Description: "End of Round: Summon a Mechanic.",
+    Description: "End of Round: Summon an Artificer in a Lane of Your choosing.",
     Effects: [
-      {
-        Trigger: "OnEndOfRound",
-        Actions: [
-          { Type: "MakeAUnit", ValueParam: 42 },
-        ],
-      },
+      { Trigger: "OnEndOfRound",
+        Actions: [{ Type: "MakeAUnit", ValueParam: 42 }] },
     ],
   },
 
@@ -1907,18 +1486,14 @@ const CARDS_EXP = [
     Name: "Unitslinger",
     Type: "Unit",
     Subtypes: ["Human"],
-    Cost: 4,
+    Cost: 5,
     Attack: 3,
-    Health: 4,
-    Description: "While in Play: Whenever an Enemy Unit is Played in another lane, Move it here. If it can't move, deal 2 damage to it instead (once each round).",
+    Health: 5,
+    Description: "While in Play: When an Enemy Unit is Move, move it here. If it can't be Moved, deal 2 Damage to it instead.",
     Effects: [
-      {
-        Trigger: "OnEnemyUnitPlayed",
+      { Trigger: "OnEnemyUnitPlayed",
         Condition: { Condition: "Not", SubConditions: [{ Condition: "SameLane" }] },
-        Actions: [
-          { Type: "MoveToSourceLane", Target: "EventUnit", Else: { Type: "DealDamage", Amount: 2, OncePerTurn: true } },
-        ],
-      },
+        Actions: [{ Type: "MoveToSourceLane", Target: "EventUnit", Else: { Type: "DealDamage", Amount: 2, OncePerTurn: true } }] },
     ],
   },
 
@@ -1926,16 +1501,14 @@ const CARDS_EXP = [
     Id: 93,
     Name: "Dual Wield",
     Type: "Spell",
-    Cost: 3,
-    Description: "Conjure a random Action. Your next Action is played twice.",
+    Cost: 2,
+    Description: "The next Action you play is Played Twice. Conjure a Random Spell.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
+      { Trigger: "OnPlayed",
         Actions: [
           { Type: "AddCardToHand", Target: "FriendlyHero", Filter: { Type: "Spell", NotIds: [93] } },
           { Type: "PlayNextTwice", Target: "FriendlyHero" },
-        ],
-      },
+        ] },
     ],
   },
 
@@ -1943,19 +1516,14 @@ const CARDS_EXP = [
     Id: 94,
     Name: "Imperial Dropship",
     Type: "Unit",
-    Subtypes: ["Machine", "Animal"],
+    Subtypes: ["Machine"],
     Cost: 5,
-    Attack: 4,
+    Attack: 3,
     Health: 3,
-    Keywords: ["Flying"],
-    Description: "When Destroyed: Summon Stormtroopers in the adjacent lanes.",
+    Description: "When Destroyed: Summon Mecha-Troopers in Adjacent Lanes.",
     Effects: [
-      {
-        Trigger: "OnDeath",
-        Actions: [
-          { Type: "MakeAUnit", ValueParam: 912, StringParam: "AdjacentLanes" },
-        ],
-      },
+      { Trigger: "OnDeath",
+        Actions: [{ Type: "MakeAUnit", ValueParam: 912, StringParam: "AdjacentLanes" }] },
     ],
   },
 
@@ -1965,17 +1533,13 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Human"],
     Cost: 4,
-    Attack: 2,
-    Health: 4,
-    Description: "While in Play: Friendly Humans have Deadly.",
+    Attack: 1,
+    Health: 3,
+    Description: "While in Play: All Humans have Deadly.",
     Effects: [
-      {
-        Trigger: "Passive",
+      { Trigger: "Passive",
         Zone: "Board",
-        Actions: [
-          { Type: "GrantKeyword", Target: "AllFriendlyUnits", Keyword: "Deadly", Where: { Subtype: "Human" } },
-        ],
-      },
+        Actions: [{ Type: "GrantKeyword", Target: "AllFriendlyUnits", Keyword: "Deadly", Where: { Subtype: "Human" } }] },
     ],
   },
 
@@ -1983,18 +1547,14 @@ const CARDS_EXP = [
     Id: 96,
     Name: "Echo Chamber",
     Type: "Unit",
-    Subtypes: ["Aberration"],
-    Cost: 7,
-    Attack: 4,
-    Health: 4,
-    Description: "When Played: Trigger every \"When Played\" effect of the cards You have played this game.",
+    Subtypes: ["Aberration", "Machine"],
+    Cost: 6,
+    Attack: 2,
+    Health: 2,
+    Description: "When Played: Do a \"When Played\" Effect of Each Card You played this game.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
-        Actions: [
-          { Type: "ReplayPlayed", Target: "Self" },
-        ],
-      },
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "ReplayPlayed", Target: "Self" }] },
     ],
   },
 
@@ -2003,31 +1563,27 @@ const CARDS_EXP = [
     Name: "Cyborg",
     Type: "Unit",
     Subtypes: ["Machine"],
-    Cost: 2,
-    Attack: 1,
+    Cost: 3,
+    Attack: 2,
     Health: 3,
-    Description: "While in Play: Adjacent Machines get +1 ATK.",
+    Description: "While in Play: Adjacent Machines gain +1 ATK.",
     Effects: [
-      {
-        Trigger: "Passive",
+      { Trigger: "Passive",
         Zone: "Board",
-        Actions: [
-          { Type: "AuraBuff", Target: "AdjacentFriendlyUnits", Where: { Subtype: "Machine" }, BuffAtk: 1 },
-        ],
-      },
+        Actions: [{ Type: "AuraBuff", Target: "AdjacentFriendlyUnits", Where: { Subtype: "Machine" }, BuffAtk: 1 }] },
     ],
   },
 
-
   {
     Id: 98,
-    Name: "Doorman",
+    Name: "Door-Machine",
     Type: "Unit",
     Subtypes: ["Machine"],
     Cost: 4,
-    Attack: 3,
+    Attack: 2,
     Health: 4,
     Keywords: ["Taunt", "Armored"],
+    KeywordParams: { Armored: 1 },
     Description: "",
   },
 
@@ -2036,14 +1592,10 @@ const CARDS_EXP = [
     Name: "Exhume",
     Type: "Spell",
     Cost: 3,
-    Description: "Summon a random Friendly Unit that costs 3 or less from Your Discard.",
+    Description: "Summon a Random Friendly Unit that costs 3 or less from Your Discard Pile.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
-        Actions: [
-          { Type: "Reanimate", Filter: { MaxCost: 3 } },
-        ],
-      },
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "Reanimate", Filter: { MaxCost: 3 } }] },
     ],
   },
 
@@ -2057,192 +1609,361 @@ const CARDS_EXP = [
     Health: 6,
     Description: "When Played: Other Friendly Animals do a Bonus Attack. While in Play: Whenever a Friendly Animal destroys an Enemy Unit, it gains that Unit's ATK.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
-        Actions: [
-          { Type: "BonusAttack", Target: "OtherFriendlyUnits", Where: { Subtype: "Animal" } },
-        ],
-      },
-      {
-        Trigger: "Passive",
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "BonusAttack", Target: "OtherFriendlyUnits", Where: { Subtype: "Animal" } }] },
+      { Trigger: "Passive",
         Zone: "Board",
-        Actions: [
-          { Type: "AbsorbAttackOnKill", Where: { Subtype: "Animal" } },
-        ],
-      },
+        Actions: [{ Type: "AbsorbAttackOnKill", Where: { Subtype: "Animal" } }] },
     ],
   },
 
+  // ==================== NEW CARDS FROM XLSX ====================
 
   {
-    Id: 70,
-    Name: "Titan Head",
+    Id: 101,
+    Name: "Deadbeat",
     Type: "Unit",
-    Subtypes: ["Machine"],
-    Cost: 5,
-    Attack: 4,
-    Health: 7,
-    Keywords: ["Unactionable"],
-    Description: "When Played: If You control all 4 Titan Pieces, Merge them into The Titan. When Destroyed: Draw a random Titan Piece from Your Deck.",
+    Subtypes: ["Aberration"],
+    Cost: 1,
+    Attack: 2,
+    Health: 2,
+    Description: "Before Combat Here: Deal 1 Damage to Your Hero.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
-        Actions: [
-          { Type: "Merge", Target: "Self", Pieces: [70, 71, 72, 73], Into: 909, At: 71, SumStats: true, AddAtk: 1, AddHp: 1 },
-        ],
-      },
-      {
-        Trigger: "OnDeath",
-        Actions: [
-          { Type: "DrawCard", Target: "FriendlyHero", Filter: { Ids: [70, 71, 72, 73], NotOnBoard: true } },
-        ],
-      },
+      { Trigger: "OnPreCombatLine",
+        Actions: [{ Type: "DealDamage", Target: "FriendlyHero", Amount: 1 }] },
     ],
   },
 
   {
-    Id: 71,
-    Name: "Titan Torso",
-    Type: "Unit",
-    Subtypes: ["Machine"],
-    Cost: 4,
-    Attack: 3,
-    Health: 5,
-    Keywords: ["Unactionable"],
-    Description: "When Played: If You control all 4 Titan Pieces, Merge them into The Titan. When Destroyed: Draw a random Titan Piece from Your Deck.",
-    Effects: [
-      {
-        Trigger: "OnPlayed",
-        Actions: [
-          { Type: "Merge", Target: "Self", Pieces: [70, 71, 72, 73], Into: 909, At: 71, SumStats: true, AddAtk: 1, AddHp: 1 },
-        ],
-      },
-      {
-        Trigger: "OnDeath",
-        Actions: [
-          { Type: "DrawCard", Target: "FriendlyHero", Filter: { Ids: [70, 71, 72, 73], NotOnBoard: true } },
-        ],
-      },
-    ],
-  },
-
-  {
-    Id: 72,
-    Name: "Titan Left Arm",
-    Type: "Unit",
-    Subtypes: ["Machine"],
+    Id: 102,
+    Name: "Re:Surgance",
+    Type: "Spell",
     Cost: 2,
-    Attack: 3,
-    Health: 1,
-    Keywords: ["Unactionable"],
-    Description: "When Played: If You control all 4 Titan Pieces, Merge them into The Titan. When Destroyed: Draw a random Titan Piece from Your Deck.",
+    Description: "A Unit gains +3 HP. Conjure a Random Unit of the same subtype.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
+      { Trigger: "OnPlayed",
         Actions: [
-          { Type: "Merge", Target: "Self", Pieces: [70, 71, 72, 73], Into: 909, At: 71, SumStats: true, AddAtk: 1, AddHp: 1 },
-        ],
-      },
-      {
-        Trigger: "OnDeath",
-        Actions: [
-          { Type: "DrawCard", Target: "FriendlyHero", Filter: { Ids: [70, 71, 72, 73], NotOnBoard: true } },
-        ],
-      },
+          { Type: "BuffStats", Target: "TargetFriendlyUnit", BuffHp: 3 },
+          { Type: "AddCardToHand", Target: "FriendlyHero", FilterFrom: "TargetSubtype" },
+        ] },
     ],
   },
 
   {
-    Id: 73,
-    Name: "Titan Right Arm",
+    Id: 103,
+    Name: "4-inch Bot",
     Type: "Unit",
     Subtypes: ["Machine"],
     Cost: 3,
-    Attack: 3,
+    Attack: 1,
     Health: 3,
-    Keywords: ["Unactionable"],
-    Description: "When Played: If You control all 4 Titan Pieces, Merge them into The Titan. When Destroyed: Draw a random Titan Piece from Your Deck.",
+    Description: "When Played: Draw a Card. If the Card Drawn was a Machine, this gains +1 ATK.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
+      { Trigger: "OnPlayed",
         Actions: [
-          { Type: "Merge", Target: "Self", Pieces: [70, 71, 72, 73], Into: 909, At: 71, SumStats: true, AddAtk: 1, AddHp: 1 },
-        ],
-      },
-      {
-        Trigger: "OnDeath",
-        Actions: [
-          { Type: "DrawCard", Target: "FriendlyHero", Filter: { Ids: [70, 71, 72, 73], NotOnBoard: true } },
-        ],
-      },
+          { Type: "DrawCard", Target: "FriendlyHero", Amount: 1 },
+          { Type: "BuffStats", Target: "Self", BuffAtk: 1, OnlyIfDrawnSubtype: "Machine" },
+        ] },
     ],
   },
 
   {
-    Id: 909,
-    Name: "The Titan",
+    Id: 104,
+    Name: "Doormant Knight",
     Type: "Unit",
-    Subtypes: ["Token", "Machine"],
+    Subtypes: ["Aberration", "Human"],
+    Cost: 4,
+    Attack: 2,
+    Health: 4,
+    Description: "While in Play: Whenever an Enemy Unit gains stats, it and adjacent Enemy Units get -1 ATK.",
+    Effects: [
+      { Trigger: "OnEnemyUnitGainedStats",
+        Actions: [{ Type: "BuffStats", Target: "EventUnitAndAdjacent", BuffAtk: -1 }] },
+    ],
+  },
+
+  {
+    Id: 105,
+    Name: "Victory Feast",
+    Type: "Spell",
+    Cost: 4,
+    Description: "All Friendly Units get +1/+1.",
+    Effects: [
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "BuffStats", Target: "AllFriendlyUnits", BuffAtk: 1, BuffHp: 1 }] },
+    ],
+  },
+
+  {
+    Id: 106,
+    Name: "Gambler's Call",
+    Type: "Spell",
     Cost: 5,
-    Attack: 10,
-    Health: 20,
+    Description: "Summon a Slot-Machine.",
+    Effects: [
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "MakeAUnit", ValueParam: 913 }] },
+    ],
+  },
+
+  {
+    Id: 107,
+    Name: "The Lighter",
+    Type: "Unit",
+    Subtypes: ["Aberration", "Machine"],
+    Cost: 5,
+    Attack: 2,
+    Health: 4,
+    Description: "When Played: The Enemy Hero gains 2 Ashes from Clashes. When this Does Damage: Shuffle Ashes from Clashes to the Enemy's Hero deck.",
+    Effects: [
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "AddCardToHand", Target: "EnemyHero", ValueParam: 914, Count: 2 }] },
+      { Trigger: "OnDamagedEnemyUnit", Condition: { Condition: "IsSelf" },
+        Actions: [{ Type: "AddCardToEnemyDeck", ValueParam: 914, Count: 1 }] },
+      { Trigger: "OnDamagedEnemyHero", Condition: { Condition: "IsSelf" },
+        Actions: [{ Type: "AddCardToEnemyDeck", ValueParam: 914, Count: 1 }] },
+    ],
+  },
+
+  {
+    Id: 108,
+    Name: "Abyss Lector",
+    Type: "Unit",
+    Subtypes: ["Aberration"],
+    Cost: 7,
+    Attack: 3,
+    Health: 3,
+    Description: "When Played: For Each 3 Points of Missing Health of Your Hero, Conjure a Random Blessing. They Cost 0 This Round.",
+    Effects: [
+      { Trigger: "OnPlayed",
+        Actions: [{
+          Type: "AddCardToHand", Target: "FriendlyHero",
+          Filter: { Ids: [915, 916, 917, 918, 919, 920, 921, 922, 923, 924], Token: true },
+          Count: { Count: "MissingHealth", Div: 3, Max: 10 },
+          FreeThisTurn: true,
+        }] },
+    ],
+  },
+
+  {
+    Id: 109,
+    Name: "The Amalgamation",
+    Type: "Unit",
+    Subtypes: ["Aberration"],
+    Cost: 8,
+    Attack: 6,
+    Health: 6,
+    Description: "When Hurt: Summon a Random Unit. When Played: Summon a Random Unit. While in Play: When You Summon a Unit, Conjure a random Unit. All Units in Your Hand cost 1 less.",
+    Effects: [
+      { Trigger: "OnFriendlyUnitDamaged", Condition: { Condition: "IsSelf" },
+        Actions: [{ Type: "MakeAUnit", Filter: { Type: "Unit", MaxCost: 4 } }] },
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "MakeAUnit", Filter: { Type: "Unit", MaxCost: 4 } }] },
+      { Trigger: "OnPlayed", Zone: "Board",
+        Condition: { Condition: "And", SubConditions: [
+          { Condition: "IsFriendly" },
+          { Condition: "Not", SubConditions: [{ Condition: "IsSelf" }] },
+          { Condition: "NotFromHistory" },
+        ] },
+        Actions: [{ Type: "AddCardToHand", Target: "FriendlyHero",
+          Filter: { Type: "Unit", MaxCost: 4 } }] },
+      { Trigger: "Passive", Zone: "Board",
+        Actions: [{ Type: "ModifyCost", Side: "Friendly", Amount: -1, CardFilter: { Type: "Unit" } }] },
+    ],
+  },
+
+  {
+    Id: 110,
+    Name: "Morsel Mantis",
+    Type: "Unit",
+    Subtypes: ["Animal"],
+    Cost: 4,
+    Attack: 2,
+    Health: 2,
+    Description: "When Played: All Other Friendly Animals get +1/+1. Sacrifice: All Other Friendly Animals get +1/+1.",
+    Effects: [
+      { Trigger: "OnPlayed",
+        Actions: [
+          { Type: "BuffStats", Target: "OtherFriendlyUnits", Where: { Subtype: "Animal" }, BuffAtk: 1, BuffHp: 1 },
+          { Type: "SacrificeUnit", Target: "TargetFriendlyUnit", Optional: true },
+          { Type: "BuffStats", Target: "OtherFriendlyUnits", Where: { Subtype: "Animal" }, BuffAtk: 1, BuffHp: 1, OnlyIfSacrificed: true },
+        ] },
+    ],
+  },
+
+  // ==================== ORIGINAL TOKENS (unchanged) ====================
+
+  {
+    Id: 900, Name: "The Tempting Goblet", Type: "Spell", Subtypes: ["Token"], Cost: 1,
+    Description: "Give a Friendly Unit Unkillable, then Sacrifice it.",
+    Effects: [{ Trigger: "OnPlayed", Targeting: "TargetFriendlyUnit",
+      Actions: [
+        { Type: "ApplyStatus", Target: "SelectedTarget", StatusKeyword: "Unkillable" },
+        { Type: "SacrificeUnit", Target: "SelectedTarget" },
+      ] }],
+  },
+
+  { Id: 901, Name: "Royal Souldier", Type: "Unit", Subtypes: ["Aberration", "Token"], Cost: 1, Attack: 1, Health: 1, Description: "" },
+
+  {
+    Id: 902, Name: "Sacrificial Dagger", Type: "Spell", Subtypes: ["Token"], Cost: 0,
+    Description: "Sacrifice a Friendly Unit.",
+    Effects: [{ Trigger: "OnPlayed", Targeting: "TargetFriendlyUnit",
+      Actions: [{ Type: "SacrificeUnit", Target: "SelectedTarget" }] }],
+  },
+
+  {
+    Id: 903, Name: "Trap", Type: "Unit", Subtypes: ["Machine", "Token"], Cost: 1, Attack: 0, Health: 1,
+    Description: "When Destroyed: Stun the Enemy Unit opposite it.",
+    Effects: [{ Trigger: "OnDeath",
+      Actions: [{ Type: "ApplyStatus", Target: "OppositeEnemyUnit", StatusKeyword: "Stunned" }] }],
+  },
+
+  {
+    Id: 904, Name: "SE", Type: "Unit", Subtypes: ["Machine", "Token"], Cost: 3, Attack: 1, Health: 3,
+    Keywords: ["Taunt"],
+    Description: "While in Play: All Friendly Units have Armored 1.",
+    Effects: [{ Trigger: "Passive", Zone: "Board",
+      Actions: [{ Type: "GrantKeyword", Target: "AllFriendlyUnits", Keyword: "Armored" }] }],
+  },
+
+  { Id: 905, Name: "Janal", Type: "Unit", Subtypes: ["Machine", "Token"], Cost: 3, Attack: 2, Health: 2, Keywords: ["Lifesteal"], Description: "" },
+
+  {
+    Id: 906, Name: "Front Man", Type: "Unit", Subtypes: ["Machine", "Token"], Cost: 3, Attack: 3, Health: 1,
+    Description: "While in Play: All Friendly Units get +1 ATK.",
+    Effects: [{ Trigger: "Passive", Zone: "Board",
+      Actions: [{ Type: "AuraBuff", Target: "AllFriendlyUnits", BuffAtk: 1 }] }],
+  },
+
+  {
+    Id: 907, Name: "Brother", Type: "Unit", Subtypes: ["Machine", "Token"], Cost: 1, Attack: 1, Health: 1,
+    Description: "When Destroyed: Gain a Solid Iron Claw.",
+    Effects: [{ Trigger: "OnDeath",
+      Actions: [{ Type: "AddCardToHand", Target: "FriendlyHero", ValueParam: 910 }] }],
+  },
+
+  { Id: 908, Name: "Sister", Type: "Unit", Subtypes: ["Machine", "Token"], Cost: 2, Attack: 1, Health: 4, Keywords: ["Lifesteal"], Description: "" },
+
+  {
+    Id: 909, Name: "The Titan", Type: "Unit", Subtypes: ["Token", "Machine"], Cost: 5, Attack: 10, Health: 20,
     Keywords: ["Taunt", "Unactionable", "SilenceImmune", "BounceImmune"],
     Description: "",
   },
 
   {
-    Id: 912,
-    Name: "Stormtrooper",
-    Type: "Unit",
-    Subtypes: ["Human", "Token"],
-    Cost: 2,
-    Attack: 2,
-    Health: 2,
-    Description: "",
-  },
-
-  {
-    Id: 911,
-    Name: "Iron Claw",
-    Type: "Spell",
-    Subtypes: ["Machine", "Token"],
-    Cost: 1,
-    Description: "A Friendly Unit gets +2 ATK.",
-    Effects: [
-      {
-        Trigger: "OnPlayed",
-        Targeting: "TargetFriendlyUnit",
-        Actions: [
-          { Type: "BuffStats", Target: "SelectedTarget", BuffAtk: 2, BuffHp: 0 },
-        ],
-      },
-    ],
-  },
-
-  {
-    Id: 910,
-    Name: "Solid Iron Claw",
-    Type: "Spell",
-    Subtypes: ["Machine", "Token"],
-    Cost: 1,
+    Id: 910, Name: "Solid Iron Claw", Type: "Spell", Subtypes: ["Machine", "Token"], Cost: 1,
     Description: "A Friendly Unit gets +2/+2.",
+    Effects: [{ Trigger: "OnPlayed", Targeting: "TargetFriendlyUnit",
+      Actions: [{ Type: "BuffStats", Target: "SelectedTarget", BuffAtk: 2, BuffHp: 2 }] }],
+  },
+
+  {
+    Id: 911, Name: "Iron Claw", Type: "Spell", Subtypes: ["Machine", "Token"], Cost: 1,
+    Description: "A Friendly Unit gets +2 ATK.",
+    Effects: [{ Trigger: "OnPlayed", Targeting: "TargetFriendlyUnit",
+      Actions: [{ Type: "BuffStats", Target: "SelectedTarget", BuffAtk: 2, BuffHp: 0 }] }],
+  },
+
+  { Id: 912, Name: "Stormtrooper", Type: "Unit", Subtypes: ["Human", "Token"], Cost: 2, Attack: 2, Health: 2, Description: "" },
+
+  // ==================== NEW TOKENS ====================
+
+  {
+    Id: 913, Name: "Slot-Machine", Type: "Unit", Subtypes: ["Machine", "Token"],
+    Cost: 3, Attack: 2, Health: 5,
+    Description: "When Hurt: Conjure a random Machine. It costs 1 less.",
+    Effects: [{ Trigger: "OnFriendlyUnitDamaged", Condition: { Condition: "IsSelf" },
+      Actions: [{ Type: "AddCardToHand", Target: "FriendlyHero",
+        Filter: { Type: "Unit", Subtype: "Machine" }, CostChange: -1 }] }],
+  },
+
+  {
+    Id: 914, Name: "Ashes from Clashes", Type: "Spell", Subtypes: ["Token"],
+    Cost: 1,
+    Description: "Deal 2 Damage to a Friendly Unit or Friendly Hero. Start of Round: If this is in your Hand, gain Ashes from Clashes.",
     Effects: [
-      {
-        Trigger: "OnPlayed",
-        Targeting: "TargetFriendlyUnit",
+      { Trigger: "OnPlayed", Targeting: "Choice",
+        ChoiceLabels: ["Target Friendly Unit", "Friendly Hero"],
         Actions: [
-          { Type: "BuffStats", Target: "SelectedTarget", BuffAtk: 2, BuffHp: 2 },
-        ],
-      },
+          { Type: "DealDamage", Target: "TargetFriendlyUnit", Amount: 2 },
+          { Type: "DealDamage", Target: "FriendlyHero", Amount: 2 },
+        ] },
+      { Trigger: "OnStartOfRound", Zone: "Hand",
+        Actions: [{ Type: "AddCardToHand", Target: "FriendlyHero", ValueParam: 914 }] },
     ],
   },
+
+  {
+    Id: 915, Name: "Blessing of Might", Type: "Spell", Subtypes: ["Token"], Cost: 3,
+    Description: "Give a Friendly Unit +3/+3.",
+    Effects: [{ Trigger: "OnPlayed", Targeting: "TargetFriendlyUnit",
+      Actions: [{ Type: "BuffStats", Target: "SelectedTarget", BuffAtk: 3, BuffHp: 3 }] }],
+  },
+  {
+    Id: 916, Name: "Blessing of Warding", Type: "Spell", Subtypes: ["Token"], Cost: 3,
+    Description: "Give a Friendly Unit Soul Guard.",
+    Effects: [{ Trigger: "OnPlayed", Targeting: "TargetFriendlyUnit",
+      Actions: [{ Type: "ApplyStatus", Target: "SelectedTarget", StatusKeyword: "SoulGuard" }] }],
+  },
+  {
+    Id: 917, Name: "Blessing of Mending", Type: "Spell", Subtypes: ["Token"], Cost: 3,
+    Description: "Heal Your Hero for 5.",
+    Effects: [{ Trigger: "OnPlayed",
+      Actions: [{ Type: "Heal", Target: "FriendlyHero", Amount: 5 }] }],
+  },
+  {
+    Id: 918, Name: "Blessing of Wisdom", Type: "Spell", Subtypes: ["Token"], Cost: 3,
+    Description: "Draw 2 cards.",
+    Effects: [{ Trigger: "OnPlayed",
+      Actions: [{ Type: "DrawCard", Target: "FriendlyHero", Amount: 2 }] }],
+  },
+  {
+    Id: 919, Name: "Blessing of Vengeance", Type: "Spell", Subtypes: ["Token"], Cost: 3,
+    Description: "Deal 3 Damage to an Enemy Unit.",
+    Effects: [{ Trigger: "OnPlayed",
+      Actions: [{ Type: "DealDamage", Target: "TargetEnemyUnit", Amount: 3 }] }],
+  },
+  {
+    Id: 920, Name: "Blessing of Silence", Type: "Spell", Subtypes: ["Token"], Cost: 3,
+    Description: "Silence an Enemy Unit.",
+    Effects: [{ Trigger: "OnPlayed",
+      Actions: [{ Type: "Silence", Target: "TargetEnemyUnit" }] }],
+  },
+  {
+    Id: 921, Name: "Blessing of Fortune", Type: "Spell", Subtypes: ["Token"], Cost: 3,
+    Description: "Add a random card to Your Hand. It costs 0 this turn.",
+    Effects: [{ Trigger: "OnPlayed",
+      Actions: [{ Type: "AddCardToHand", Target: "FriendlyHero", FreeThisTurn: true }] }],
+  },
+  {
+    Id: 922, Name: "Blessing of Renewal", Type: "Spell", Subtypes: ["Token"], Cost: 3,
+    Description: "Return a Friendly Unit to Your Hand. It costs 1 less.",
+    Effects: [{ Trigger: "OnPlayed", Targeting: "TargetFriendlyUnit",
+      Actions: [{ Type: "ReturnToHand", Target: "SelectedTarget", CostChange: -1 }] }],
+  },
+  {
+    Id: 923, Name: "Blessing of Fury", Type: "Spell", Subtypes: ["Token"], Cost: 3,
+    Description: "All Friendly Units get +1 ATK.",
+    Effects: [{ Trigger: "OnPlayed",
+      Actions: [{ Type: "BuffStats", Target: "AllFriendlyUnits", BuffAtk: 1 }] }],
+  },
+  {
+    Id: 924, Name: "Blessing of Fortitude", Type: "Spell", Subtypes: ["Token"], Cost: 3,
+    Description: "Your Hero gains +3 Max HP and heals 3.",
+    Effects: [{ Trigger: "OnPlayed", Actions: [
+      { Type: "IncreaseMaxHp", Target: "FriendlyHero", Amount: 3 },
+      { Type: "Heal", Target: "FriendlyHero", Amount: 3 },
+    ] }],
+  },
+
 ];
 
 (function(){
-  var on=false;
-  try{on=localStorage.getItem('rj_exp')==='1'}catch(e){}
-  window.RJ_EXP=on;
-  if(!on)return;
-  CARDS.length=0;
-  CARDS_EXP.forEach(function(c){CARDS.push(c)});
+  var on = false;
+  try { on = localStorage.getItem('rj_exp') === '1'; } catch(e) {}
+  window.RJ_EXP = on;
+  if (!on) return;
+  CARDS.length = 0;
+  CARDS_EXP.forEach(function(c){ CARDS.push(c); });
 })();
