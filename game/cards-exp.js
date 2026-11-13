@@ -993,7 +993,7 @@ const CARDS_EXP = [
 
   {
     Id: 62,
-    Name: "Synth-Medic",
+    Name: "Therapist",
     Type: "Unit",
     Subtypes: ["Machine"],
     Cost: 3,
@@ -1746,31 +1746,34 @@ const CARDS_EXP = [
   },
 
   {
-    Id: 109,
-    Name: "The Amalgamation",
-    Type: "Unit",
-    Subtypes: ["Aberration"],
-    Cost: 8,
-    Attack: 6,
-    Health: 6,
-    Description: "When Hurt: Summon a Random Unit. When Played: Summon a Random Unit. While in Play: When You Summon a Unit, Conjure a random Unit. All Units in Your Hand cost 1 less.",
-    Effects: [
+  Id: 109,
+  Name: "The Amalgamation",
+  Type: "Unit",
+  Subtypes: ["Aberration"],
+  Cost: 8,
+  Attack: 6,
+  Health: 6,
+  Description: "When Hurt: Summon a Random Unit. When Played: Summon a Random Unit. While in Play: When You Summon a Unit, Conjure a random Unit. While in Play: All Units in Your Hand cost 1 less.",
+  Effects: [
       { Trigger: "OnFriendlyUnitDamaged", Condition: { Condition: "IsSelf" },
-        Actions: [{ Type: "MakeAUnit", Filter: { Type: "Unit", MaxCost: 4 } }] },
-      { Trigger: "OnPlayed",
-        Actions: [{ Type: "MakeAUnit", Filter: { Type: "Unit", MaxCost: 4 } }] },
-      { Trigger: "OnPlayed", Zone: "Board",
-        Condition: { Condition: "And", SubConditions: [
-          { Condition: "IsFriendly" },
-          { Condition: "Not", SubConditions: [{ Condition: "IsSelf" }] },
-          { Condition: "NotFromHistory" },
-        ] },
-        Actions: [{ Type: "AddCardToHand", Target: "FriendlyHero",
-          Filter: { Type: "Unit", MaxCost: 4 } }] },
+      Actions: [{ Type: "MakeAUnit", Filter: { Type: "Unit", MaxCost: 4 } }] },
+
+     { Trigger: "OnPlayed",
+      Actions: [{ Type: "MakeAUnit", Filter: { Type: "Unit", MaxCost: 4 } }] },
+
+     { Trigger: "OnPlayed", Zone: "Board",
+      Condition: { Condition: "And", SubConditions: [
+        { Condition: "IsFriendly" },
+        { Condition: "Not", SubConditions: [{ Condition: "IsSelf" }] },
+        { Condition: "NotFromHistory" },
+      ] },
+      Actions: [{ Type: "AddCardToHand", Target: "FriendlyHero",
+        Filter: { Type: "Unit", MaxCost: 4 } }] },
+
       { Trigger: "Passive", Zone: "Board",
-        Actions: [{ Type: "ModifyCost", Side: "Friendly", Amount: -1, CardFilter: { Type: "Unit" } }] },
-    ],
-  },
+      Actions: [{ Type: "ModifyCost", Side: "Friendly", Amount: -1, CardFilter: { Type: "Unit" } }] },
+  ],
+},
 
   {
     Id: 110,
@@ -1881,13 +1884,13 @@ const CARDS_EXP = [
   {
     Id: 914, Name: "Ashes from Clashes", Type: "Spell", Subtypes: ["Token"],
     Cost: 1,
-    Description: "Deal 2 Damage to a Friendly Unit or Friendly Hero. Start of Round: If this is in your Hand, gain Ashes from Clashes.",
+    Description: "Deal 1 Damage to a Friendly Unit or Friendly Hero. Start of Round: If this is in your Hand, gain Ashes from Clashes.",
     Effects: [
       { Trigger: "OnPlayed", Targeting: "Choice",
         ChoiceLabels: ["Target Friendly Unit", "Friendly Hero"],
         Actions: [
-          { Type: "DealDamage", Target: "TargetFriendlyUnit", Amount: 2 },
-          { Type: "DealDamage", Target: "FriendlyHero", Amount: 2 },
+          { Type: "DealDamage", Target: "TargetFriendlyUnit", Amount: 1 },
+          { Type: "DealDamage", Target: "FriendlyHero", Amount: 1 },
         ] },
       { Trigger: "OnStartOfRound", Zone: "Hand",
         Actions: [{ Type: "AddCardToHand", Target: "FriendlyHero", ValueParam: 914 }] },
