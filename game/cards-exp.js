@@ -524,7 +524,7 @@ const CARDS_EXP = [
     Subtypes: ["Animal", "Machine"],
     Cost: 5,
     Attack: 5,
-    Health: 12,
+    Health: 10,
     Keywords: ["Stunned"],
     Description: "When this Does Damage: Stun It.",
     Effects: [
