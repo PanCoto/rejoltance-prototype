@@ -1685,10 +1685,12 @@ const CARDS_EXP = [
     Name: "Victory Feast",
     Type: "Spell",
     Cost: 4,
-    Description: "All Friendly Units get +1/+1.",
+    Description: "All Friendly Units get +1/+1. Draw a Card.",
     Effects: [
       { Trigger: "OnPlayed",
         Actions: [{ Type: "BuffStats", Target: "AllFriendlyUnits", BuffAtk: 1, BuffHp: 1 }] },
+ 	{ Type: "DrawCard", Target: "FriendlyHero", Amount: 1 },
+
     ],
   },
 
