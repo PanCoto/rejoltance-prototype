@@ -303,7 +303,7 @@ function dmg(G,t,n,s,melee){
  if(n>0&&t.kw.has('Marked'))n*=2;
  if(n>0&&s&&s.uid&&!s.sp&&s.o!=t.o&&s.kw&&s.kw.has('Deadly')&&!s.sil)n=Math.max(n,t.hp);
  t.hp-=n;EV(G,{k:'dmg',u:t.uid,n});lifesteal(G,s,n);
- if(s&&n>0&&(s.sp||(s.uid&&s.o!=t.o)))later(G,()=>G.p[t.o].ln.slice().forEach(w=>w&&fire(G,'OnFriendlyUnitDamaged',w,s.sp?{u:t}:{u:t,t:s})));
+ if(s&&n>0&&(s.sp||(s.uid&&s.o!=t.o)))later(G,()=>hurtFire(G,t,s.sp?{u:t}:{u:t,t:s}));
  if(s&&s.uid&&!s.sp&&n>0){if(s.kw.has('BurnSource')&&!s.sil&&!t.h){t.bn=burnN(t)+1;t.kw.add('Burning')}if(melee===1)later(G,()=>fire(G,'OnDamagedEnemyUnit',s,{u:s,t}))}
  if(t.hp<=0&&s&&s.uid&&!s.sp&&!t.k&&melee===1&&(RULES.onKillUnkillable||!t.kw.has('Unkillable'))&&(RULES.onKillSoulGuard||!t.kw.has('SoulGuard'))){t.k=1;later(G,()=>{fire(G,'OnKill',s,{u:s,t});killAbsorb(G,s,t)})}}
 function killAbsorb(G,s,t){if(!s||s.gone||s.hp<=0||!t||G.over)return;
@@ -379,7 +379,7 @@ function act(G,a,s,c){
  case'AbsorbStats':{const v=c.sac||c.last;if(v){s.atk+=v.atk;s.hp+=v.hp;s.mx+=v.hp}break}
  case'GiveToOpponent':s.give=1;s.giveA=a;break;
  case'MakeAUnit':case'SummonUnit':{if(T=='SummonUnit')break;
-  let ls=[0,1,2,3].filter(i=>!me.ln[i]);
+  let ls=[0,1,2,3].filter(i=>!me.ln[i]&&i!==c.xl);
   if(a.StringParam=='AdjacentLanes')ls=ls.filter(i=>Math.abs(i-s.lane)==1);else{const n=a.Count||1,ch=[];
    for(let k=0;k<n&&!a.Auto;k++){const w=(c.lanes||[])[c.li||0];if(w==null)break;c.li=(c.li||0)+1;if(ls.includes(w)&&!ch.includes(w))ch.push(w)}
    const rest=ls.filter(i=>!ch.includes(i)),pref=rest.filter(i=>!G.p[1-s.o].ln[i]);
@@ -494,17 +494,21 @@ function killUnit(G,u,lane){const p=G.p[u.o],unk=u.kw.has('Unkillable')&&!u.sil;
  EV(G,{k:'die',id:u.id,atk:u.atk,hp:Math.max(u.hp,0),o:p.i,lane,uid:u.uid,bt:G.bt?1:0});
  p.ln[lane]=null;u.gone=1;
  if(!unk&&u.id<900)p.disc.push({uid:UID++,id:u.id,nf:u.uid,unk:u.kw.has('Unkillable')?1:0,...(u.cr?{red:u.cr}:{}),...(u.cba?{ba:u.cba}:{})});
- fire(G,'OnDeath',u,{u});units(p).forEach(o=>fire(G,'OnFriendlyUnitDied',o,{u}));fireHand(G,'OnFriendlyUnitDied',p,{u,lane});
+ fire(G,'OnDeath',u,{u});flushHurt(G,u);units(p).forEach(o=>fire(G,'OnFriendlyUnitDied',o,{u}));fireHand(G,'OnFriendlyUnitDied',p,{u,lane});
  if(unk){L(G,u.d.Name+' is Unkillable - back to hand');
   if(u.id<900||RULES.tokensReturnToHand){const card={uid:UID++,id:u.id,nf:u.uid,unk:1,...(u.cr?{red:u.cr}:{}),...(u.cba?{ba:u.cba}:{})};if(p.hand.length<HAND_MAX||RULES.fullHandRework){p.hand.push(card);gained(G,p,'unkillable');acn(G,p,'unk',1,3,'deathsticks')}else if(u.id<900)p.disc.push(card)}}}
 function sacrifice(G,u,by){const p=G.p[u.o];p.sc++;u.sacF=1;acn(G,p,'sac',1,5,'feast');L(G,u.d.Name+' sacrificed');
  fire(G,'OnSacrificed',u,{by:by||null});
  if(!u.gone)killUnit(G,u,u.lane);
  units(p).forEach(o=>{if(!o.gone)fire(G,'OnOtherUnitSacrificed',o,{u})});fireHand(G,'OnOtherUnitSacrificed',p,{u})}
+function hurtFire(G,t,ctx){G.p[t.o].ln.slice().forEach(w=>{if(!w)return;
+ if(w===t&&t.hp<=0&&!t.gone){(t.hurtQ=t.hurtQ||[]).push(ctx);return}
+ fire(G,'OnFriendlyUnitDamaged',w,ctx)})}
+function flushHurt(G,u){const q=u.hurtQ;u.hurtQ=0;if(q)q.forEach(c=>fire(G,'OnFriendlyUnitDamaged',u,u.gone?Object.assign({},c,{xl:u.lane}):c))}
 function resolve(G){aura(G);
  for(let n=0;n<30&&!G.over;n++){let ch=0;
-  for(const p of G.p)for(let i=0;i<4;i++){const u=p.ln[i];if(!u||u.hp>0)continue;ch=1;
-   if(u.kw.has('SoulGuard')){const n=sgN(u);if(u.agn>0){u.agn--;u.sgd=(u.sgd||0)+1}u.sgn=n-1;if(u.sgn<=0){u.sgn=0;u.kw.delete('SoulGuard')}u.hp=1;u.lh=1;L(G,u.d.Name+' soul guard breaks');hpOne(G,u);continue}
+  for(const p of G.p)for(let i=0;i<4;i++){const u=p.ln[i];if(!u)continue;if(u.hp>0){if(u.hurtQ)flushHurt(G,u);continue}ch=1;
+   if(u.kw.has('SoulGuard')){const n=sgN(u);if(u.agn>0){u.agn--;u.sgd=(u.sgd||0)+1}u.sgn=n-1;if(u.sgn<=0){u.sgn=0;u.kw.delete('SoulGuard')}u.hp=1;u.lh=1;L(G,u.d.Name+' soul guard breaks');hpOne(G,u);flushHurt(G,u);continue}
    killUnit(G,u,i);if(!u.kw.has('Unkillable'))L(G,u.d.Name+' destroyed')}
   if(!ch)break}
  const hit=[];G.p.forEach(p=>units(p).forEach(u=>{if(u.hp>0){if(u.lh>1&&u.hp===1)hit.push(u);u.lh=u.hp}}));
@@ -533,7 +537,7 @@ function lane(G,i,pre){pre=pre||{};
   later(G,()=>{if(!G.over)fire(G,'OnAttackDone',x,{u:x})})};
  G.q=[];hit(A,B,aa,sa);hit(B,A,ba,sb);const q=G.q;G.q=null;q.forEach(f=>f());resolve(G);
  G.pc=1;[0,1].forEach(o=>{const u=G.p[o].ln[i];if(u&&!u.gone&&!G.over)fire(G,'OnPostCombatLine',u,{})});G.pc=0;resolve(G)}
-function endRound(G){G.p.forEach(p=>{if(!G.sim&&p.ln.every(Boolean)&&!p.hand.length)acu(G,p,'empty')});if(G.p.some(p=>units(p).some(u=>u.kw.has('Burning'))))EV(G,{k:'snd',n:'burn'});const burnHurt=[];G.p.forEach(p=>units(p).forEach(u=>{if(u.kw.has('Burning')){const ar=u.kw.has('Armored')?kwp(u,'Armored'):u.kw.has('Armor2')?2:0,n=Math.max(0,burnN(u)-ar);u.hp-=n;EV(G,{k:'dmg',u:u.uid,n,bt:1});if(n>0)burnHurt.push(u)}}));G.bt=1;burnHurt.forEach(u=>{if(!G.over&&!u.gone)G.p[u.o].ln.slice().forEach(w=>w&&fire(G,'OnFriendlyUnitDamaged',w,{u}))});resolve(G);G.bt=0;roundTrig(G,'OnEndOfRound');evolveAll(G)}
+function endRound(G){G.p.forEach(p=>{if(!G.sim&&p.ln.every(Boolean)&&!p.hand.length)acu(G,p,'empty')});if(G.p.some(p=>units(p).some(u=>u.kw.has('Burning'))))EV(G,{k:'snd',n:'burn'});const burnHurt=[];G.p.forEach(p=>units(p).forEach(u=>{if(u.kw.has('Burning')){const ar=u.kw.has('Armored')?kwp(u,'Armored'):u.kw.has('Armor2')?2:0,n=Math.max(0,burnN(u)-ar);u.hp-=n;EV(G,{k:'dmg',u:u.uid,n,bt:1});if(n>0)burnHurt.push(u)}}));G.bt=1;burnHurt.forEach(u=>{if(!G.over&&!u.gone)hurtFire(G,u,{u})});resolve(G);G.bt=0;roundTrig(G,'OnEndOfRound');evolveAll(G)}
 function evolve(G,u){const c=(CD[u.id].Cost||0)+1,pool=poolOf({Type:'Unit',Cost:c}).filter(d=>!hasSub(d,'Piece'));if(!pool.length)return;
  const d=pool[R(pool.length)];L(G,u.d.Name+' evolves into '+d.Name);transformUnit(G,u,d.Id);u.kw.add('Evolving');EV(G,{k:'snd',n:'buff'});transPlay(G,u,{sm:1},0);resolve(G)}
 function evolveAll(G){if(G.over)return;[G.start,1-G.start].forEach(i=>G.p[i].ln.slice().forEach(u=>{if(u&&!u.gone&&u.hp>0&&!u.sil&&u.kw.has('Evolving')&&!G.over)evolve(G,u)}));resolve(G)}

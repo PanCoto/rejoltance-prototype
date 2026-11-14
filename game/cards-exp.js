@@ -1756,9 +1756,9 @@ const CARDS_EXP = [
     Description: "When Hurt: Summon a Random Unit. When Played: Summon a Random Unit. While in Play: When You Summon a Unit, Conjure a random Unit and all Units in Your Hand cost 1 less.",
     Effects: [
       { Trigger: "OnFriendlyUnitDamaged", Condition: { Condition: "IsSelf" },
-        Actions: [{ Type: "MakeAUnit", Filter: { Type: "Unit", MaxCost: 6 } }] },
+        Actions: [{ Type: "MakeAUnit", Filter: { Type: "Unit", MaxCost: 5 } }] },
       { Trigger: "OnPlayed",
-        Actions: [{ Type: "MakeAUnit", Filter: { Type: "Unit", MaxCost: 6 } }] },
+        Actions: [{ Type: "MakeAUnit", Filter: { Type: "Unit", MaxCost: 5 } }] },
       { Trigger: "OnPlayed", Zone: "Board",
         Condition: { Condition: "And", SubConditions: [
           { Condition: "IsFriendly" },
@@ -1766,7 +1766,7 @@ const CARDS_EXP = [
           { Condition: "NotFromHistory" },
         ] },
         Actions: [{ Type: "AddCardToHand", Target: "FriendlyHero",
-          Filter: { Type: "Unit", MaxCost: 6 } }] },
+          Filter: { Type: "Unit", MaxCost: 5 } }] },
       { Trigger: "Passive", Zone: "Board",
         Actions: [{ Type: "ModifyCost", Side: "Friendly", Amount: -1, CardFilter: { Type: "Unit" } }] },
     ],
