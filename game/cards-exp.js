@@ -252,13 +252,11 @@ const CARDS_EXP = [
     Name: "HellFire",
     Type: "Spell",
     Cost: 5,
-    Description: "Deal 3 Damage and Apply Burn 3 to all Units on Board.",
+    Description: "Deal 3 Damage and Apply Burning to all Units on Board.",
     Effects: [
       { Trigger: "OnPlayed",
         Actions: [
           { Type: "DealDamage", Target: "AllUnitsOnBoard", Amount: 3 },
-          { Type: "ApplyStatus", Target: "AllUnitsOnBoard", StatusKeyword: "Burning" },
-          { Type: "ApplyStatus", Target: "AllUnitsOnBoard", StatusKeyword: "Burning" },
           { Type: "ApplyStatus", Target: "AllUnitsOnBoard", StatusKeyword: "Burning" },
         ] },
     ],
