@@ -1565,8 +1565,8 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Machine"],
     Cost: 3,
-    Attack: 3,
-    Health: 1,
+    Attack: 2,
+    Health: 3,
     Description: "While in Play: Adjacent Machines gain +1 ATK.",
     Effects: [
       { Trigger: "Passive",
@@ -1627,7 +1627,7 @@ const CARDS_EXP = [
     Subtypes: ["Aberration"],
     Cost: 1,
     Attack: 2,
-    Health: 2,
+    Health: 1,
     Description: "Before Combat Here: Deal 1 Damage to Your Hero.",
     Effects: [
       { Trigger: "OnPreCombatLine",
@@ -1899,20 +1899,20 @@ const CARDS_EXP = [
   },
   {
     Id: 916, Name: "Blessing of Warding", Type: "Spell", Subtypes: ["Token"], Cost: 3,
-    Description: "Give a Friendly Unit Soul Guard and +1/+2.",
+    Description: "Give a Friendly Unit Soul Guard and +1/+1.",
     Effects: [{ Trigger: "OnPlayed", Targeting: "TargetFriendlyUnit",
       Actions: [
         { Type: "ApplyStatus", Target: "SelectedTarget", StatusKeyword: "SoulGuard" },
-        { Type: "BuffStats", Target: "SelectedTarget", BuffAtk: 1, BuffHp: 2 },
+        { Type: "BuffStats", Target: "SelectedTarget", BuffAtk: 1, BuffHp: 1 },
       ] }],
   },
   {
     Id: 917, Name: "Blessing of Mending", Type: "Spell", Subtypes: ["Token"], Cost: 3,
-    Description: "Heal Your Hero for 5 and all Friendly Units for 3.",
+    Description: "Heal Your Hero for 4 and all Friendly Units for 4.",
     Effects: [{ Trigger: "OnPlayed",
       Actions: [
-        { Type: "Heal", Target: "FriendlyHero", Amount: 5 },
-        { Type: "Heal", Target: "AllFriendlyUnits", Amount: 3 },
+        { Type: "Heal", Target: "FriendlyHero", Amount: 4 },
+        { Type: "Heal", Target: "AllFriendlyUnits", Amount: 4 },
       ] }],
   },
   {
@@ -1923,10 +1923,10 @@ const CARDS_EXP = [
   },
   {
     Id: 919, Name: "Blessing of Vengeance", Type: "Spell", Subtypes: ["Token"], Cost: 3,
-    Description: "Deal 4 Damage to an Enemy Unit and 1 Damage to the Enemy Hero.",
+    Description: "Deal 3 Damage to an Enemy Unit and 1 Damage to the Enemy Hero.",
     Effects: [{ Trigger: "OnPlayed", Targeting: "TargetEnemyUnit",
       Actions: [
-        { Type: "DealDamage", Target: "TargetEnemyUnit", Amount: 4 },
+        { Type: "DealDamage", Target: "TargetEnemyUnit", Amount: 3 },
         { Type: "DealDamage", Target: "EnemyHero", Amount: 1 },
       ] }],
   },
@@ -1953,9 +1953,9 @@ const CARDS_EXP = [
   },
   {
     Id: 923, Name: "Blessing of Fury", Type: "Spell", Subtypes: ["Token"], Cost: 3,
-    Description: "All Friendly Units get +2/+1.",
+    Description: "All Friendly Units get +2 ATK.",
     Effects: [{ Trigger: "OnPlayed",
-      Actions: [{ Type: "BuffStats", Target: "AllFriendlyUnits", BuffAtk: 2, BuffHp: 1 }] }],
+      Actions: [{ Type: "BuffStats", Target: "AllFriendlyUnits", BuffAtk: 2, BuffHp: 0 }] }],
   },
   {
     Id: 924, Name: "Blessing of Fortitude", Type: "Spell", Subtypes: ["Token"], Cost: 3,
@@ -2000,10 +2000,10 @@ const CARDS_EXP = [
   },
   {
     Id: 930, Name: "Blessing of Frenzy", Type: "Spell", Subtypes: ["Token"], Cost: 3,
-    Description: "A Friendly Unit gets +2 ATK and does a Bonus Attack.",
+    Description: "A Friendly Unit gets +1 ATK and does a Bonus Attack.",
     Effects: [{ Trigger: "OnPlayed", Targeting: "TargetFriendlyUnit",
       Actions: [
-        { Type: "BuffStats", Target: "SelectedTarget", BuffAtk: 2 },
+        { Type: "BuffStats", Target: "SelectedTarget", BuffAtk: 1 },
         { Type: "BonusAttack", Target: "SelectedTarget" },
       ] }],
   },
