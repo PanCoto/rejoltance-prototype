@@ -1502,7 +1502,7 @@ const CARDS_EXP = [
     Name: "Dual Wield",
     Type: "Spell",
     Cost: 2,
-    Description: "The next Action you play is Played Twice.",
+    Description: "Conjure a random Action. Your next Action is played twice.",
     Effects: [
       { Trigger: "OnPlayed",
         Actions: [
