@@ -303,7 +303,7 @@ function dmg(G,t,n,s,melee){
  if(n>0&&t.kw.has('Marked'))n*=2;
  if(n>0&&s&&s.uid&&!s.sp&&s.o!=t.o&&s.kw&&s.kw.has('Deadly')&&!s.sil)n=Math.max(n,t.hp);
  t.hp-=n;EV(G,{k:'dmg',u:t.uid,n});lifesteal(G,s,n);
- if(s&&s.uid&&!s.sp&&n>0&&s.o!=t.o)later(G,()=>G.p[t.o].ln.slice().forEach(w=>w&&fire(G,'OnFriendlyUnitDamaged',w,{u:t,t:s})));
+ if(s&&n>0&&(s.sp||(s.uid&&s.o!=t.o)))later(G,()=>G.p[t.o].ln.slice().forEach(w=>w&&fire(G,'OnFriendlyUnitDamaged',w,s.sp?{u:t}:{u:t,t:s})));
  if(s&&s.uid&&!s.sp&&n>0){if(s.kw.has('BurnSource')&&!s.sil&&!t.h){t.bn=burnN(t)+1;t.kw.add('Burning')}if(melee===1)later(G,()=>fire(G,'OnDamagedEnemyUnit',s,{u:s,t}))}
  if(t.hp<=0&&s&&s.uid&&!s.sp&&!t.k&&melee===1&&(RULES.onKillUnkillable||!t.kw.has('Unkillable'))&&(RULES.onKillSoulGuard||!t.kw.has('SoulGuard'))){t.k=1;later(G,()=>{fire(G,'OnKill',s,{u:s,t});killAbsorb(G,s,t)})}}
 function killAbsorb(G,s,t){if(!s||s.gone||s.hp<=0||!t||G.over)return;
@@ -533,7 +533,7 @@ function lane(G,i,pre){pre=pre||{};
   later(G,()=>{if(!G.over)fire(G,'OnAttackDone',x,{u:x})})};
  G.q=[];hit(A,B,aa,sa);hit(B,A,ba,sb);const q=G.q;G.q=null;q.forEach(f=>f());resolve(G);
  G.pc=1;[0,1].forEach(o=>{const u=G.p[o].ln[i];if(u&&!u.gone&&!G.over)fire(G,'OnPostCombatLine',u,{})});G.pc=0;resolve(G)}
-function endRound(G){G.p.forEach(p=>{if(!G.sim&&p.ln.every(Boolean)&&!p.hand.length)acu(G,p,'empty')});if(G.p.some(p=>units(p).some(u=>u.kw.has('Burning'))))EV(G,{k:'snd',n:'burn'});G.p.forEach(p=>units(p).forEach(u=>{if(u.kw.has('Burning')){const ar=u.kw.has('Armored')?kwp(u,'Armored'):u.kw.has('Armor2')?2:0,n=Math.max(0,burnN(u)-ar);u.hp-=n;EV(G,{k:'dmg',u:u.uid,n,bt:1})}}));G.bt=1;resolve(G);G.bt=0;roundTrig(G,'OnEndOfRound');evolveAll(G)}
+function endRound(G){G.p.forEach(p=>{if(!G.sim&&p.ln.every(Boolean)&&!p.hand.length)acu(G,p,'empty')});if(G.p.some(p=>units(p).some(u=>u.kw.has('Burning'))))EV(G,{k:'snd',n:'burn'});const burnHurt=[];G.p.forEach(p=>units(p).forEach(u=>{if(u.kw.has('Burning')){const ar=u.kw.has('Armored')?kwp(u,'Armored'):u.kw.has('Armor2')?2:0,n=Math.max(0,burnN(u)-ar);u.hp-=n;EV(G,{k:'dmg',u:u.uid,n,bt:1});if(n>0)burnHurt.push(u)}}));G.bt=1;burnHurt.forEach(u=>{if(!G.over&&!u.gone)G.p[u.o].ln.slice().forEach(w=>w&&fire(G,'OnFriendlyUnitDamaged',w,{u}))});resolve(G);G.bt=0;roundTrig(G,'OnEndOfRound');evolveAll(G)}
 function evolve(G,u){const c=(CD[u.id].Cost||0)+1,pool=poolOf({Type:'Unit',Cost:c}).filter(d=>!hasSub(d,'Piece'));if(!pool.length)return;
  const d=pool[R(pool.length)];L(G,u.d.Name+' evolves into '+d.Name);transformUnit(G,u,d.Id);u.kw.add('Evolving');EV(G,{k:'snd',n:'buff'});transPlay(G,u,{sm:1},0);resolve(G)}
 function evolveAll(G){if(G.over)return;[G.start,1-G.start].forEach(i=>G.p[i].ln.slice().forEach(u=>{if(u&&!u.gone&&u.hp>0&&!u.sil&&u.kw.has('Evolving')&&!G.over)evolve(G,u)}));resolve(G)}

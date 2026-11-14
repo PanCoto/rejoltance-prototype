@@ -1520,6 +1520,7 @@ const CARDS_EXP = [
     Cost: 5,
     Attack: 3,
     Health: 3,
+    Keywords: ["Flying"],
     Description: "When Destroyed: Summon Mecha-Troopers in Adjacent Lanes.",
     Effects: [
       { Trigger: "OnDeath",
