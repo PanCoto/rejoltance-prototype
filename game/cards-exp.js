@@ -1810,10 +1810,10 @@ const CARDS_EXP = [
   { Id: 901, Name: "Royal Souldier", Type: "Unit", Subtypes: ["Aberration", "Token"], Cost: 1, Attack: 1, Health: 1, Description: "" },
 
   {
-    Id: 902, Name: "Sacrificial Dagger", Type: "Spell", Subtypes: ["Token"], Cost: 0,
-    Description: "Sacrifice a Friendly Unit.",
+    Id: 902, Name: "Sacrificial Dagger", Type: "Spell", Subtypes: ["Token"], Cost: 1,
+    Description: "Sacrifice a Friendly Unit. Draw a Card.",
     Effects: [{ Trigger: "OnPlayed", Targeting: "TargetFriendlyUnit",
-      Actions: [{ Type: "SacrificeUnit", Target: "SelectedTarget" }] }],
+      Actions: [{ Type: "SacrificeUnit", Target: "SelectedTarget" }, { Type: "DrawCard", Target: "FriendlyHero", Amount: 1 },] }],
   },
 
   {
