@@ -431,7 +431,7 @@ case'LoseHealth':ts.forEach(t=>{if(t.h)dmg(G,t,a.Amount||1,null,2);else{t.hp-=a.
    const pk=pool[R(pool.length)];me.disc.splice(me.disc.indexOf(pk),1);const nu=mk(pk.id,s.o);nu.atk+=pk.ba||0;nu.cba=pk.ba||0;nu.cr=pk.red||0;if(pk.unk)nu.kw.add('Unkillable');place(G,me,nu,i);L(G,nu.d.Name+' rises from the discard');
    if((!c.sm||c.rp)&&!G.over)fire(G,'OnPlayed',nu,{tf:RULES.summonTriggers?0:1,nosac:1,sm:1,nr:1,ask:1});
    if(RULES.summonTriggers&&!G.over)announce(G,nu)});break}
- case'MoveRight':{const i=s.lane+1;if(i<4&&!me.ln[i]&&me.ln[s.lane]==s){me.ln[s.lane]=null;place(G,me,s,i);if(a.ThenAttack){const v=G.p[1-s.o].ln[s.lane];if(v&&!v.gone&&v.hp>0&&!!v.kw.has('Flying')===!!s.kw.has('Flying'))strike(G,s)}}break}
+ case'MoveRight':{const i=s.lane+1;if(i<4&&!me.ln[i]&&me.ln[s.lane]==s){me.ln[s.lane]=null;place(G,me,s,i);if(a.ThenAttack){const v=G.p[1-s.o].ln[s.lane];if(v&&!v.gone&&v.hp>0&&engage(v,s))strike(G,s)}}break}
  case'SpendBlood':me.b=a.Amount!=null?Math.max(0,me.b-a.Amount):0;break
  case'AddResource':me.b=Math.min(me.b+(a.Amount||1),10);break
  case'Merge':{
@@ -515,11 +515,12 @@ function resolve(G){aura(G);
  hit.forEach(u=>{if(!G.over&&!u.gone&&u.hp===1)hpOne(G,u)});
  aura(G);chk(G)}
 function splash(G,x,i,n){[i-1,i+1].forEach(k=>{const w=G.p[1-x.o].ln[k];if(w)dmg(G,w,n,x,1)})}
+function engage(x,y){const fx=!!x.kw.has('Flying'),fy=!!y.kw.has('Flying');if(fx===fy)return true;const g=fx?y:x;return g.kw.has('AntiAirborne')&&!g.sil}
 function strike(G,u){if(!u||u.gone||G.over)return;
  if(u.kw.has('Stunned')){u.kw.delete('Stunned');return}
  const v=G.p[1-u.o].ln[u.lane];
- EV(G,{k:'atk',u:u.uid,o:u.o,l:u.lane,bonus:1,post:G.pc?1:0,hr:(v&&!!u.kw.has('Flying')===!!v.kw.has('Flying'))?0:1});
- if(v&&!!u.kw.has('Flying')===!!v.kw.has('Flying')){dmg(G,v,u.atk,u,1);if(u.kw.has('Breakthrough')&&!G.over)thru(G,u,u.atk)}else dmg(G,H(1-u.o),u.atk,u,1);
+ EV(G,{k:'atk',u:u.uid,o:u.o,l:u.lane,bonus:1,post:G.pc?1:0,hr:(v&&engage(u,v))?0:1});
+ if(v&&engage(u,v)){dmg(G,v,u.atk,u,1);if(u.kw.has('Breakthrough')&&!G.over)thru(G,u,u.atk)}else dmg(G,H(1-u.o),u.atk,u,1);
  if(u.kw.has('SplashDamage'))splash(G,u,u.lane,kwp(u,'SplashDamage'));
  later(G,()=>{if(!G.over)fire(G,'OnAttackDone',u,{u})})}
 function preTargets(G,u){if(!u||u.sil)return null;
@@ -531,8 +532,8 @@ function lane(G,i,pre){pre=pre||{};
  const A=G.p[0].ln[i],B=G.p[1].ln[i];if(!A&&!B)return;
  const sa=A&&A.kw.has('Stunned'),sb=B&&B.kw.has('Stunned'),aa=A?A.atk:0,ba=B?B.atk:0;
  if(sa)A.kw.delete('Stunned');if(sb)B.kw.delete('Stunned');
- const hit=(x,y,n,st)=>{if(!x||st||n<=0)return;EV(G,{k:'atk',u:x.uid,o:x.o,l:i,hr:(y&&!!x.kw.has('Flying')===!!y.kw.has('Flying'))?0:1});
-  if(y&&!!x.kw.has('Flying')===!!y.kw.has('Flying')){dmg(G,y,n,x,1);if(x.kw.has('Breakthrough')&&!G.over)thru(G,x,n)}else dmg(G,H(1-x.o),n,x,1);
+ const hit=(x,y,n,st)=>{if(!x||st||n<=0)return;EV(G,{k:'atk',u:x.uid,o:x.o,l:i,hr:(y&&engage(x,y))?0:1});
+  if(y&&engage(x,y)){dmg(G,y,n,x,1);if(x.kw.has('Breakthrough')&&!G.over)thru(G,x,n)}else dmg(G,H(1-x.o),n,x,1);
   if(x.kw.has('SplashDamage'))splash(G,x,i,kwp(x,'SplashDamage'));
   later(G,()=>{if(!G.over)fire(G,'OnAttackDone',x,{u:x})})};
  G.q=[];hit(A,B,aa,sa);hit(B,A,ba,sb);const q=G.q;G.q=null;q.forEach(f=>f());resolve(G);

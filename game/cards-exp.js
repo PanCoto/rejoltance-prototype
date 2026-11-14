@@ -343,6 +343,7 @@ const CARDS_EXP = [
     Cost: 3,
     Attack: 2,
     Health: 2,
+    Keywords: ["AntiAirborne"],
     Description: "Whenever an Enemy Unit is Played in this lane: Deal 2 damage to it.",
     Effects: [
       { Trigger: "OnEnemyUnitPlayed",
@@ -594,6 +595,7 @@ const CARDS_EXP = [
     Cost: 3,
     Attack: 1,
     Health: 4,
+    Keywords: ["AntiAirborne"],
     Description: "Before Combat: Apply Burning to an Enemy Unit.",
     Effects: [
       { Trigger: "OnPreCombatLine",
@@ -704,7 +706,7 @@ const CARDS_EXP = [
     Cost: 2,
     Attack: 1,
     Health: 2,
-    Keywords: ["SplashDamage"],
+    Keywords: ["SplashDamage", "AntiAirborne"],
     KeywordParams: { SplashDamage: 1 },
     Description: "",
   },
@@ -863,6 +865,7 @@ const CARDS_EXP = [
     Cost: 5,
     Attack: 0,
     Health: 6,
+    Keywords: ["AntiAirborne"],
     Rule: "persistentGrowth",
     Description: "While in Hand, Deck, Discard or on Board: Gain +1 ATK whenever a Friendly Machine is Destroyed.",
     DescriptionClassic: "While in Hand: Gain +1 ATK whenever a Friendly Machine is Destroyed.",
@@ -1487,6 +1490,7 @@ const CARDS_EXP = [
     Cost: 5,
     Attack: 3,
     Health: 5,
+    Keywords: ["AntiAirborne"],
     Description: "While in Play: When an Enemy Unit is Move, move it here. If it can't be Moved, deal 2 Damage to it instead.",
     Effects: [
       { Trigger: "OnEnemyUnitPlayed",
