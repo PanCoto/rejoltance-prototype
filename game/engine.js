@@ -582,7 +582,7 @@ function apicks(G,p,d,got,ln){got=got||[];const out=[];out.f=[];
 function choiceOK(G,p,d,i){const e=(d.Effects||[]).find(x=>x.ChoiceLabels);if(!e)return true;const a=e.Actions[i];
  if(a.Type=='DrawFromDiscard')return p.disc.length>0;const k=actKind(a,e);return!k||req(G,p,k,silBounceF(a),null,d.Type=='Spell',d.ExU).length>0}
 function canPlay(G,p,ci,ln){const c=p.hand[ci];if(!c||G.over)return false;if(G.act!=null&&p.i!=G.act)return false;
- const d=CD[c.id];if((G.allow=='U'&&d.Type!='Unit')||(G.allow=='A'&&d.Type!='Spell'))return false;
+ const d=CD[c.id];if((G.allow=='U'&&d.Type!='Unit')||(G.allow=='A'&&d.Type!='Spell'&&!d.ActionPlay))return false;
  if(cost(G,p,c)>p.b)return false;
  if(d.Type=='Unit'&&(ln==null||p.ln[ln]))return false;
  if(d.Type=='Spell'){const pk=picks(d);if(pk.includes('L')&&(d.Effects||[]).some(e=>(e.Actions||[]).some(a=>a.Type=='CopyUnit'))&&!p.ln.some(x=>!x))return false;if(pk.includes('P')&&!units(G.p[1-p.i]).length)return false;if(pk.some((k,i)=>k!='L'&&!req(G,p,k,pk.f[i],null,true).length))return false}return true}

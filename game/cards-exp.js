@@ -1001,12 +1001,12 @@ const CARDS_EXP = [
     Cost: 3,
     Attack: 1,
     Health: 4,
-    Description: "When Played: Heal a Friendly Unit or Your Hero for 3. If You control another Machine, a Unit healed this way also gets +2 HP.",
+    Description: "When Played: Heal a Friendly Unit or Your Hero for 4. If You control another Machine, a Unit healed this way also gets +2 HP.",
     Effects: [
       { Trigger: "OnPlayed",
         Targeting: "TargetFriendlyUnitOrHero",
         Actions: [
-          { Type: "Heal", Target: "SelectedTarget", Amount: 3 },
+          { Type: "Heal", Target: "SelectedTarget", Amount: 4 },
           { Type: "BuffStats", Target: "SelectedTarget", BuffHp: 2, Condition: { Condition: "HasSubtypeOnBoard", TargetParam: "Machine" } },
         ] },
       { Trigger: "OnPlayed",
@@ -1654,7 +1654,7 @@ const CARDS_EXP = [
 
   {
     Id: 103,
-    Name: "4-inch Bot",
+    Name: "Fem-Bot",
     Type: "Unit",
     Subtypes: ["Machine"],
     Cost: 3,
@@ -1753,7 +1753,7 @@ const CARDS_EXP = [
     Id: 109,
     Name: "The Amalgamation",
     Type: "Unit",
-    Subtypes: ["Aberration"],
+    Subtypes: ["Aberration", "Animal", "Human", "Machine"],
     Cost: 9,
     Attack: 6,
     Health: 6,
@@ -1807,6 +1807,17 @@ const CARDS_EXP = [
       { Trigger: "OnPlayed",
         Actions: [{ Type: "AddCardToHand", Target: "FriendlyHero", ValueParam: 935 }] },
     ],
+  },
+  {
+    Id: 112,
+    Name: "Bug Knight",
+    Type: "Unit",
+    Subtypes: ["Aberration"],
+    Cost: 2,
+    Attack: 2,
+    Health: 2,
+    ActionPlay: true,
+    Description: "Can be Played During Action Phase.",
   },
 
   // ==================== ORIGINAL TOKENS (unchanged) ====================
