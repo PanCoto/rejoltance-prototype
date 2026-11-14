@@ -1881,7 +1881,7 @@ const CARDS_EXP = [
 
   {
     Id: 914, Name: "Ashes from Clashes", Type: "Spell", Subtypes: ["Token"],
-    Cost: 1,
+    Cost: 0,
     Description: "Deal 2 Damage to a Friendly Unit or Friendly Hero. Start of Round: If this is in your Hand, gain Ashes from Clashes.",
     Effects: [
       { Trigger: "OnPlayed", Targeting: "TargetFriendlyUnitOrHero",
