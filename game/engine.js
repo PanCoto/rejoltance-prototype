@@ -55,6 +55,7 @@ function val(G,v,s,c){if(v==null||typeof v!='object')return v;
 const TYPEALIAS={Conjure:'AddCardToHand',Summon:'MakeAUnit'};
 const NUMF=['Amount','BuffAtk','BuffHp','Min','Max','Count'];
 function ra(G,a,s,c){const b=Object.assign({},a);if(TYPEALIAS[b.Type])b.Type=TYPEALIAS[b.Type];
+ if(a.AmountFrom=='CardsDrawn')b.Amount=c.drawn||0;
  if(a.AmountFrom=='SacrificedAttack')b.Amount=Math.min(a.Max||99,Math.max(a.Min||0,c.last?c.last.atk:0));
  NUMF.forEach(k=>{if(b[k]!=null&&typeof b[k]=='object')b[k]=val(G,b[k],s,c)});return b}
 let UID=1;const R=n=>Math.floor(Math.random()*n);
@@ -171,7 +172,8 @@ function autoFH(G,u){const p=G.p[u.o],us=units(p).filter(x=>x!==u&&!x.gone&&x.hp
 // When Destroyed effects that let you choose a target (Black Rabbitlings): parked so the owner can pick once the board has settled.
 function deferDeath(G,u,e,ctx){if(!askOnE(G,u.o))return false;
  const d={Name:u.d.Name,Id:u.id,Type:'Unit',Effects:[Object.assign({},e,{Trigger:'OnPlayed'})],ExU:u};
- if(!req(G,G.p[u.o],'fh',null,null,false,u).some(x=>!x.h))return false;   // only the hero to pick: no question needed
+ const dk=e.Targeting=='TargetEnemyUnit'?'e':'fh',dr=req(G,G.p[u.o],dk,null,null,false,u);
+ if(dk=='e'?dr.length<2:!dr.some(x=>!x.h))return false;   // nothing to choose between: no question needed
  pq(G).push({k:'eff',u,e,ctx,d,death:1});return true}
 function deferRp(G,s,h,e,acts){if(s.gone||!askOnE(G,s.o))return false;
  const e2=Object.assign({},e,{Targeting:e.Targeting=='Choice'?null:e.Targeting,ChoiceLabels:null,Actions:acts}),
@@ -191,7 +193,7 @@ function runItem(G,it,pk){pk=pk||[];if(G.over)return;
   if(ctx.t&&!ctx.t.h&&(ctx.t.gone||ctx.t.hp<=0))delete ctx.t;
   L(G,'Dual Wield - '+d.Name+' is played again');fire(G,'OnPlayed',{d,o:p.i,sp:1,lane:-1,uid:0},ctx);resolve(G);return}
  if(it.death){const u=it.u,p=G.p[u.o],ctx=pickCtx(apicks(G,p,it.d,pk,null),pk,Object.assign({},it.ctx));
-  if(!ctx.t||(!ctx.t.h&&(ctx.t.gone||ctx.t.hp<=0)))ctx.t=autoFH(G,u);
+  if(!ctx.t||(!ctx.t.h&&(ctx.t.gone||ctx.t.hp<=0))){if(it.e.Targeting=='TargetFriendlyUnitOrHero')ctx.t=autoFH(G,u);else delete ctx.t}
   it.e.Actions.forEach(a=>act(G,a,u,ctx));resolve(G);return}
  const u=it.u;if(!u||u.gone||u.hp<=0)return;
  const p=G.p[u.o],ks=apicks(G,p,it.d,pk,null),ctx=Object.assign({},it.ctx),hasS=ks.includes('S');delete ctx.ask;
@@ -208,6 +210,7 @@ function fire(G,trig,u,ctx){if(!u||u.sil||G.over)return;ctx=ctx||{};
   if(SELF.includes(trig)&&!e.Condition&&ctx.u&&ctx.u!==u)return;
   if(!cond(e.Condition,u,ctx,G))return;
   if(trig=='OnPlayed'&&ctx.ask&&deferEff(G,u,e,ctx))return;
+  if(trig=='OnDeath'&&e.Targeting=='TargetEnemyUnit'&&!ctx.t&&deferDeath(G,u,e,ctx))return;
   if(e.Targeting=='TargetFriendlyUnitOrHero'&&!ctx.t){if(trig=='OnDeath'&&deferDeath(G,u,e,ctx))return;ctx=Object.assign({},ctx,{t:autoFH(G,u)})}
   const s0=!G.sim&&u.uid?gsig(G):null;
   if(e.Targeting=='Choice'&&e.ChoiceLabels&&e.ChoiceLabels.length==e.Actions.length)act(G,e.Actions[ctx.ch||0],u,ctx);
@@ -301,6 +304,7 @@ function dmg(G,t,n,s,melee){
  if(t.h){G.p[t.p].hp-=n;if(!G.sim&&n>0&&G.p[t.p].ac)G.p[t.p].ac.taken+=n;
   if(G.en&&!G.sim&&t.p==1&&n>0){G.en.dealt+=n;G.en.rd=(G.en.rd||0)+n;if(G.en.dealt>=999)acu(G,G.p[0],'unstop');if(G.en.rd>=20)acu(G,G.p[0],'wonder')}EV(G,G.bk?{k:'dmg',h:t.p,n,bk:1,bo:s.o,bl:s.lane}:{k:'dmg',h:t.p,n});L(G,(t.p?'Enemy':'You')+' hero takes '+n);lifesteal(G,s,n);
   if(s&&s.uid&&!s.sp&&n>0)later(G,()=>G.p[s.o].ln.slice().forEach(w=>w&&fire(G,'OnDamagedEnemyHero',w,{u:s,t:s})));chk(G);return}
+ if(n>0&&t.kw.has('Protected'))n=0;
  const ar=t.kw.has('Armored')?kwp(t,'Armored'):t.kw.has('Armor2')?2:0;
  if(n>0&&ar)n=Math.max(0,n-ar);
  if(n>0&&t.kw.has('Marked'))n*=2;
@@ -342,7 +346,7 @@ function act(G,a,s,c){
   if(w!=null&&ls.includes(w))lane=w;
   else{const safe=ls.filter(i=>!G.p[1-s.o].ln[i]);
    ls=(safe.length?safe:ls).sort((a2,b)=>Math.abs(a2-t.lane)-Math.abs(b-t.lane));lane=ls[0]}
-  const nu=mk(t.id,s.o);
+  const nu=mk(t.id,s.o);nu.d=t.d;
   const auraKw=Object.keys(t.ag||{}).filter(k=>!(t.agc&&t.agc[k]));
   nu.atk=t.atk-(t.aurA||0);nu.hp=t.hp;nu.mx=t.mx;nu.lh=t.hp;
   nu.kw=new Set([...t.kw].filter(k=>!auraKw.includes(k)));
@@ -416,7 +420,7 @@ case'ReturnToHand':unitsOnly.filter(t=>!t.gone&&(!a.IfAlive||t.hp>0)).forEach(t=
   const list=(c.sacs||[]).filter(u=>u&&!u.gone&&u!==s&&u.o==s.o&&me.ln[u.lane]===u);let ga=0,gh=0;
   list.forEach(v=>{if(v.gone)return;c.last=v;c.sacd=1;const va=v.atk,vh=Math.max(0,v.hp);sacrifice(G,v,s);if(a.Absorb){ga+=va;gh+=vh}else{ga++;gh++}});
   if((ga||gh)&&!s.gone){s.atk+=ga;s.hp+=gh;s.mx+=gh;if(!G.sim){EV(G,{k:'snd',n:'buff'});EV(G,{k:'fx',t:'buff',a:ga,hp:gh,u:s.uid})}}break}
-case'LoseHealth':ts.forEach(t=>{if(t.h)dmg(G,t,a.Amount||1,null,2);else{t.hp-=a.Amount||1;EV(G,{k:'dmg',u:t.uid,n:a.Amount||1})}});break;
+case'LoseHealth':ts.forEach(t=>{if(t.h)dmg(G,t,a.Amount||1,null,2);else if(!t.kw.has('Protected')){t.hp-=a.Amount||1;EV(G,{k:'dmg',u:t.uid,n:a.Amount||1})}});break;
  case'ModifyGlobalBuff':EV(G,{k:'snd',n:'buff'});if(!G.sim&&units(me).length)EV(G,{k:'aoe',T:'BuffStats',st:'',pos:1,o:me.i,us:units(me).map(x=>({u:x.uid,o:x.o,l:x.lane}))});me.gb.a+=a.BuffAtk||0;me.gb.h+=a.BuffHp||0;units(me).forEach(u=>{u.atk+=a.BuffAtk||0;u.hp+=a.BuffHp||0;u.mx+=a.BuffHp||0});break;
  case'BonusAttack':unitsOnly.forEach(t=>strike(G,t));break;
  case'LaneDebuff':{const n=a.Amount||3,rg=a.Regain||0;let any=0;
@@ -425,6 +429,21 @@ case'LoseHealth':ts.forEach(t=>{if(t.h)dmg(G,t,a.Amount||1,null,2);else{t.hp-=a.
   if(any)EV(G,{k:'snd',n:'debuff'});break}
  case'TutorCard':{let i=c.tut?me.deck.findIndex(x=>x.uid==c.tut.uid):-1;if(i<0)i=me.deck.reduce((b,c2,k)=>CD[c2.id].Cost>CD[me.deck[b].id].Cost?k:b,0);const got=me.deck.length&&me.hand.length<HAND_MAX;if(got)me.hand.push(me.deck.splice(i,1)[0]);shuf(me.deck);if(got)gained(G,me,'tutor');break}
  case'ShuffleDeck':shuf(me.deck);break;
+ case'DrawKilledLastRound':{const pool=me.disc.filter(x=>x.nf!=null&&x.dt===G.turn-1&&CD[x.id].Type=='Unit');let n=0;
+  pool.forEach(x=>{if(me.hand.length>=HAND_MAX)return;me.disc.splice(me.disc.indexOf(x),1);delete x.dt;me.hand.push(x);n++;gained(G,me,'discard')});
+  c.drawn=n;L(G,'Soul Harvest - '+n+' card'+(n==1?'':'s')+' drawn');break}
+ case'CopyDestroyed':{if(c.rp)break;const side=a.Side||'Enemy';let dd=null;
+  for(let i=(G.dead||[]).length-1;i>=0;i--){const x=G.dead[i];if(x.uid===s.uid||!CD[x.id])continue;if(side=='Enemy'&&x.o==s.o)continue;if(side=='Friendly'&&x.o!=s.o)continue;dd=x;break}
+  if(!dd||s.gone||s.hp<=0)break;const dc=CD[dd.id],src=dd.d||dc;L(G,s.d.Name+' copies the abilities of '+dc.Name);
+  if(a.CopyHealth!==false&&dc.Health>s.mx){s.mx=dc.Health;s.hp=dc.Health;EV(G,{k:'trig',u:s.uid})}
+  // Copies every ability EXCEPT the "When Played" effect (Doppelganger already used its own): When Destroyed, When Sacrificed, While in Play, triggers, auras...
+  const cp=(src.Effects||[]).filter(e=>e.Trigger=='OnPlayed'?inZone(e,'Board'):(!zoneOf(e)||inZone(e,'Board')));
+  if(cp.length){s.d=Object.assign({},s.d,{Effects:(s.d.Effects||[]).concat(cp)});EV(G,{k:'trig',u:s.uid})}
+  break}
+ case'CopyLastEnemyCard':{if(c.rp)break;let h=null;
+  for(let i=G.hist.length-1;i>=0;i--){const x=G.hist[i];if(x.p==s.o||x.tf||x.uid===s.uid||!CD[x.id])continue;h=x;break}
+  if(!h)break;
+  if(me.hand.length<HAND_MAX){me.hand.push({uid:UID++,id:h.id,tok:1,...(a.CostChange?{red:-(a.CostChange)}:{})});L(G,s.d.Name+' conjures a copy of '+CD[h.id].Name);gained(G,me,'add')}break}
  case'DrawFromDiscard':for(let i=0;i<(a.Amount||1)&&me.disc.length&&me.hand.length<HAND_MAX;i++){me.hand.push(me.disc.pop());gained(G,me,'discard')}if(a.Later)me.dl=(me.dl||[]).concat('Discard');break;
  case'Reanimate':{
   const n=a.Count||1,ch=[];let ls=[0,1,2,3].filter(i=>!me.ln[i]);
@@ -436,6 +455,7 @@ case'LoseHealth':ts.forEach(t=>{if(t.h)dmg(G,t,a.Amount||1,null,2);else{t.hp-=a.
    if(RULES.summonTriggers&&!G.over)announce(G,nu)});break}
  case'MoveRight':{const i=s.lane+1;if(i<4&&!me.ln[i]&&me.ln[s.lane]==s){me.ln[s.lane]=null;place(G,me,s,i);if(a.ThenAttack){const v=G.p[1-s.o].ln[s.lane];if(v&&!v.gone&&v.hp>0&&engage(v,s))strike(G,s)}}break}
  case'SpendBlood':me.b=a.Amount!=null?Math.max(0,me.b-a.Amount):0;break
+ case'LoseBlood':ts.forEach(t=>{if(!t.h)return;const q=G.p[t.p],n=Math.max(0,Math.floor(a.Amount||0));if(n>0){q.b=Math.max(0,q.b-n);L(G,(t.p?'Enemy loses ':'You lose ')+n+' Blood');EV(G,{k:'snd',n:'debuff'})}});break
  case'AddResource':me.b=Math.min(me.b+(a.Amount||1),10);break
  case'Merge':{
   if(s.gone||s.hp<=0||!CD[a.Into])break;const rest=[];
@@ -495,8 +515,8 @@ function hpOne(G,u){if(!RULES.hpOneTrigger||G.over||!u||u.gone)return;
  G.p[u.o].ln.slice().forEach(w=>w&&!w.gone&&fire(G,'OnFriendlyUnitHpOne',w,{u}))}
 function killUnit(G,u,lane){const p=G.p[u.o],unk=u.kw.has('Unkillable')&&!u.sil;if(!G.sim&&!u.sacF&&p.ac)p.ac.lost++;
  EV(G,{k:'die',id:u.id,atk:u.atk,hp:Math.max(u.hp,0),o:p.i,lane,uid:u.uid,bt:G.bt?1:0});
- p.ln[lane]=null;u.gone=1;
- if(!unk&&u.id<900)p.disc.push({uid:UID++,id:u.id,nf:u.uid,unk:u.kw.has('Unkillable')?1:0,...(u.cr?{red:u.cr}:{}),...(u.cba?{ba:u.cba}:{})});
+ p.ln[lane]=null;u.gone=1;(G.dead=G.dead||[]).push({o:u.o,id:u.id,uid:u.uid,t:G.turn,...(u.d!==CD[u.id]?{d:u.d}:{})});
+ if(!unk&&u.id<900)p.disc.push({uid:UID++,id:u.id,nf:u.uid,dt:G.turn,unk:u.kw.has('Unkillable')?1:0,...(u.cr?{red:u.cr}:{}),...(u.cba?{ba:u.cba}:{})});
  fire(G,'OnDeath',u,{u});flushHurt(G,u);units(p).forEach(o=>fire(G,'OnFriendlyUnitDied',o,{u}));fireHand(G,'OnFriendlyUnitDied',p,{u,lane});
  if(unk){L(G,u.d.Name+' is Unkillable - back to hand');
   if(u.id<900||RULES.tokensReturnToHand){const card={uid:UID++,id:u.id,nf:u.uid,unk:1,...(u.cr?{red:u.cr}:{}),...(u.cba?{ba:u.cba}:{})};if(p.hand.length<HAND_MAX||RULES.fullHandRework){p.hand.push(card);gained(G,p,'unkillable');acn(G,p,'unk',1,3,'deathsticks')}else if(u.id<900)p.disc.push(card)}}}
@@ -529,7 +549,19 @@ function strike(G,u){if(!u||u.gone||G.over)return;
 function preTargets(G,u){if(!u||u.sil)return null;
  const e=(u.d.Effects||[]).find(x=>x.Trigger=='OnPreCombatLine'&&x.Actions.some(a=>a.Target=='TargetEnemyUnit'));
  const t=units(G.p[1-u.o]);return e&&t.length?t:null}
+// "Before Combat Here: You may move it to a Different Lane" (AI AL). preMoves = free lanes the unit may go to (null = no such ability / nowhere to go).
+// pre.mv[o]: a lane number = move there, null = stay, undefined = nobody was asked (bot / online guest) -> botMove decides.
+function preMoves(G,u){if(!u||u.sil||u.gone||u.hp<=0||G.over)return null;
+ if(!(u.d.Effects||[]).some(x=>x.Trigger=='OnPreCombatLine'&&x.Actions.some(a=>a.Type=='MoveLane')))return null;
+ const o=G.p[u.o],f=[0,1,2,3].filter(l=>l!==u.lane&&!o.ln[l]);return f.length?f:null}
+function botMove(G,u,opts){const op=G.p[1-u.o],sc=l=>{const e=op.ln[l];return e?(e.hp<=u.atk?3:1)+(e.atk<u.hp?1:0):(u.atk>0?2:0)};
+ let best=null,bs=sc(u.lane)+.5;opts.forEach(l=>{const s=sc(l)+R(100)/1000;if(s>bs){bs=s;best=l}});return best}
+function moveLane(G,u,to){const o=G.p[u.o];if(u.gone||o.ln[to]||o.ln[u.lane]!==u)return;
+ L(G,u.d.Name+' moves to lane '+(to+1));o.ln[u.lane]=null;place(G,o,u,to);aura(G)}
 function lane(G,i,pre){pre=pre||{};
+ [0,1].forEach(o=>{const u=G.p[o].ln[i];if(!u||G.over)return;const opts=preMoves(G,u);if(!opts)return;
+  let to=pre.mv?pre.mv[o]:undefined;if(to===undefined)to=botMove(G,u,opts);
+  if(to!=null&&opts.includes(to))moveLane(G,u,to)});
  [0,1].forEach(o=>{const u=G.p[o].ln[i];if(!u)return;let t=pre[o];if(!t&&preTargets(G,u))t=botPick(G,G.p[o],'e');
   if(o==1&&G.over&&G.over.hpWin){G.over=null;fire(G,'OnPreCombatLine',u,{t});chk(G)}else fire(G,'OnPreCombatLine',u,{t})});resolve(G);
  const A=G.p[0].ln[i],B=G.p[1].ln[i];if(!A&&!B)return;
@@ -541,7 +573,7 @@ function lane(G,i,pre){pre=pre||{};
   later(G,()=>{if(!G.over)fire(G,'OnAttackDone',x,{u:x})})};
  G.q=[];hit(A,B,aa,sa);hit(B,A,ba,sb);const q=G.q;G.q=null;q.forEach(f=>f());resolve(G);
  G.pc=1;[0,1].forEach(o=>{const u=G.p[o].ln[i];if(u&&!u.gone&&!G.over)fire(G,'OnPostCombatLine',u,{})});G.pc=0;resolve(G)}
-function endRound(G){G.p.forEach(p=>{if(!G.sim&&p.ln.every(Boolean)&&!p.hand.length)acu(G,p,'empty')});if(G.p.some(p=>units(p).some(u=>u.kw.has('Burning'))))EV(G,{k:'snd',n:'burn'});const burnHurt=[];G.p.forEach(p=>units(p).forEach(u=>{if(u.kw.has('Burning')){const ar=u.kw.has('Armored')?kwp(u,'Armored'):u.kw.has('Armor2')?2:0,n=Math.max(0,burnN(u)-ar);u.hp-=n;EV(G,{k:'dmg',u:u.uid,n,bt:1});if(n>0)burnHurt.push(u)}}));G.bt=1;burnHurt.forEach(u=>{if(!G.over&&!u.gone)hurtFire(G,u,{u})});resolve(G);G.bt=0;roundTrig(G,'OnEndOfRound');evolveAll(G)}
+function endRound(G){G.p.forEach(p=>{if(!G.sim&&p.ln.every(Boolean)&&!p.hand.length)acu(G,p,'empty')});if(G.p.some(p=>units(p).some(u=>u.kw.has('Burning'))))EV(G,{k:'snd',n:'burn'});const burnHurt=[];G.p.forEach(p=>units(p).forEach(u=>{if(u.kw.has('Burning')){const ar=u.kw.has('Armored')?kwp(u,'Armored'):u.kw.has('Armor2')?2:0,n=u.kw.has('Protected')?0:Math.max(0,burnN(u)-ar);u.hp-=n;EV(G,{k:'dmg',u:u.uid,n,bt:1});if(n>0)burnHurt.push(u)}}));G.bt=1;burnHurt.forEach(u=>{if(!G.over&&!u.gone)hurtFire(G,u,{u})});resolve(G);G.bt=0;roundTrig(G,'OnEndOfRound');evolveAll(G);G.p.forEach(p=>units(p).forEach(u=>{if(u.kw.has('Protected'))u.kw.delete('Protected')}))}
 function evolve(G,u){const c=(CD[u.id].Cost||0)+1,pool=poolOf({Type:'Unit',Cost:c}).filter(d=>!hasSub(d,'Piece'));if(!pool.length)return;
  const d=pool[R(pool.length)];L(G,u.d.Name+' evolves into '+d.Name);transformUnit(G,u,d.Id);u.kw.add('Evolving');EV(G,{k:'snd',n:'buff'});transPlay(G,u,{sm:1},0);resolve(G)}
 function evolveAll(G){if(G.over)return;[G.start,1-G.start].forEach(i=>G.p[i].ln.slice().forEach(u=>{if(u&&!u.gone&&u.hp>0&&!u.sil&&u.kw.has('Evolving')&&!G.over)evolve(G,u)}));resolve(G)}

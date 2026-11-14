@@ -118,7 +118,7 @@ const CARDS_EXP = [
     Id: 8,
     Name: "Knight",
     Type: "Unit",
-    Subtypes: ["Human"],
+    Subtypes: ["Human", "Machine"],
     Cost: 3,
     Attack: 2,
     Health: 3,
@@ -356,7 +356,7 @@ const CARDS_EXP = [
     Id: 23,
     Name: "Chainsaw Guy",
     Type: "Unit",
-    Subtypes: ["Human"],
+    Subtypes: ["Human", "Machine"],
     Cost: 6,
     Attack: 5,
     Health: 5,
@@ -1818,6 +1818,96 @@ const CARDS_EXP = [
     Health: 2,
     ActionPlay: true,
     Description: "Can be Played During Action Phase.",
+  },
+  {
+    Id: 113,
+    Name: "Soul Harvest",
+    Type: "Spell",
+    Cost: 5,
+    Description: "Draw the Friendly Units that were Destroyed last Round. Deal damage equal to the cards drawn to an Enemy Unit or Hero.",
+    Effects: [
+      { Trigger: "OnPlayed",
+        Actions: [
+          { Type: "DrawKilledLastRound" },
+          { Type: "DealDamage", Target: "TargetEnemyUnitOrHero", AmountFrom: "CardsDrawn" },
+        ] },
+    ],
+  },
+  {
+    Id: 114,
+    Name: "Doppelgänger",
+    Type: "Unit",
+    Subtypes: ["Aberration"],
+    Cost: 3,
+    Attack: 2,
+    Health: 2,
+    Description: "When Played: Conjure a copy of the last card the Enemy played. It costs 1 less.",
+    Effects: [
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "CopyLastEnemyCard", CostChange: -1 }] },
+    ],
+  },
+
+  {
+    Id: 115,
+    Name: "AI AL",
+    Type: "Unit",
+    Subtypes: ["Machine"],
+    Cost: 4,
+    Attack: 3,
+    Health: 1,
+    Keywords: ["Breakthrough"],
+    Description: "Before Combat Here: You may move it to a Different Lane.",
+    Effects: [
+      { Trigger: "OnPreCombatLine",
+        Actions: [{ Type: "MoveLane", Target: "Self" }] },
+    ],
+  },
+
+  {
+    Id: 116,
+    Name: "Ozymandias",
+    Type: "Unit",
+    Subtypes: ["Human"],
+    Cost: 7,
+    Keywords: ["SilenceImmune"],
+    Attack: 5,
+    Health: 5,
+    Description: "When Destroyed: Destroy an Enemy Unit.",
+    Effects: [
+      { Trigger: "OnDeath",
+        Targeting: "TargetEnemyUnit",
+        Actions: [{ Type: "DestroyUnit", Target: "TargetEnemyUnit" }] },
+    ],
+  },
+
+  {
+    Id: 117,
+    Name: "Stalinium",
+    Type: "Spell",
+    Cost: 3,
+    Description: "A Friendly Unit gets Protected this Round.",
+    Effects: [
+      { Trigger: "OnPlayed",
+        Targeting: "TargetFriendlyUnit",
+        Actions: [{ Type: "ApplyStatus", Target: "SelectedTarget", StatusKeyword: "Protected" }] },
+    ],
+  },
+
+  {
+    Id: 118,
+    Name: "Spend To Win",
+    Type: "Spell",
+    Cost: 1,
+    Description: "Spend all Your Blood. For each Blood spent, the Enemy Hero loses 1 Blood.",
+    Effects: [
+      { Trigger: "OnPlayed",
+        Actions: [
+          { Type: "LoseBlood", Target: "EnemyHero", Amount: { Count: "Blood" } },
+          { Type: "SpendBlood", Target: "FriendlyHero" },
+          // { Type: "DrawCard", Target: "FriendlyHero" },
+        ] },
+    ],
   },
 
   // ==================== ORIGINAL TOKENS (unchanged) ====================

@@ -23,7 +23,7 @@ function refreshDecks(){ALL=DECKS.concat(loadC().map(d=>({...d,custom:1})));
  if(window.renderPickers)renderPickers()}
 refreshDecks();
 const ROM=n=>{if(n<=0)return'0';let s='';for(const[v,r]of[[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']])while(n>=v){s+=r;n-=v}return s};
-const KWD={Flying:'A Unit with Flying skips non-Flying Units and attacks the Hero directly. Only Flying Units can block it.',Armored:'A Unit with Armored takes {n} less damage from each hit.',Unkillable:'When a Unit with Unkillable would be destroyed, it returns to its owner\'s Hand instead.',SoulGuard:'When a Unit with SoulGuard would be destroyed, it survives with 1 HP instead and loses a stack of SoulGuard.',SplashDamage:'When a Unit with Splash attacks, it also deals {n} damage to Enemy Units in the adjacent lanes.',Burning:'A Unit with Burning takes damage equal to its Burning stacks at the end of each round. Applying Burning again adds a stack.',Marked:'A Marked Unit takes double damage.',Stunned:'A Stunned Unit skips its next attack.',Breakthrough:'When a Unit with Breakthrough attacks a Unit, it also damages the Enemy Hero.',Unactionable:'A Unit with Unactionable can\'t be targeted or affected by Enemy Spells.',SilenceImmune:'A Unit with Indomitable can\'t be Silenced.',BounceImmune:'A Unit with Anchored can\'t be Bounced.',Lifesteal:'When a Unit with Lifesteal deals damage, it heals its owner\'s Hero for that amount.',Deadly:'A Unit with Deadly destroys any Unit it damages.',Taunt:'While a Unit with Taunt is in play, damage aimed at its owner\'s Hero hits it instead.',Evolving:'At the end of each round, a Unit with Evolving transforms into a random Unit that costs 1 more, and keeps Evolving. Silence removes it.'};
+const KWD={Flying:'A Unit with Flying skips non-Flying Units and attacks the Hero directly. Only Flying Units can block it.',Armored:'A Unit with Armored takes {n} less damage from each hit.',Unkillable:'When a Unit with Unkillable would be destroyed, it returns to its owner\'s Hand instead.',SoulGuard:'When a Unit with SoulGuard would be destroyed, it survives with 1 HP instead and loses a stack of SoulGuard.',SplashDamage:'When a Unit with Splash attacks, it also deals {n} damage to Enemy Units in the adjacent lanes.',Burning:'A Unit with Burning takes damage equal to its Burning stacks at the end of each round. Applying Burning again adds a stack.',Marked:'A Marked Unit takes double damage.',Stunned:'A Stunned Unit skips its next attack.',Breakthrough:'When a Unit with Breakthrough attacks a Unit, it also damages the Enemy Hero.',Unactionable:'A Unit with Unactionable can\'t be targeted or affected by Enemy Spells.',SilenceImmune:'A Unit with Indomitable can\'t be Silenced.',BounceImmune:'A Unit with Anchored can\'t be Bounced.',Lifesteal:'When a Unit with Lifesteal deals damage, it heals its owner\'s Hero for that amount.',Deadly:'A Unit with Deadly destroys any Unit it damages.',Taunt:'While a Unit with Taunt is in play, damage aimed at its owner\'s Hero hits it instead.',Evolving:'At the end of each round, a Unit with Evolving transforms into a random Unit that costs 1 more, and keeps Evolving. Silence removes it.',Protected:'A Protected Unit can\'t be hurt until the end of the round. Silence removes it.'};
 const TERMS=[
  ['Sacrifice',/\bSacrifice[ds]?\b/i,'When you Sacrifice a Unit, you destroy one of your own Units.'],
  ['Blood',/\bBlood\b/i,'Blood is the resource used to play cards. It refills every round, up to 10.'],
@@ -35,7 +35,7 @@ const TERMS=[
  ['Move Right',/\bMove Right\b/i,'When a Unit Moves Right, it moves to the next lane on the right, if that lane is empty.'],
  ['Exploding Damage',/\bExploding (Damage|Present)\b/i,'When a card has Exploding Damage, a copy of it goes to the opponent\'s Hand, costing 1 more.'],
  ['Mark',/\bMark(ed)?\b/i,'Marked'],['Stun',/\bStun(ned)?\b/i,'Stunned'],['Burning',/\bBurning\b/i,'Burning'],
- ['SoulGuard',/Soul ?Guard/i,'SoulGuard'],['Unkillable',/\bUnkillable\b/i,'Unkillable'],['Flying',/\bFlying\b/i,'Flying'],['Armored',/\bArmored\b/i,'Armored'],['Unactionable',/\bUnactionable\b/i,'Unactionable'],['SilenceImmune',/\bIndomitable\b/i,'SilenceImmune'],['BounceImmune',/\bAnchored\b/i,'BounceImmune'],['Lifesteal',/\bLifesteal\b/i,'Lifesteal'],['Taunt',/\bTaunt\b/i,'Taunt'],['Deadly',/\bDeadly\b/i,'Deadly'],['Evolving',/\bEvolving\b/i,'Evolving'],
+ ['SoulGuard',/Soul ?Guard/i,'SoulGuard'],['Unkillable',/\bUnkillable\b/i,'Unkillable'],['Flying',/\bFlying\b/i,'Flying'],['Armored',/\bArmored\b/i,'Armored'],['Unactionable',/\bUnactionable\b/i,'Unactionable'],['SilenceImmune',/\bIndomitable\b/i,'SilenceImmune'],['BounceImmune',/\bAnchored\b/i,'BounceImmune'],['Lifesteal',/\bLifesteal\b/i,'Lifesteal'],['Taunt',/\bTaunt\b/i,'Taunt'],['Deadly',/\bDeadly\b/i,'Deadly'],['Evolving',/\bEvolving\b/i,'Evolving'],['Protected',/\bProtected\b/i,'Protected'],
  ['Merge',/\bMerge[sd]?\b/i,'When all the pieces are on your side, they Merge into one Unit in the Titan Torso\'s lane.']];
 const KNAME={SplashDamage:'Splash',BurnSource:'Burn Source',SilenceImmune:'Indomitable',BounceImmune:'Anchored'};
 const kwNum=(d,k)=>(d.KeywordParams||{})[k]||(k=='Armored'||k=='SplashDamage'?1:'');
@@ -43,7 +43,7 @@ const HIDDEN_KW=new Set(['BurnSource']); // internal keywords: work in the engin
 const shownKw=a=>a.filter(k=>!HIDDEN_KW.has(k));
 const kwLabel=(d,k,u)=>k=='Armor2'?'Armored 2':k=='Stunned'&&u&&(u.stn||0)>1?'Stunned '+u.stn:k=='Burning'&&u&&(u.bn||0)>1?'Burning '+u.bn:k=='SoulGuard'&&u&&(u.sgn||0)>1?'SoulGuard '+u.sgn:(KNAME[k]||k)+(kwNum(d,k)!==''&&(k=='Armored'||k=='SplashDamage')?' '+kwNum(d,k):'');
 const BAD=new Set(['Burning','Marked','Stunned']);
-const hl=t=>(t||'').replace(/\b(Sacrifice[d]?|Mark(?:ed)?|Stunned?|Burning|SoulGuard|Unkillable|Unactionable|Lifesteal|Taunt|Deadly|Evolving|Flying|Merge[sd]?)\b/g,'<span class="k u">$1</span>').replace(/(\d+ )?\bBlood\b/g,'<span class="k">$&</span>');
+const hl=t=>(t||'').replace(/\b(Sacrifice[d]?|Mark(?:ed)?|Stunned?|Burning|SoulGuard|Unkillable|Unactionable|Lifesteal|Taunt|Deadly|Evolving|Protected|Flying|Merge[sd]?)\b/g,'<span class="k u">$1</span>').replace(/(\d+ )?\bBlood\b/g,'<span class="k">$&</span>');
 const MISSING=new Set(),IMGX=window.RJ_IMG||{};
 const artFile=id=>'img/'+(IMGX[+id]||id+'.webp');
 const artSrc=id=>MISSING.has(+id)?'img/missing_texture.webp':artFile(id);
@@ -186,7 +186,7 @@ function render(){
  const hs=h=>RULES.fullHandRework?`${h.length}/${HAND_MAX}`:h.length;$('ecn').textContent=`hand ${hs(op.hand)} - deck ${op.deck.length}`;$('pcn').textContent=`hand ${hs(me.hand)} - deck ${me.deck.length}`;$('edots').innerHTML=dots(op);$('pdots').innerHTML=dots(me);
  const top=me.disc[me.disc.length-1];$('pile').className=top?'':'empty';$('pile').innerHTML=top?cardHTML(top,0):'';$('pc').textContent=me.disc.length+'x';$('dc').textContent=me.deck.length?me.deck.length+'x':'Fatigue '+((me.fat||0)+1);
  const placing=mine()&&sel!=null&&!pend&&me.hand[sel]&&CD[me.hand[sel].id].Type=='Unit';
- for(const row of[1,0])for(let i=0;i<4;i++){const u=G.p[row].ln[i];const free=(placing&&!u&&row==0&&canPlay(G,me,sel,i))||(!u&&row==0&&tg.includes(i)&&pend&&!pend.pre&&kind()=='L')||(pend&&!pend.pre&&kind()=='P');
+ for(const row of[1,0])for(let i=0;i<4;i++){const u=G.p[row].ln[i];const free=(placing&&!u&&row==0&&canPlay(G,me,sel,i))||(!u&&row==0&&tg.includes(i)&&pend&&!pend.pre&&kind()=='L')||(pend&&!pend.pre&&kind()=='P')||(pend&&pend.pre&&pend.mv&&row==0&&!u&&pend.mv.includes(i));
   h+=`<div class="slot ${free?'hl':''} ${flash==i?'fl':''}" data-r="${row}" data-i="${i}" style="left:${LX[i]}px;top:${LY[row?0:1]}px">${u?cardHTML(u,1,(row?'e ':'')+(tg.includes(u)?'tgt':'')+(pend&&pend.multi&&pend.multi.includes(u)?' msel':''),`data-u="${u.uid}"`):`<span class="num">${ROM(i+1)}</span>`}</div>`}
  if(flash>=0)h='<div class="laneband" style="left:'+(LX[flash]-14)+'px"></div>'+h;
  $('board').innerHTML=h+'<div id="castlbl"></div>';
@@ -363,7 +363,7 @@ function askExt(it){return new Promise(res=>{let done=false,iv=0;
  busy=false;nextPick()})}
 async function askPending(my){const was=busy;busy=true;
  while(G&&!G.over&&my==gid&&G.pq&&G.pq.length){const it=G.pq.shift();
-  if(it.k=='eff'&&(!it.u||it.u.gone||it.u.hp<=0))continue;
+  if(it.k=='eff'&&!it.death&&(!it.u||it.u.gone||it.u.hp<=0))continue;   // 'When Destroyed' items belong to a unit that is already gone
   const ow=it.k=='eff'?it.u.o:it.pi,ks=apicks(G,G.p[ow],it.d,[],null);let pk=[];
   if(ks.length){
    if(ow==0)pk=await askExt(it);
@@ -383,6 +383,10 @@ document.addEventListener('click',e=>{if(!G||G.over||$('game').style.display!='b
  const ct=t.closest(CARDSEL);
  if(!ct){if(stickyZoom)unpin()}
  else if(!ct.closest('#zoom')&&!ct.closest('#pile')&&!ct.closest('.fly')&&!(pend&&ct.closest('#board')))pinCard(ct);   // (a click that picks a target is not a zoom click)
+ if(pend&&pend.pre&&pend.mv){   // AI AL: pick a free lane to move to (or "Stay")
+  if(t.dataset.nomove){const r=pendRes;pend=null;say('');r(null)}
+  else if(sl&&+sl.dataset.r==0&&!G.p[0].ln[+sl.dataset.i]&&pend.mv.includes(+sl.dataset.i)){const r=pendRes,ln=+sl.dataset.i;pend=null;say('');r(ln)}
+  return}
  if(pend&&pend.pre){if(sl){const u2=G.p[+sl.dataset.r].ln[+sl.dataset.i];if(u2&&validTargets().includes(u2)){const r=pendRes;pend=null;say('');r(u2)}}return}
  if(t.dataset.skip&&pend&&!pend.pre&&mine()){pend.got.push(NOSAC);nextPick();return}
  if(t.dataset.ch!=null&&pend&&!t.disabled){pend.got.push(+t.dataset.ch);nextPick();return}
@@ -467,6 +471,12 @@ function choosePre(u){return new Promise(r=>{   // online: PRE_SEC seconds, then
  const show=()=>say(`<b>${u.d.Name}</b> - before combat: choose an enemy unit (red outline)`+(NET?` - <b style="color:#e3242b">${left}s</b>`:''));
  pendRes=fin;pend={ks:['e'],got:[],pre:true};render();show();
  if(NET)iv=setInterval(()=>{if(done||!pend||!pend.pre){clearInterval(iv);return}if(--left<=0){pend=null;say('');render();fin(null)}else show()},1000)})}
+function chooseMove(u,opts){return new Promise(r=>{   // "Before Combat: you may move to a different lane" - click a free lane or Stay
+ let left=PRE_SEC,iv=0,done=false;
+ const fin=v=>{if(done)return;done=true;clearInterval(iv);pendRes=null;r(v)};
+ const show=()=>say(`<b>${u.d.Name}</b> - before combat: move to another lane? (white outline) <button data-nomove="1">Stay</button>`+(NET?` - <b style="color:#e3242b">${left}s</b>`:''));
+ pendRes=fin;pend={ks:['L'],got:[],pre:true,mv:opts};render();show();
+ if(NET)iv=setInterval(()=>{if(done||!pend||!pend.pre){clearInterval(iv);return}if(--left<=0){pend=null;say('');render();fin(null)}else show()},1000)})}
 let LUN=[];
 function strikeLane(i){LUN=[];const A=G.p[0].ln[i],B=G.p[1].ln[i],both=!!(A&&B);
  [[0,A],[1,B]].forEach(([r,u])=>{if(!u||u.atk<=0||u.kw.has('Stunned'))return;
@@ -477,7 +487,11 @@ function strikeLane(i){LUN=[];const A=G.p[0].ln[i],B=G.p[1].ln[i],both=!!(A&&B);
 function recoil(){LUN.forEach(x=>{const el=document.querySelector(`#board [data-u="${x.uid}"]`);if(!el)return;el.style.zIndex=6;
   el.animate([{transform:`translateY(${x.off}px) scale(1.08)`},{transform:'translateY(0) scale(1)'}],{duration:480,easing:'cubic-bezier(.2,.75,.25,1)'})});LUN=[]}
 async function combat(my){for(let i=0;i<4&&!G.over&&my==gid;i++){flash=i;render();
-  const pre={},opts=preTargets(G,G.p[0].ln[i]);
+  const pre={mv:{0:null,1:null}};   // lane moves (AI AL) are all settled here, before the attack animation; lane() must not decide again
+  for(const o of [0,1]){const mu=G.p[o].ln[i],mo=preMoves(G,mu);if(!mo)continue;
+   const to=o==0?await chooseMove(mu,mo):botMove(G,mu,mo);if(my!=gid)return;
+   if(to!=null&&mo.includes(to)){moveLane(G,mu,to);render();anim();if(NET)netPush();await sleep(500)}}
+  const opts=preTargets(G,G.p[0].ln[i]);
   if(opts)pre[0]=opts.length==1?opts[0]:await choosePre(G.p[0].ln[i]);
   if(NET){const o1=preTargets(G,G.p[1].ln[i]);if(o1)pre[1]=o1.length==1?o1[0]:await askPre(i,o1);if(my!=gid)return}
   say('');render();
