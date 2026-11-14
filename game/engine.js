@@ -67,7 +67,14 @@ const kwp=(u,k,df)=>((u.d.KeywordParams||{})[k])||df||1;
 const burnN=u=>u&&u.kw&&u.kw.has('Burning')?Math.max(1,u.bn||0):0;
 const sgN=u=>u&&u.kw&&u.kw.has('SoulGuard')?Math.max(1,u.sgn||0):0;
 function mk(id,o){const d=CD[id];return{uid:UID++,id,d,o,atk:d.Attack||0,hp:d.Health||0,mx:d.Health||0,kw:new Set(d.Keywords||[]),lane:-1}}
-const FAIR_HAND=true,FAIR_MAXCOST=1;
+/* ===== GAME-START SETTINGS - edit these numbers =====
+   START_MANA : mana you have in round 1 (it still goes up by 1 every round, max 10).
+   FAIR_MAXCOST: the opening hand is guaranteed to hold a card costing this much or less (1 = a 1-drop, 2 = a 1- or 2-drop).
+   'normal' is the regular game, 'exp' is used when "Experimental changes" is on in Settings. */
+const START_MANA={normal:1,exp:1},FAIR_MAX={normal:1,exp:1};
+const FAIR_HAND=true;
+const RJ_MODE=(typeof window!=='undefined'&&window.RJ_EXP)?'exp':'normal';
+const MANA_BONUS=START_MANA[RJ_MODE]-1,FAIR_MAXCOST=FAIR_MAX[RJ_MODE];
 function fairOpen(G,p){
  for(let k=0;k<3;k++)draw(G,p,1);
  const cheap=c=>CD[c.id].Cost<=FAIR_MAXCOST;
@@ -87,7 +94,7 @@ function mulligan(G,p,ids){const out=p.hand.filter(c=>ids.includes(c.uid));p.han
 function roundTrig(G,trig){if(G.over)return;
  [G.start,1-G.start].forEach(i=>G.p[i].ln.slice().forEach(u=>{if(u&&!u.gone&&u.hp>0&&!G.over)fire(G,trig,u,{u})}));resolve(G)}
 function startRound(G){G.turn++;G.start=(G.turn%2?0:1)^(G.fp|0);G.step=0;setStep(G);
- G.p.forEach(p=>{if(p.ac)Object.assign(p.ac,{spent:0,drawn:0,sac:0,unk:0,bnc:0});p.mb=Math.min(10,G.turn)+(G.en&&p.i==1?G.en.mod.mana:0);p.b=p.mb;if(G.turn>1){draw(G,p);if(G.en&&p.i==1)for(let k=0;k<G.en.mod.draw;k++)draw(G,p)}
+ G.p.forEach(p=>{if(p.ac)Object.assign(p.ac,{spent:0,drawn:0,sac:0,unk:0,bnc:0});p.mb=Math.min(10,G.turn+MANA_BONUS)+(G.en&&p.i==1?G.en.mod.mana:0);p.b=p.mb;if(G.turn>1){draw(G,p);if(G.en&&p.i==1)for(let k=0;k<G.en.mod.draw;k++)draw(G,p)}
   if(p.dl&&p.dl.length){const q=p.dl;p.dl=[];L(G,(p.i?'Enemy':'You')+' draw'+(p.i?'s':'')+' '+q.length+' extra card'+(q.length>1?'s':'')+' (Expectancy)');
    q.forEach(src=>{if(src=='Discard'){if(p.disc.length&&p.hand.length<HAND_MAX){p.hand.push(p.disc.pop());gained(G,p,'discard')}}else draw(G,p)})}});
  L(G,'— Round '+G.turn+' —');if(G.en)bossRound(G);regainAtk(G);roundTrig(G,'OnStartOfRound');
@@ -136,7 +143,7 @@ const bossNext=G=>(G.en.tier+1)*20;
 function bossRound(G){const e=G.en,b=G.p[1],want=Math.floor(e.dealt/20);e.rd=0;
  while(e.tier<want){e.tier++;let k=bossTierKind(e.tier);if(k=='mana'&&e.mod.mana>=BOSS_MANA_CAP)k='stat';e.mod[k]++;
   const t='Boss upgrade '+e.tier+': '+BOSS_TXT[k];e.log.push(t);L(G,t);EV(G,{k:'snd',n:'buff'});EV(G,{k:'boss',h:'BOSS UPGRADE '+e.tier,t:'The Boss '+BOSS_TXT[k]})}
- b.mb=Math.min(10,G.turn)+e.mod.mana;b.b=b.mb;
+ b.mb=Math.min(10,G.turn+MANA_BONUS)+e.mod.mana;b.b=b.mb;
  const pool=CARDS.filter(c=>c.Id<900&&!CARDS_NOCONJ(c)&&!BOSS_BAN.includes(c.Id));
  for(let i=0;i<e.mod.conj;i++){if(b.hand.length>=HAND_MAX)break;const d=pool[R(pool.length)];b.hand.push({uid:UID++,id:d.Id,tok:1});L(G,'Boss conjures '+d.Name);gained(G,b,'add')}
  if(e.mod.pulse){const us=units(G.p[0]).filter(u=>u.hp>0&&!u.gone);const t=us.length?us[R(us.length)]:H(0);L(G,'Boss pulse: '+e.mod.pulse+' damage');dmg(G,t,e.mod.pulse,null,2);resolve(G)}}
@@ -157,6 +164,14 @@ function deferEff(G,u,e,ctx){if(u.gone||!askOnE(G,u.o))return false;
  const d={Name:u.d.Name,Id:u.id,Type:'Unit',Effects:[e],ExU:u};
  if(!apicks(G,G.p[u.o],d,[],null).length)return false;
  pq(G).push({k:'eff',u,e,ctx,d});return true}
+// "Friendly Unit or Your Hero" effects with no chosen target (bot, simulations, timeouts): heal whoever is missing the most.
+function autoFH(G,u){const p=G.p[u.o],us=units(p).filter(x=>x!==u&&!x.gone&&x.hp>0&&x.hp<x.mx).sort((a,b)=>(b.mx-b.hp)-(a.mx-a.hp));
+ return us.length&&(us[0].mx-us[0].hp)>(p.mhp||20)-p.hp?us[0]:H(u.o)}
+// When Destroyed effects that let you choose a target (Black Rabbitlings): parked so the owner can pick once the board has settled.
+function deferDeath(G,u,e,ctx){if(!askOnE(G,u.o))return false;
+ const d={Name:u.d.Name,Id:u.id,Type:'Unit',Effects:[Object.assign({},e,{Trigger:'OnPlayed'})],ExU:u};
+ if(!req(G,G.p[u.o],'fh',null,null,false,u).some(x=>!x.h))return false;   // only the hero to pick: no question needed
+ pq(G).push({k:'eff',u,e,ctx,d,death:1});return true}
 function deferRp(G,s,h,e,acts){if(s.gone||!askOnE(G,s.o))return false;
  const e2=Object.assign({},e,{Targeting:e.Targeting=='Choice'?null:e.Targeting,ChoiceLabels:null,Actions:acts}),
   d={Name:s.d.Name+' ('+CD[h.id].Name+')',Id:s.id,Type:'Unit',Effects:[e2],ExU:s};
@@ -174,6 +189,9 @@ function runItem(G,it,pk){pk=pk||[];if(G.over)return;
  if(it.k=='spell2'){const p=G.p[it.pi],d=it.d,ctx=pickCtx(apicks(G,p,d,pk,null),pk,{});
   if(ctx.t&&!ctx.t.h&&(ctx.t.gone||ctx.t.hp<=0))delete ctx.t;
   L(G,'Dual Wield - '+d.Name+' is played again');fire(G,'OnPlayed',{d,o:p.i,sp:1,lane:-1,uid:0},ctx);resolve(G);return}
+ if(it.death){const u=it.u,p=G.p[u.o],ctx=pickCtx(apicks(G,p,it.d,pk,null),pk,Object.assign({},it.ctx));
+  if(!ctx.t||(!ctx.t.h&&(ctx.t.gone||ctx.t.hp<=0)))ctx.t=autoFH(G,u);
+  it.e.Actions.forEach(a=>act(G,a,u,ctx));resolve(G);return}
  const u=it.u;if(!u||u.gone||u.hp<=0)return;
  const p=G.p[u.o],ks=apicks(G,p,it.d,pk,null),ctx=Object.assign({},it.ctx),hasS=ks.includes('S');delete ctx.ask;
  if(hasS)delete ctx.nosac;pickCtx(ks,pk,ctx);if(hasS&&!ctx.sac)ctx.nosac=1;
@@ -189,6 +207,7 @@ function fire(G,trig,u,ctx){if(!u||u.sil||G.over)return;ctx=ctx||{};
   if(SELF.includes(trig)&&!e.Condition&&ctx.u&&ctx.u!==u)return;
   if(!cond(e.Condition,u,ctx,G))return;
   if(trig=='OnPlayed'&&ctx.ask&&deferEff(G,u,e,ctx))return;
+  if(e.Targeting=='TargetFriendlyUnitOrHero'&&!ctx.t){if(trig=='OnDeath'&&deferDeath(G,u,e,ctx))return;ctx=Object.assign({},ctx,{t:autoFH(G,u)})}
   const s0=!G.sim&&u.uid?gsig(G):null;
   if(e.Targeting=='Choice'&&e.ChoiceLabels&&e.ChoiceLabels.length==e.Actions.length)act(G,e.Actions[ctx.ch||0],u,ctx);
   else e.Actions.forEach(a=>act(G,a,u,ctx));
@@ -258,7 +277,7 @@ function tg0(G,a,s,c){const me=G.p[s.o],op=G.p[1-s.o];
  case'EnemyUnitsNearLane':{const l0=c.pl!=null?c.pl:bestLane(G,s.o);return units(op).filter(x=>Math.abs(x.lane-l0)<=1&&aoeOK(x,s))}
  case'OppositeEnemyUnit':{const u=op.ln[s.lane];return u&&!shield(u,s)?[u]:[]}
  case'Sacrificer':{const w=c.by;return w&&!w.gone&&w.hp>0&&G.p[w.o].ln[w.lane]===w&&!shield(w,s)?[w]:[]}
- case'TargetEnemyUnit':case'SelectedTarget':case'TargetFriendlyUnit':case'TargetAnyUnit':case'TargetEnemyUnitOrHero':
+ case'TargetEnemyUnit':case'SelectedTarget':case'TargetFriendlyUnit':case'TargetAnyUnit':case'TargetEnemyUnitOrHero':case'TargetFriendlyUnitOrHero':
   if(c.t)return shield(c.t,s)?[]:[c.t];
   if(a.Target=='TargetEnemyUnit'){const u=op.ln[s.lane],vs=units(op).filter(x=>!shield(x,s)),t=u&&!shield(u,s)?u:vs[R(vs.length)];return t?[t]:[]}
   return[]}
@@ -518,7 +537,7 @@ function endRound(G){G.p.forEach(p=>{if(!G.sim&&p.ln.every(Boolean)&&!p.hand.len
 function evolve(G,u){const c=(CD[u.id].Cost||0)+1,pool=poolOf({Type:'Unit',Cost:c}).filter(d=>!hasSub(d,'Piece'));if(!pool.length)return;
  const d=pool[R(pool.length)];L(G,u.d.Name+' evolves into '+d.Name);transformUnit(G,u,d.Id);u.kw.add('Evolving');EV(G,{k:'snd',n:'buff'});transPlay(G,u,{sm:1},0);resolve(G)}
 function evolveAll(G){if(G.over)return;[G.start,1-G.start].forEach(i=>G.p[i].ln.slice().forEach(u=>{if(u&&!u.gone&&u.hp>0&&!u.sil&&u.kw.has('Evolving')&&!G.over)evolve(G,u)}));resolve(G)}
-const SELKIND={TargetEnemyUnit:'e',TargetFriendlyUnit:'f',TargetAnyUnit:'a',TargetEnemyUnitOrHero:'eh'};
+const SELKIND={TargetEnemyUnit:'e',TargetFriendlyUnit:'f',TargetAnyUnit:'a',TargetEnemyUnitOrHero:'eh',TargetFriendlyUnitOrHero:'fh'};
 const DEBUFF_ST=['Marked','Burning','Stunned'];
 function selKind(a,e){const tt=a.Target,T=a.Type;if(a.Select)return a.Select;
  if(SELKIND[tt])return SELKIND[tt];if(tt!='SelectedTarget')return null;
@@ -542,7 +561,7 @@ function picks(d,noSac){const out=[];out.f=[];let hasT=0,hasE=0,hasF=0,hasA=0;co
 const NOSAC=-1;
 const optSac=d=>(d.Effects||[]).some(e=>e.Trigger=='OnPlayed'&&e.Actions.some(a=>a.Type=='SacrificeUnit'&&a.Optional));
 function req(G,p,k,f,ex,sp,xu){const me=units(p).filter(x=>x!==xu),op=units(G.p[1-p.i]).filter(u=>!(sp&&unact(u))),fl=l=>f?l.filter(x=>unitOK(x,f)):l;
- return k=='L'?[0,1,2,3].filter(i=>!p.ln[i]&&!(ex||[]).includes(i)):k=='P'?[0,1,2,3]:k=='e'?fl(op):(k=='f'||k=='S'||k=='M')?fl(me):k=='a'?fl([...me,...op]):k=='eh'?[...fl(op),H(1-p.i)]:k=='D'?p.deck:k=='C'?[0,1]:[]}
+ return k=='L'?[0,1,2,3].filter(i=>!p.ln[i]&&!(ex||[]).includes(i)):k=='P'?[0,1,2,3]:k=='e'?fl(op):(k=='f'||k=='S'||k=='M')?fl(me):k=='a'?fl([...me,...op]):k=='eh'?[...fl(op),H(1-p.i)]:k=='fh'?[...fl(me),H(p.i)]:k=='D'?p.deck:k=='C'?[0,1]:[]}
 const actKind=(a,e)=>selKind(a,e);
 function apicks(G,p,d,got,ln){got=got||[];const out=[];out.f=[];
  let noSac=picks(d).includes('S')&&!req(G,p,'S',null,null,false,d.ExU).length;
@@ -598,6 +617,7 @@ function botPlanBasic(G,p){const op=G.p[1-p.i];
  for(const {c,i} of order){const d=CD[c.id];if(!playable(G,p,i))continue;
   const pick=ln=>{const pk=[];for(let n=0;n<8;n++){const ks=apicks(G,p,d,pk,ln);if(ks.length<=pk.length)break;const kk=ks[pk.length];pk.push(botPick(G,p,kk,kk=='L'?(ln!=null?[ln]:[]).concat(pk.filter((_,j)=>ks[j]=='L')):null,d.Type=='Spell',ks.f[pk.length]))}return pk};
   if(d.Type=='Spell'){
+   if(c.id==914)continue;   // Ashes from Clashes only hurts your own side
    if(picks(d).includes('S')&&units(p).length<2)continue;
    if((d.Effects||[]).some(e=>e.Trigger=='OnPlayed'&&e.Actions.some(a=>['AllEnemyUnits','AllUnitsOnBoard'].includes(a.Target)&&['DealDamage','DestroyUnit','Silence','BuffStats','ApplyStatus'].includes(a.Type)))&&units(op).length<2)continue;
    if((d.Effects||[]).some(e=>e.Actions.some(a=>a.Type=='Reanimate'&&!(p.disc.some(x=>CD[x.id].Type=='Unit'&&cardOK(CD[x.id],a.Filter))&&p.ln.some(x=>!x)))))continue;

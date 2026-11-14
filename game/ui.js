@@ -8,10 +8,12 @@ const show=id=>{['menu','bld','game'].forEach(k=>$(k).style.display=k==id?(k=='m
  if(id!='game'){const e=$('setmenu');if(e)e.style.display='none'}};
 document.querySelectorAll('.ring').forEach(c=>{const x=c.getContext('2d');for(let i=0;i<60;i++)for(let j=0;j<60;j++){const r=Math.hypot(i-29.5,j-29.5);
  if(r<=29.6&&r>=25.6){x.fillStyle=r>=27.4?'#2c2c2c':'#222';x.fillRect(i,j,1,1)}}});
-const loadC=()=>{try{return JSON.parse(localStorage.getItem('rj_decks')||'[]')}catch(e){return[]}};
-const saveC=a=>{try{localStorage.setItem('rj_decks',JSON.stringify(a))}catch(e){alert('Could not save (storage blocked)')}};
-const getDef=()=>{try{return localStorage.getItem('rj_default')}catch(e){return null}};
-const putDef=n=>{try{n?localStorage.setItem('rj_default',n):localStorage.removeItem('rj_default')}catch(e){}};
+// Custom decks (and the default-deck choice) are stored separately for the normal and the Experimental version. Normal keeps the original keys, so nothing saved before is lost.
+const DKEY=window.RJ_EXP?'rj_decks_exp':'rj_decks',DDEF=window.RJ_EXP?'rj_default_exp':'rj_default';
+const loadC=()=>{try{return JSON.parse(localStorage.getItem(DKEY)||'[]')}catch(e){return[]}};
+const saveC=a=>{try{localStorage.setItem(DKEY,JSON.stringify(a))}catch(e){alert('Could not save (storage blocked)')}};
+const getDef=()=>{try{return localStorage.getItem(DDEF)}catch(e){return null}};
+const putDef=n=>{try{n?localStorage.setItem(DDEF,n):localStorage.removeItem(DDEF)}catch(e){}};
 const STAR='<svg class="star" viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M7 1h2v4h5v2h-2v2h2v2h-3v4H9v-3H7v3H4v-4H1V9h2V7H1V5h5z"/></svg>';
 function refreshDecks(){ALL=DECKS.concat(loadC().map(d=>({...d,custom:1})));
  const dn=getDef(),di=dn==null?-1:ALL.findIndex(d=>d.n==dn);
@@ -157,7 +159,7 @@ function autoSkip(){
   if(G&&!G.over&&G.step<3&&mine()&&!pend&&sel==null&&!castMode&&noMoves())endNow();else asClear()},AUTOSKIP_MS)}
 setInterval(autoSkip,400);
 // ===== END AUTO-SKIP =====
-const ASK={L:'Choose a free lane to summon into',M:'Choose units to sacrifice',e:'Choose an enemy unit',f:'Choose a friendly unit',S:'Choose a unit to sacrifice',a:'Choose any unit',D:'Choose a card from your deck',eh:'Choose an enemy unit or the enemy hero',P:'Choose a lane - enemy units there and in the adjacent lanes are affected'};
+const ASK={L:'Choose a free lane to summon into',M:'Choose units to sacrifice',e:'Choose an enemy unit',f:'Choose a friendly unit',S:'Choose a unit to sacrifice',a:'Choose any unit',D:'Choose a card from your deck',eh:'Choose an enemy unit or the enemy hero',fh:'Choose a friendly unit or your hero',P:'Choose a lane - enemy units there and in the adjacent lanes are affected'};
 const LX=[36,332,624,916],LY=[88,432];
 const mine=()=>(G.act==0||(pend&&pend.ext))&&!busy&&!G.over;
 const pdef=()=>pend.ext?pend.ext.d:CD[G.p[0].hand[pend.ci].id];   // the card (or pseudo card) whose picks are being made
@@ -177,6 +179,7 @@ function render(){
  $('phase').textContent='Phase : '+(G.step>=3?'Combat':PH[G.allow]);$('round').textContent='Round : '+G.turn;
  {const eh=$('endl');if(G.en){const e=G.en,lv=Math.floor(e.dealt/20);eh.style.display='block';eh.innerHTML=`ENDLESS<br><b>Score ${e.dealt}</b> <span class="ebst">Best ${Math.max(e.dealt,+lsGet('rj_endless_best')||0)}</span><small>Boss level ${lv} - next upgrade at ${(lv+1)*20} damage</small>`;eh.title=e.log.length?e.log.join('\n'):'No boss upgrades yet'}else eh.style.display='none'}
  $('ehp').textContent=Math.max(0,op.hp);$('php').textContent=Math.max(0,me.hp);
+ $('ehero').classList.toggle('htg',tg.some(x=>x&&x.h&&x.p==1));$('phero').classList.toggle('htg',tg.some(x=>x&&x.h&&x.p==0));
  $('ehp').className='hpn'+(op.hp<=7?' lo':'');$('php').className='hpn'+(me.hp<=7?' lo':'');
  $('enb').textContent=NET?(OPN||'Opponent'):'Botzacy';$('pnb').textContent=myName()||'Playerzacy';
  $('game').classList.toggle('et',G.act==1);$('enb').className='nbar'+(G.act==1?' act':'');$('pnb').className='nbar'+(G.act==0?' act':'');
@@ -323,11 +326,11 @@ function effNote(d,ks,got,k){
  if(j>=0&&j<idx&&k!='C'){const e=(d.Effects||[]).find(x=>x.ChoiceLabels);a=e&&e.Actions[got[j]]}
  else{const nth=ks.slice(0,idx).filter(x=>x==k).length;const x=pickActs(d).filter(y=>y.k==k)[nth];a=x&&x.a}
  const v=a&&actVerb(a,d.ExU);if(!v)return'';
- const who={e:'the chosen enemy unit',f:'the chosen friendly unit',a:'the chosen unit',eh:'the chosen enemy unit or hero',L:'the chosen lane',P:'the chosen lane',S:'the chosen unit',M:'the chosen units',D:'a card'}[k]||'the target';
+ const who={e:'the chosen enemy unit',f:'the chosen friendly unit',a:'the chosen unit',eh:'the chosen enemy unit or hero',fh:'the chosen friendly unit or your hero',L:'the chosen lane',P:'the chosen lane',S:'the chosen unit',M:'the chosen units',D:'a card'}[k]||'the target';
  return`<br><span class=\"efx\">Effect: <b>${v} ${who}</b></span>`}
 function nextPick(){const me=G.p[0],d=pdef(),ks=apicks(G,me,d,pend.got,pend.ln),cx=pend.ext?0:1;
  if(pend.got.length<ks.length){const k=ks[pend.got.length];
-  if(d.Type=='Unit'&&['e','f','a'].includes(k)){const r=req(G,me,k,ks.f[pend.got.length],null,false,d.ExU);if(r.length==1){pend.got.push(r[0]);nextPick();return}}
+  if(d.Type=='Unit'&&['e','f','a','fh'].includes(k)){const r=req(G,me,k,ks.f[pend.got.length],null,false,d.ExU);if(r.length==1){pend.got.push(r[0]);nextPick();return}}
   if(k=='L'){const r=req(G,me,'L',null,laneEx());if(r.length==1){pend.got.push(r[0]);nextPick();return}}
   render();
   if(k=='C'){const e=d.Effects.find(x=>x.ChoiceLabels);say(`<b>${d.Name}</b>: `+e.ChoiceLabels.map((l,i)=>`<button data-ch="${i}" ${choiceOK(G,me,d,i)?'':'disabled'}>${l}</button>`).join(''),cx)}
@@ -387,6 +390,7 @@ document.addEventListener('click',e=>{if(!G||G.over||$('game').style.display!='b
  if(!mine())return;
  if(hd){if(!(pend&&pend.ext))selectHand(+hd.dataset.h);return}
  if(pend&&kind()=='eh'&&t.closest('#ehero')){pend.got.push(H(1));nextPick();return}
+ if(pend&&kind()=='fh'&&t.closest('#phero')){pend.got.push(H(0));nextPick();return}
  if(castMode&&t.closest('#board')){const ci=sel;castMode=false;sel=null;doPlay({ci,ln:null,got:[]});return}
  if(sl){const r=+sl.dataset.r,i=+sl.dataset.i,u=G.p[r].ln[i];
   if(pend){if(kind()=='P'){pend.got.push(i);nextPick();return}if(kind()=='L'){if(!u&&r==0&&validTargets().includes(i)){pend.got.push(i);nextPick()}return}
@@ -421,13 +425,14 @@ function dropInfo(el){const me=G.p[0];if(!el||sel==null||!me.hand[sel])return nu
   if(k=='P'){return sl?{node:sl,ok:1,run:()=>sl.click()}:null}
   if(k=='L'){if(sl&&+sl.dataset.r==0&&!me.ln[+sl.dataset.i]&&validTargets().includes(+sl.dataset.i))return{node:sl,ok:1,run:()=>sl.click()};return null}
   if(k=='eh'&&el.closest('#ehero'))return{node:el.closest('#ehero'),ok:1,run:()=>el.click()};
+  if(k=='fh'&&el.closest('#phero'))return{node:el.closest('#phero'),ok:1,run:()=>el.click()};
   if(sl){const u=G.p[+sl.dataset.r].ln[+sl.dataset.i];if(u&&validTargets().includes(u))return{node:sl,ok:1,run:()=>el.click()}}
   return null}
  const cs=choiceSpot(el,d);
  if(cs)return{node:cs.node,ok:cs.ok,run:()=>{if(!cs.ok){cancel();say("Can't choose that option right now");return}
   pend={ci:sel,ln:null,got:[cs.j]};if(cs.unit)pend.got.push(cs.unit);nextPick()}};
  return null}
-const ringOf=n=>n.id=='ehero'?n.querySelector('.ring'):n;
+const ringOf=n=>n.id=='ehero'||n.id=='phero'?n.querySelector('.ring'):n;
 function dropOn(el){const i=dropInfo(el);if(i)i.run();else cancel()}
 function dragZones(on){document.querySelectorAll('.dz,.dh').forEach(x=>x.classList.remove('dz','dh'));if(!on||sel==null)return;
  const me=G.p[0],d=CD[me.hand[sel].id];if(d.Type!='Spell'||pend||castMode)return;const ef=(d.Effects||[]).find(x=>x.ChoiceLabels);if(!ef)return;
@@ -560,9 +565,10 @@ const expand=m=>Object.keys(m).map(Number).sort((a,b)=>a-b).flatMap(id=>Array(m[
 const uniqName=base=>{const t=new Set(allDecks().map(d=>d.n));if(!t.has(base))return base;for(let i=2;;i++)if(!t.has(base+' ('+i+')'))return base+' ('+i+')'};
 const iconId=m=>{let b=null;Object.keys(m).forEach(k=>{const c=CD[k];if(!c||!m[k])return;
  if(!b||c.Cost>b.Cost||(c.Cost==b.Cost&&(c.Attack||0)+(c.Health||0)>(b.Attack||0)+(b.Health||0)))b=c});return b};
-const statsOf=m=>{let n=0,u=0,sp=0,sum=0;const cv=Array(10).fill(0);
- for(const k in m){const c=CD[k],q=m[k];if(!c)continue;n+=q;if(c.Type=='Unit')u+=q;else sp+=q;sum+=c.Cost*q;cv[Math.min(9,Math.max(0,c.Cost-1))]+=q}
- return{n,u,sp,avg:n?sum/n:0,cv}};
+const CMAX=10,costOf=(c,k)=>k==CMAX?c.Cost>=CMAX:c.Cost==k,cLbl=k=>k==CMAX?CMAX+'+':k;   // cost filter / curve buckets: 0..9 and 10+
+const statsOf=m=>{let n=0,u=0,sp=0,sum=0;const cv=Array(8).fill(0),cx=Array(CMAX+1).fill(0);
+ for(const k in m){const c=CD[k],q=m[k];if(!c)continue;n+=q;if(c.Type=='Unit')u+=q;else sp+=q;sum+=c.Cost*q;cv[Math.min(7,c.Cost)]+=q;cx[Math.min(CMAX,c.Cost)]+=q}
+ return{n,u,sp,avg:n?sum/n:0,cv,cx}};
 const imgTag=(id,cls)=>`<img ${cls?`class="${cls}" `:''}src="${artSrc(id)}" alt="" draggable="false" onerror="artErr(this,${id})">`;
 
 let toastT=0;
@@ -635,12 +641,12 @@ function mkFilter(host,grid,els,tag){
  const S={q:'',type:'',costs:new Set(),subs:new Set()};
  host.innerHTML=`<div class="frow"><div class="sbox"><input class="fq" placeholder="Search name, text, subtype..." autocomplete="off" spellcheck="false"><button class="fx ghost" title="Clear search" hidden>&times;</button></div><button class="fsub ghost">Subtype</button><button class="frst ghost" hidden>Reset</button></div>
  <div class="frow"><div class="seg"><button data-t="">All</button><button data-t="Unit">Units</button><button data-t="Spell">Spells</button></div>
- <div class="chips">${[1,2,3,4,5,6,7,8,9,10].map(k=>`<button class="chip" data-k="${k}" title="${k==10?'Cost 10 or more':'Cost '+k}">${k==10?'10+':k}</button>`).join('')}</div><span class="fcnt"></span></div>
+ <div class="chips">${Array.from({length:CMAX+1},(_,k)=>k).map(k=>`<button class="chip" data-k="${k}" title="${k==CMAX?'Cost '+CMAX+' or more':'Cost '+k}">${cLbl(k)}</button>`).join('')}</div><span class="fcnt"></span></div>
  <div class="fhint">Tips: <b>c:3</b> <b>a&gt;=4</b> <b>hp&lt;3</b> <b>s:animal</b> <b>k:flying</b> <b>t:spell</b> <b>-word</b> to exclude</div>
  <div class="fpop">${SUBS.map(([s,n])=>`<button class="chip" data-s="${hesc(s)}">${hesc(s)} <small>${n}</small></button>`).join('')}</div>`;
  const q=host.querySelector('.fq'),fx=host.querySelector('.fx'),rst=host.querySelector('.frst'),fsub=host.querySelector('.fsub'),pop=host.querySelector('.fpop'),cnt=host.querySelector('.fcnt');
  function apply(top){const terms=parseQ(S.q.trim());let n=0;
-  els.forEach(({c,el,hay},i)=>{let ok=!(S.type&&c.Type!=S.type)&&(!S.costs.size||[...S.costs].some(k=>k==10?c.Cost>=10:c.Cost==k))&&(!S.subs.size||(c.Subtypes||[]).some(x=>S.subs.has(x)));
+  els.forEach(({c,el,hay},i)=>{let ok=!(S.type&&c.Type!=S.type)&&(!S.costs.size||[...S.costs].some(k=>costOf(c,k)))&&(!S.subs.size||(c.Subtypes||[]).some(x=>S.subs.has(x)));
    let sc=0;if(ok&&terms.length){sc=qScore(c,terms,hay);ok=sc>=0}
    el.hidden=!ok;el.style.order=ok?i-(terms.length?sc*1000:0):i;if(ok)n++});
   cnt.textContent=n+' / '+els.length+' cards';fx.hidden=!S.q;
@@ -736,10 +742,10 @@ function renderEdit(){
  $('eimg').style.display=ic?'block':'none';$('eq').style.display=ic?'none':'flex';if(ic){const i=$('eimg');if(i.dataset.id!=ic.Id){i.dataset.id=ic.Id;i.onerror=()=>artErr(i,ic.Id);i.src=artSrc(ic.Id)}}
  $('bstat').textContent=ic?'Icon: '+ic.Name:'Icon: most expensive card';
  $('bdef').classList.toggle('on',!!E.def);$('bdef').innerHTML=STAR+(E.def?' Default deck':' Make default');
- const mx=Math.max(1,...st.cv);
+ const mx=Math.max(1,...st.cx);
  $('ecurve').innerHTML=`<div class="cvh"><b>Deck curve</b><span>avg cost ${n?st.avg.toFixed(1):'-'} &middot; ${st.u} units &middot; ${st.sp} spells</span></div><div class="cv">`+
-  st.cv.map((q,k)=>{const pc=n&&q?Math.round(q/n*100):0;const ck=k+1;return`<div class="cvc${FE.S.costs.has(ck)?' on':''}" data-k="${ck}" title="${q} card${q==1?'':'s'} costing ${ck==10?'10+':ck}${pc?' ('+pc+'% of the deck)':''} - click to filter the list">
-   <span class="cvn">${q||''}</span><div class="cvb"><i style="height:${q/mx*100}%"></i></div><span class="cvl">${ck==10?'10+':ck}</span><span class="cvp">${pc?pc+'%':'-'}</span></div>`}).join('')+`</div><div class="cvk">cost &middot; share of deck</div>`;
+  st.cx.map((q,k)=>{const pc=n&&q?Math.round(q/n*100):0;return`<div class="cvc${FE.S.costs.has(k)?' on':''}" data-k="${k}" title="${q} card${q==1?'':'s'} costing ${cLbl(k)}${pc?' ('+pc+'% of the deck)':''} - click to filter the list">
+   <span class="cvn">${q||''}</span><div class="cvb"><i style="height:${q/mx*100}%"></i></div><span class="cvl">${cLbl(k)}</span><span class="cvp">${pc?pc+'%':'-'}</span></div>`}).join('')+`</div><div class="cvk">cost &middot; share of deck</div>`;
  if(!$('bi').classList.contains('bad'))hint(HINT0)}
 window.addEventListener('rj-filter',()=>{if(E&&bview=='edit'){$('ecurve').querySelectorAll('.cvc').forEach(c=>c.classList.toggle('on',FE.S.costs.has(+c.dataset.k)))}});
 $('ecurve').onclick=e=>{const c=e.target.closest('.cvc');if(c)FE.toggleCost(+c.dataset.k)};

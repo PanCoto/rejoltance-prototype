@@ -49,7 +49,7 @@ function pickOptions(G,p,d,k,f){const sp=d.Type=='Spell';
  if(k=='M'){const us=req(G,p,'M').sort((a,b)=>unitVal(a)-unitVal(b)),o=[{m:[]}];for(let n=1;n<=us.length;n++)o.push({m:us.slice(0,n).map(u=>u.uid)});return o}
  if(k=='L')return[{u:null}];
  if(k=='C')return[0,1].filter(i=>choiceOK(G,p,d,i)).map(i=>({n:i}));
- if(k=='D'){const lim=Math.min(10,G.turn+2);return[{c:p.deck.slice().sort((x,y)=>{const f=z=>{const c=CD[z.id].Cost;return c>lim?-c:c};return f(y)-f(x)})[0].uid}]}
+ if(k=='D'){const lim=Math.min(10,G.turn+MANA_BONUS+2);return[{c:p.deck.slice().sort((x,y)=>{const f=z=>{const c=CD[z.id].Cost;return c>lim?-c:c};return f(y)-f(x)})[0].uid}]}
  if(k=='S'&&optSac(d))return[{n:NOSAC}].concat(req(G,p,k,f||null,null,sp).map(t=>({u:t.uid})));
  return req(G,p,k,f||null,null,sp).map(t=>t.h?{h:t.p}:{u:t.uid})}
 function enumPicks(G,p,d,got,out){
@@ -149,7 +149,7 @@ function curveScore(hand,draws,R){
  for(let r=1;r<=R;r++){
   if(r>1&&draws.length>=r-1)h.push(draws[r-2]);
   const n=h.length;let best=0,bm=0;
-  for(let m=1;m<(1<<n);m++){let c=0,v=0;for(let i=0;i<n;i++)if(m>>i&1){c+=CD[h[i]].Cost;v+=tempoVal(h[i])}if(c<=r&&v>best){best=v;bm=m}}
+  for(let m=1;m<(1<<n);m++){let c=0,v=0;for(let i=0;i<n;i++)if(m>>i&1){c+=CD[h[i]].Cost;v+=tempoVal(h[i])}if(c<=r+MANA_BONUS&&v>best){best=v;bm=m}}
   tot+=best;if(bm)h=h.filter((_,i)=>!(bm>>i&1))}
  return tot}
 function botMullPlan(G,p){
@@ -188,6 +188,7 @@ function botAskPicks(G,it){
    const ex=k=='L'?pk.filter((_,j)=>ks[j]=='L'&&typeof pk[j]=='number'):null,ts=req(G,p,k,f,ex,sp,xu);
    if(k=='L'){const op=G.p[1-p.i];v=shuf(ts.slice()).sort((a,b)=>(op.ln[a]?1:0)-(op.ln[b]?1:0))[0]}
    else if(k=='f')v=ts.slice().sort((a,b)=>unitVal(b)-unitVal(a))[0];
+  else if(k=='fh'){const us=ts.filter(x=>!x.h&&x.hp<x.mx).sort((a,b)=>(b.mx-b.hp)-(a.mx-a.hp));v=us.length&&(us[0].mx-us[0].hp)>(p.mhp||20)-p.hp?us[0]:H(p.i)}
    else{const un=ts.filter(x=>!x.h&&x.o!=p.i).sort((a,b)=>unitVal(b)-unitVal(a));v=un[0]||ts.find(x=>x.h)||ts[0]}}
   if(v==null)break;pk.push(v)}
  return pk}

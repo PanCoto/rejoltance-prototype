@@ -67,7 +67,8 @@ function askRemote(it){return new Promise(res=>{
    const ks=apicks(G,p,it.d,pk,null),k=ks[pk.length];if(!k)break;
    const v=o&&o.h!=null?H(1-o.h):o?resolvePick(G,p,null,o):undefined;
    if(v==null)break;
-   if(['e','f','a','eh','S'].includes(k)&&typeof v=='object'&&!v.h&&!req(G,p,k,ks.f[pk.length]||null,null,sp,it.d.ExU).includes(v))break;
+   if(['e','f','a','eh','fh','S'].includes(k)&&typeof v=='object'&&!v.h&&!req(G,p,k,ks.f[pk.length]||null,null,sp,it.d.ExU).includes(v))break;
+   if(k=='fh'&&v.h&&v.p!=p.i)break;
    if(k=='L'&&!req(G,p,'L',null,pk.filter((_,j)=>ks[j]=='L')).includes(v))break;
    if(k=='P'&&!(v>=0&&v<4))break;
    pk.push(v)}
