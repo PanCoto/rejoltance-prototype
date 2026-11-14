@@ -152,6 +152,7 @@ function cond(c,u,x,G){if(!c)return true;const sub=(c.SubConditions||[]).map(k=>
  switch(c.Condition){case'And':return sub.every(Boolean);case'Or':return sub.some(Boolean);case'Not':return!sub[0];
  case'IsSelf':return x.u===u;case'SameLane':return!!x.u&&x.u.lane===u.lane;
  case'IsSubtype':return!!x.u&&hasSub(x.u.d||CD[x.u.id],P);
+ case'PlayedSubtype':return!!x.pc&&hasSub(x.pc,P);
  case'IsStatus':return x.st==P;case'IsEnemy':return!!x.u&&x.u.o!=u.o;case'IsFriendly':return!!x.u&&x.u.o==u.o;
  case'HasSubtypeOnBoard':return G.p[u.o].ln.some(w=>w&&w!==u&&hasSub(w.d,P));
  case'FromHistory':return!!x.u&&G.hist.some(h=>h.uid===x.u.uid);
@@ -217,8 +218,10 @@ function gsig(G){return G.p.map(p=>[p.hp,p.mhp,p.b,p.hand.length,p.deck.length,p
 function fireHand(G,trig,p,ctx){
  const run=(c,zone)=>{if(c.used||(c.nf&&ctx.u&&c.nf===ctx.u.uid))return;(CD[c.id].Effects||[]).forEach(e=>{
   if(e.Trigger!=trig||!inZone(e,zone)||!cond(e.Condition,{o:p.i},ctx,G))return;
+  if(e.Count){c.cnt=(c.cnt||0)+1;if(zone=='Hand')EV(G,{k:'hand',c:c.uid});if(c.cnt<e.Count)return;c.cnt=0}
   e.Actions.forEach(a=>{
    if(a.Type=='BuffStats'){if(a.Amount!=null)c.red=(c.red||0)-a.Amount;else c.ba=(c.ba||0)+(a.BuffAtk||0);if(zone=='Hand')EV(G,{k:'hand',c:c.uid})}
+   else if(a.Type=='TransformInHand'&&zone=='Hand'&&a.Into!=null&&CD[a.Into]){const nm=CD[c.id].Name;c.id=a.Into;c.cnt=0;L(G,nm+' transforms into '+CD[a.Into].Name);EV(G,{k:'hand',c:c.uid})}
    else if(a.Type=='AddCardToHand'&&zone=='Hand'){
     let id=a.ValueParam;
     if(a.Filter||id==null){const pp=poolOf(a.Filter);if(!pp.length)return;id=pp[R(pp.length)].Id}
@@ -596,7 +599,7 @@ function play(G,p,ci,ln,pk){if(!canPlay(G,p,ci,ln))return false;
  p.fr=Object.assign({},p.fr,{[d.Type]:G.turn,Any:G.turn});
  if(d.Type=='Unit'){const u=mk(c.id,p.i);u.atk+=c.ba||0;u.paid=paid;u.cr=c.red||0;u.cba=c.ba||0;if(c.unk)u.kw.add('Unkillable');he.uid=u.uid;place(G,p,u,ln);L(G,(p.i?'Enemy':'You')+' play '+d.Name);
   fire(G,'OnPlayed',u,ctx);announce(G,u);
-  resolve(G)}
+  resolve(G);if(!G.over)fireHand(G,'OnFriendlyCardPlayed',p,{pc:d})}
  else{L(G,(p.i?'Enemy':'You')+' cast '+d.Name);const s={d,o:p.i,sp:1,lane:-1,uid:0};
   const twice=!!p.dw;if(twice){p.dw=0;L(G,'Dual Wield - '+d.Name+' is played twice')}
   const twice2=twice&&askOnE(G,p.i);
@@ -606,7 +609,7 @@ function play(G,p,ci,ln,pk){if(!canPlay(G,p,ci,ln))return false;
    const c2=Object.assign({},ctx);delete c2.sac;delete c2.sacd;delete c2.last;if(c2.t&&!c2.t.h&&(c2.t.gone||c2.t.hp<=0))delete c2.t;
    fire(G,'OnPlayed',{d,o:p.i,sp:1,lane:-1,uid:0},c2);resolve(G)}
   if(s.give&&G.p[1-p.i].hand.length<HAND_MAX){const cc=s.giveA&&s.giveA.CostChange;G.p[1-p.i].hand.push({uid:UID++,id:c.id,...(cc?{red:(c.red||0)-cc}:{})});gained(G,G.p[1-p.i],'gift')}else p.disc.push({uid:UID++,id:c.id});
-  p.ln.forEach(w=>w&&fire(G,'OnFriendlyActionPlayed',w,{}));fireHand(G,'OnFriendlyActionPlayed',p,{})}
+  p.ln.forEach(w=>w&&fire(G,'OnFriendlyActionPlayed',w,{}));fireHand(G,'OnFriendlyActionPlayed',p,{});if(!G.over)fireHand(G,'OnFriendlyCardPlayed',p,{pc:d})}
  return true}
 function botPick(G,p,k,ex,sp,f){const val=u=>u.atk*2+u.hp,ts=req(G,p,k,f||null,ex,sp);
  if(k=='L'){const op=G.p[1-p.i];return shuf(ts.slice()).sort((a,b)=>(op.ln[a]?1:0)-(op.ln[b]?1:0))[0]}

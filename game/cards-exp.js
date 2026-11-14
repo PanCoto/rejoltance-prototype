@@ -379,6 +379,7 @@ const CARDS_EXP = [
     Cost: 6,
     Attack: 5,
     Health: 5,
+    Keywords: ["AntiAirborne"],
     Description: "While in Play: When You mark an Enemy Unit, do a Bonus Attack.",
     Effects: [
       { Trigger: "OnStatusApplied",
@@ -1000,12 +1001,12 @@ const CARDS_EXP = [
     Cost: 3,
     Attack: 1,
     Health: 4,
-    Description: "When Played: Heal a Friendly Unit or Your Hero for 4. If You control another Machine, a Unit healed this way also gets +2 HP.",
+    Description: "When Played: Heal a Friendly Unit or Your Hero for 3. If You control another Machine, a Unit healed this way also gets +2 HP.",
     Effects: [
       { Trigger: "OnPlayed",
         Targeting: "TargetFriendlyUnitOrHero",
         Actions: [
-          { Type: "Heal", Target: "SelectedTarget", Amount: 4 },
+          { Type: "Heal", Target: "SelectedTarget", Amount: 3 },
           { Type: "BuffStats", Target: "SelectedTarget", BuffHp: 2, Condition: { Condition: "HasSubtypeOnBoard", TargetParam: "Machine" } },
         ] },
       { Trigger: "OnPlayed",
@@ -1490,7 +1491,6 @@ const CARDS_EXP = [
     Cost: 5,
     Attack: 3,
     Health: 5,
-    Keywords: ["AntiAirborne"],
     Description: "While in Play: When an Enemy Unit is Move, move it here. If it can't be Moved, deal 2 Damage to it instead.",
     Effects: [
       { Trigger: "OnEnemyUnitPlayed",
@@ -1794,6 +1794,20 @@ const CARDS_EXP = [
         ] },
     ],
   },
+  {
+    Id: 111,
+    Name: "Engineer",
+    Type: "Unit",
+    Subtypes: ["Human"],
+    Cost: 1,
+    Attack: 1,
+    Health: 1,
+    Description: "When Played: Gain a Sentry Gun.",
+    Effects: [
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "AddCardToHand", Target: "FriendlyHero", ValueParam: 935 }] },
+    ],
+  },
 
   // ==================== ORIGINAL TOKENS (unchanged) ====================
 
@@ -1810,10 +1824,10 @@ const CARDS_EXP = [
   { Id: 901, Name: "Royal Souldier", Type: "Unit", Subtypes: ["Aberration", "Token"], Cost: 1, Attack: 1, Health: 1, Description: "" },
 
   {
-    Id: 902, Name: "Sacrificial Dagger", Type: "Spell", Subtypes: ["Token"], Cost: 1,
-    Description: "Sacrifice a Friendly Unit. Draw a Card.",
+    Id: 902, Name: "Sacrificial Dagger", Type: "Spell", Subtypes: ["Token"], Cost: 0,
+    Description: "Sacrifice a Friendly Unit.",
     Effects: [{ Trigger: "OnPlayed", Targeting: "TargetFriendlyUnit",
-      Actions: [{ Type: "SacrificeUnit", Target: "SelectedTarget" }, { Type: "DrawCard", Target: "FriendlyHero", Amount: 1 },] }],
+      Actions: [{ Type: "SacrificeUnit", Target: "SelectedTarget" }] }],
   },
 
   {
@@ -1884,11 +1898,11 @@ const CARDS_EXP = [
 
   {
     Id: 914, Name: "Ashes from Clashes", Type: "Spell", Subtypes: ["Token"],
-    Cost: 0,
-    Description: "Deal 2 Damage to a Friendly Unit or Friendly Hero. Start of Round: If this is in your Hand, gain Ashes from Clashes.",
+    Cost: 1,
+    Description: "Deal 1 Damage to a Friendly Unit or Friendly Hero. Start of Round: If this is in your Hand, gain Ashes from Clashes.",
     Effects: [
       { Trigger: "OnPlayed", Targeting: "TargetFriendlyUnitOrHero",
-        Actions: [{ Type: "DealDamage", Target: "SelectedTarget", Amount: 2 }] },
+        Actions: [{ Type: "DealDamage", Target: "SelectedTarget", Amount: 1 }] },
       { Trigger: "OnStartOfRound", Zone: "Hand",
         Actions: [{ Type: "AddCardToHand", Target: "FriendlyHero", ValueParam: 914 }] },
     ],
@@ -2039,6 +2053,73 @@ const CARDS_EXP = [
         { Type: "ApplyStatus", Target: "SelectedTarget", StatusKeyword: "Flying" },
         { Type: "BuffStats", Target: "SelectedTarget", BuffAtk: 2, BuffHp: 1 },
       ] }],
+  },
+  {
+    Id: 935,
+    Name: "Sentry Gun",
+    Type: "Unit",
+    Subtypes: ["Machine", "Token"],
+    Cost: 2,
+    Attack: 1,
+    Health: 2,
+    Description: "While in Your Hand: When You Play 2 Machine Cards, Transform this into Sentry Minigun.",
+    Effects: [
+      { Trigger: "OnFriendlyCardPlayed",
+        Zone: "Hand",
+        Count: 2,
+        Condition: { Condition: "PlayedSubtype", TargetParam: "Machine" },
+        Actions: [{ Type: "TransformInHand", Into: 936 }] },
+    ],
+  },
+  {
+    Id: 936,
+    Name: "Sentry Minigun",
+    Type: "Unit",
+    Subtypes: ["Machine", "Token"],
+    Cost: 3,
+    Attack: 3,
+    Health: 2,
+    Description: "While in Your Hand: When You Play 2 Machine Cards, Transform this into Missile Gun.",
+    Effects: [
+      { Trigger: "OnFriendlyCardPlayed",
+        Zone: "Hand",
+        Count: 2,
+        Condition: { Condition: "PlayedSubtype", TargetParam: "Machine" },
+        Actions: [{ Type: "TransformInHand", Into: 937 }] },
+    ],
+  },
+  {
+    Id: 937,
+    Name: "Missile Gun",
+    Type: "Unit",
+    Subtypes: ["Machine", "Token"],
+    Cost: 5,
+    Attack: 3,
+    Health: 3,
+    Keywords: ["SplashDamage"],
+    KeywordParams: { SplashDamage: 1 },
+    Description: "While in Your Hand: When You Play 2 Machine Cards, Transform this into Mini Sentry.",
+    Effects: [
+      { Trigger: "OnFriendlyCardPlayed",
+        Zone: "Hand",
+        Count: 2,
+        Condition: { Condition: "PlayedSubtype", TargetParam: "Machine" },
+        Actions: [{ Type: "TransformInHand", Into: 938 }] },
+    ],
+  },
+  {
+    Id: 938,
+    Name: "Mini Sentry",
+    Type: "Unit",
+    Subtypes: ["Anime", "Machine", "Token"],
+    Cost: 6,
+    Attack: 2,
+    Health: 3,
+    Description: "When Played: All Friendly Machines do a Bonus Attack.",
+    Effects: [
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "BonusAttack", Target: "AllFriendlyUnits", Where: { Subtype: "Machine" } }] },
+    ],
   },
 ];
 
