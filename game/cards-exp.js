@@ -1675,7 +1675,8 @@ const CARDS_EXP = [
     Subtypes: ["Aberration", "Human"],
     Cost: 4,
     Attack: 2,
-    Health: 5,
+    Health: 3,
+    Keywords: ["Armored"],
     Description: "While in Play: Whenever an Enemy Unit gains stats, it and adjacent Enemy Units get -1 ATK.",
     Effects: [
       { Trigger: "OnEnemyUnitGainedStats",
@@ -1731,7 +1732,7 @@ const CARDS_EXP = [
     Name: "Abyss Lector",
     Type: "Unit",
     Subtypes: ["Aberration"],
-    Cost: 7,
+    Cost: 8,
     Attack: 3,
     Health: 3,
     Description: "When Played: For Each 3 Points of Missing Health of Your Hero, Conjure a Random Blessing. They Cost 0 This Round.",
