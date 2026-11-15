@@ -576,7 +576,7 @@ const CARDS = [
     Health: 3,
     Keywords: ["SoulGuard"],
     Rule: "hpOneTrigger",
-    Description: "Whenever a Friendly Unit is Destroyed or Drops to 1 HP: Deal 3 Damage to the Enemy Hero.",
+    Description: "Whenever a Friendly Unit is Destroyed or Drops to 1 HP: Deal 2 Damage to the Enemy Hero.",
     DescriptionClassic: "Whenever a Friendly Unit is Destroyed: Deal 2 Damage to the Enemy Hero.",
     Effects: [
       { Trigger: "OnFriendlyUnitDied",
@@ -845,13 +845,13 @@ const CARDS = [
     Name: "The Curtain Call",
     Type: "Spell",
     Cost: 7,
-    Description: "For the Rest of The Game, Marking a Marked Unit Destroys it. Mark all Enemy Units, then Deal 2 Damage to Them.",
+    Description: "For the Rest of The Game, Marking a Marked Unit Destroys it. Mark all Enemy Units, then Deal 1 Damage to Them.",
     Effects: [
       { Trigger: "OnPlayed",
         Actions: [
           { Type: "GrantRule", Rule: "mk" },
           { Type: "ApplyStatus", Target: "AllEnemyUnits", StatusKeyword: "Marked" },
-          { Type: "DealDamage", Target: "AllEnemyUnits", Amount: 2 },
+          { Type: "DealDamage", Target: "AllEnemyUnits", Amount: 1 },
         ] },
     ],
   },
