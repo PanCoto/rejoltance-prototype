@@ -23,6 +23,10 @@ $('expchg').checked=!!window.RJ_EXP;
 $('expchg').onchange=()=>{const on=$('expchg').checked;
  if($('game').style.display=='block'&&!confirm('Changing this reloads the page and ends the current game. Continue?')){$('expchg').checked=!on;return}
  lsSet('rj_exp',on?'1':'0');location.reload()};
+$('max2row').style.display=window.RJ_EXP&&window.RJ_MAX2_TOGGLE?'':'none';$('max2').checked=window.RJ_MAXC<3;
+$('max2').onchange=()=>{const on=$('max2').checked;
+ if($('game').style.display=='block'&&!confirm('Changing this reloads the page and ends the current game. Continue?')){$('max2').checked=!on;return}
+ lsSet('rj_max2',on?'1':'0');location.reload()};
 $('hotnum').checked=lsGet('rj_hotnum')==='1';document.body.classList.toggle('hn',$('hotnum').checked);
 $('hotnum').onchange=()=>{lsSet('rj_hotnum',$('hotnum').checked?'1':'0');document.body.classList.toggle('hn',$('hotnum').checked)};
 const pct=(id,key,def,apply)=>{const el=$(id),n=$(id.replace('v','n'));let v=lsGet(key);v=v===null||v===''||isNaN(+v)?def:Math.max(0,Math.min(100,+v));

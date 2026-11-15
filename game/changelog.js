@@ -66,6 +66,10 @@ const CHANGELOG=`
 - Summoned / Transformed / Revived units with when played abilities will now do them correclty, letting the owner target the unit of their choosing if such targeting is required.
 `;
 
-// Changelog of the EXPERIMENTAL build (Settings -> Experimental changes). Same format as above. Empty since v1.0.2 (the experimental changes were promoted to the normal build); add an entry when you start a new experiment.
 const CHANGELOG_EXP=`
+## PTB - Max copies test
+### Deck Building
+- New setting **Max 2 copies per card** (Settings, only shown while Experimental changes are on). When it is on, player-built decks can have at most 2 copies of the same card.
+- Premade decks are exempt. Your saved decks with 3 copies stay in your list marked **Over limit**, but cannot be played until you edit them.
+- Online: both players must have the setting on or off.
 `;

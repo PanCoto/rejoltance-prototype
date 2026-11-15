@@ -15,7 +15,9 @@ const saveC=a=>{try{localStorage.setItem(DKEY,JSON.stringify(a))}catch(e){alert(
 const getDef=()=>{try{return localStorage.getItem(DDEF)}catch(e){return null}};
 const putDef=n=>{try{n?localStorage.setItem(DDEF,n):localStorage.removeItem(DDEF)}catch(e){}};
 const STAR='<svg class="star" viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M7 1h2v4h5v2h-2v2h2v2h-3v4H9v-3H7v3H4v-4H1V9h2V7H1V5h5z"/></svg>';
-function refreshDecks(){ALL=DECKS.concat(loadC().map(d=>({...d,custom:1})));
+// Max-copies rule: a custom deck with more than RJ_MAXC copies of a card is "over the limit" (kept in the deck list, but not playable until fixed).
+const overCap=c=>{const m={};let x=0;(c||[]).forEach(id=>{m[id]=(m[id]||0)+1;if(m[id]>x)x=m[id]});return x>window.RJ_MAXC};
+function refreshDecks(){ALL=DECKS.concat(loadC().filter(d=>!overCap(d.c)).map(d=>({...d,custom:1})));
  const dn=getDef(),di=dn==null?-1:ALL.findIndex(d=>d.n==dn);
  ['d0','d1'].forEach((s,k)=>{const el=$(s),o=el.selectedOptions[0],prev=o?o.dataset.n:null;let v=el.selectedIndex<0?(k?Math.min(1,ALL.length-1):Math.max(0,di)):el.selectedIndex;el.innerHTML='';
   ALL.forEach((d,i)=>{const op=new Option((d.custom?'* ':'')+d.n,i);op.dataset.n=d.n;el.add(op)});
@@ -616,7 +618,7 @@ function deckEncode(m){
 function deckDecode(txt){
  txt=(txt||'').trim();if(!txt)throw'Paste a deck code first.';
  if(txt[0]=='{'){let d;try{d=JSON.parse(txt)}catch(e){throw'That code is not valid.'}
-  if(!d||!Array.isArray(d.c))throw'That code is not valid.';const m=countsOf(d.c);Object.keys(m).forEach(k=>m[k]=Math.min(3,m[k]));
+  if(!d||!Array.isArray(d.c))throw'That code is not valid.';const m=countsOf(d.c);Object.keys(m).forEach(k=>m[k]=Math.min(window.RJ_MAXC,m[k]));
   if(!Object.keys(m).length)throw'That code has no cards from this version of the game.';return{cards:m,name:typeof d.n=='string'?d.n.slice(0,24):''}}
  const s=txt.toUpperCase().replace(/[^0-9A-Z]/g,'').replace(/O/g,'0').replace(/[IL]/g,'1').replace(/U/g,'V'),BAD='That code is not valid.';
  if(s.length<8)throw BAD;
@@ -626,7 +628,7 @@ function deckDecode(txt){
  if(get(4)!=1)throw'This code is from a different version of the game.';
  const n=get(6);if(!n||n>30)throw BAD;const ents=[];for(let i=0;i<n;i++){const id=get(12),q=get(2);if(!q)throw BAD;ents.push([id,q])}
  if(bits.length-p>4||ckOf(ents)!=ck)throw BAD;
- const m={};let tot=0;for(const[id,q]of ents){if(!CD[id]||id>=900||m[id])throw'This code contains cards that do not exist in this version of the game.';m[id]=q;tot+=q}
+ const m={};let tot=0;for(const[id,q]of ents){if(!CD[id]||id>=900||m[id])throw'This code contains cards that do not exist in this version of the game.';const qq=Math.min(q,window.RJ_MAXC);m[id]=qq;tot+=qq}
  if(tot>30)throw'That deck has more than 30 cards.';return{cards:m}}
 window.deckEncode=deckEncode;window.deckDecode=deckDecode;
 
@@ -708,7 +710,7 @@ function renderDecks(){
  $('dsum').innerHTML=`<b>${cust.length}</b> of your decks &middot; <b>${pre.length}</b> premade`+(getDef()?` &middot; default: <b>${hesc(getDef())}</b>`:'');
  const tile=d=>{const m=countsOf(d.c),st=statsOf(m),ic=iconId(m),key=(d.custom?'c:':'b:')+d.n,mx=Math.max(1,...st.cv);
   return`<div class="dk${selDeck==key?' sel':''}${delConf==key?' dc':''}${d.built?' pre':''}" data-k="${hesc(key)}">
-  <div class="dkart">${ic?imgTag(ic.Id):'<i class="dkq">?</i>'}<span class="dkn${st.n==30?'':' bad'}">${st.n}/30</span><div class="dkbs">${getDef()==d.n?'<span class="dkd">'+STAR+' Default</span>':''}${d.built?'<span class="dkt">Premade</span>':''}</div>
+  <div class="dkart">${ic?imgTag(ic.Id):'<i class="dkq">?</i>'}<span class="dkn${st.n==30?'':' bad'}">${st.n}/30</span><div class="dkbs">${getDef()==d.n?'<span class="dkd">'+STAR+' Default</span>':''}${d.built?'<span class="dkt">Premade</span>':''}${d.custom&&overCap(d.c)?'<span class="dkt" title="This deck has more than '+window.RJ_MAXC+' copies of a card. Edit it to make it playable.">Over limit</span>':''}</div>
    <div class="dkact"><button class="pri" data-a="edit">Edit</button><button data-a="def">${getDef()==d.n?'Unset default':'Set default'}</button><button data-a="png" title="Save this deck as a PNG image">Share PNG</button><button data-a="del"${d.built?' disabled title="Premade decks cannot be deleted"':''}>Delete</button></div>
    <div class="dkconf"><span>Delete this deck?</span><button data-a="yes">Delete</button><button data-a="no">Cancel</button></div></div>
   <div class="dkinfo"><b>${hesc(d.n)}</b><small>${st.u} units &middot; ${st.sp} spells<br>avg cost ${st.avg.toFixed(1)}</small>
@@ -742,16 +744,16 @@ const HINT0='Click a card to add it. Right-click or use the - button to remove.'
 const mark=()=>{E.dirty=true};
 function add(id){const q=E.cards[id]||0,c=CD[id];
  if(btot()>=30)return hint('The deck is full (30/30).',1);
- if(q>=3)return hint('Max 3 copies of '+c.Name+'.',1);
+ if(q>=window.RJ_MAXC)return hint('Max '+window.RJ_MAXC+' cop'+(window.RJ_MAXC==1?'y':'ies')+' of '+c.Name+'.',1);
  E.cards[id]=q+1;mark();renderEdit()}
 function dec(id){if(!E.cards[id])return;if(--E.cards[id]<=0)delete E.cards[id];mark();renderEdit()}
 function renderEdit(){
  if(!E)return;const n=btot(),st=statsOf(E.cards),ic=iconId(E.cards);
- eEls.forEach(({c,el})=>{const q=E.cards[c.Id]||0;el.classList.toggle('in',q>0);el.classList.toggle('blk',q>=3||n>=30);el.querySelector('u').textContent=q?'x'+q:''});
+ eEls.forEach(({c,el})=>{const q=E.cards[c.Id]||0;el.classList.toggle('in',q>0);el.classList.toggle('blk',q>=window.RJ_MAXC||n>=30);el.querySelector('u').textContent=q?'x'+q:''});
  const ids=Object.keys(E.cards).map(Number).sort((a,b)=>cmpC(CD[a],CD[b]));
  $('bd').innerHTML=ids.length?ids.map(id=>{const c=CD[id],q=E.cards[id];
   return`<div class="er" data-id="${id}" data-cid="${id}">${imgTag(id)}<b class="erc">${c.Cost}</b><span class="ern">${hesc(c.Name)}</span>
-  <button class="eb" data-a="-" title="Remove one">&minus;</button><span class="erq">${q}</span><button class="eb" data-a="+" title="Add one"${q>=3||n>=30?' disabled':''}>+</button><button class="eb x" data-a="x" title="Remove all copies">&times;</button></div>`}).join('')
+  <button class="eb" data-a="-" title="Remove one">&minus;</button><span class="erq">${q}</span><button class="eb" data-a="+" title="Add one"${q>=window.RJ_MAXC||n>=30?' disabled':''}>+</button><button class="eb x" data-a="x" title="Remove all copies">&times;</button></div>`}).join('')
   :'<div class="eempty">This deck is empty.<br>Click cards on the right to add them.</div>';
  const bc=$('bc');bc.textContent=n+'/30';bc.className=n==30?'ok':'';$('bsave').classList.toggle('ready',n==30);
  $('eimg').style.display=ic?'block':'none';$('eq').style.display=ic?'none':'flex';if(ic){const i=$('eimg');if(i.dataset.id!=ic.Id){i.dataset.id=ic.Id;i.onerror=()=>artErr(i,ic.Id);i.src=artSrc(ic.Id)}}
@@ -775,6 +777,7 @@ $('bclr').onclick=()=>{if(!btot())return;modal({title:'Clear the deck?',text:'Th
 $('bsave').onclick=()=>{
  const n=E.name.trim();if(!n){hint('Give the deck a name.',1);return $('bn').focus()}
  if(btot()!=30)return hint('A deck needs exactly 30 cards (now '+btot()+').',1);
+ const over=Object.keys(E.cards).find(k=>E.cards[k]>window.RJ_MAXC);if(over)return hint('Max '+window.RJ_MAXC+' copies per card - remove copies of '+CD[over].Name+'.',1);
  const cust=loadC();if(DECKS.some(d=>d.n==n)||cust.some(d=>d.n==n&&d.n!=E.orig)){hint('A deck with that name already exists.',1);return $('bn').focus()}
  const ent={n,c:expand(E.cards)},i=cust.findIndex(d=>d.n==E.orig);if(i>=0)cust[i]=ent;else cust.push(ent);
  saveC(cust);

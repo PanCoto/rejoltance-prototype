@@ -807,8 +807,8 @@ const CARDS_EXP = [
     Subtypes: ["Human"],
     Cost: 2,
     Attack: 2,
-    Health: 1,
-    Description: "When Played: Gain a Trap. It costs 0 this turn.",
+    Health: 2,
+    Description: "When Played: Gain a Trap.",
     Effects: [
       { Trigger: "OnPlayed",
         Actions: [{ Type: "AddCardToHand", Target: "FriendlyHero", ValueParam: 903, FreeThisTurn: true }] },
@@ -1963,7 +1963,7 @@ const CARDS_EXP = [
   },
 
   {
-    Id: 903, Name: "Trap", Type: "Unit", Subtypes: ["Machine", "Token"], Cost: 1, Attack: 0, Health: 1,
+    Id: 903, Name: "Trap", Type: "Unit", Subtypes: ["Machine", "Token"], Cost: 0, Attack: 0, Health: 1,
     Description: "When Destroyed: Stun the Enemy Unit opposite it.",
     Effects: [{ Trigger: "OnDeath",
       Actions: [{ Type: "ApplyStatus", Target: "OppositeEnemyUnit", StatusKeyword: "Stunned" }] }],
