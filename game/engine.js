@@ -231,7 +231,7 @@ function fireHand(G,trig,p,ctx){
     if(p.hand.length<HAND_MAX){p.hand.push({uid:UID++,id,tok:1,...(a.FreeThisTurn?{z:G.turn}:{}),...(a.CostChange?{red:-(a.CostChange)}:{})});gained(G,p,'add')}}
    else if(a.Type=='SummonUnit'&&zone=='Hand'&&ctx.lane!=null&&!p.ln[ctx.lane]&&!G.over){c.used=1;p.hand=p.hand.filter(x=>x!==c);
     const u=mk(c.id,p.i);u.atk+=c.ba||0;if(c.unk)u.kw.add('Unkillable');place(G,p,u,ctx.lane);L(G,CD[c.id].Name+' rises');fire(G,'OnPlayed',u,{ask:1});
-    if(RULES.summonTriggers&&!G.over)announce(G,u)}})})};
+    if(RULES.summonTriggers&&!G.over)announce(G,u,1)}})})};
  p.hand.slice().forEach(c=>run(c,'Hand'));
  p.deck.slice().forEach(c=>run(c,'Deck'));
  p.disc.slice().forEach(c=>run(c,'Discard'))}
@@ -358,7 +358,7 @@ function act(G,a,s,c){
   place(G,me,nu,lane);
   L(G,'Pale Mirror summons a copy of '+t.d.Name);
   if((!c.sm||c.rp)&&!G.over)fire(G,'OnPlayed',nu,{tf:1,nosac:1,sm:1,nr:1,ask:1});
-  if(RULES.summonTriggers&&!G.over)announce(G,nu);
+  if(RULES.summonTriggers&&!G.over)announce(G,nu,1);
   break}
  case'DealDamage':{const n=a.Amount;
   ts.forEach(t=>dmg(G,t,n,s,2));break}
@@ -393,7 +393,7 @@ function act(G,a,s,c){
    ls=ch.concat((pref.length?pref:rest).slice(0,n-ch.length))}
   ls.forEach(i=>{if(me.ln[i])return;let id=a.ValueParam;if(a.Filter||id==null){const pp=poolOf(Object.assign({},a.Filter,{Type:'Unit'}));if(!pp.length)return;id=pp[R(pp.length)].Id}
    const nu=mk(id,s.o);place(G,me,nu,i);if((!c.sm||c.rp)&&!G.over)fire(G,'OnPlayed',nu,{tf:RULES.summonTriggers?0:1,nosac:1,sm:1,nr:1,ask:1});
-    if(RULES.summonTriggers&&!G.over)announce(G,nu)});break}
+    if(RULES.summonTriggers&&!G.over)announce(G,nu,1)});break}
 case'AddCardToHand':{
   let flt=a.Filter;
   if(a.FilterFrom==='TargetSubtype'&&c.t&&c.t.d&&c.t.d.Subtypes&&c.t.d.Subtypes.length){
@@ -440,6 +440,9 @@ case'LoseHealth':ts.forEach(t=>{if(t.h)dmg(G,t,a.Amount||1,null,2);else if(!t.kw
   const cp=(src.Effects||[]).filter(e=>e.Trigger=='OnPlayed'?inZone(e,'Board'):(!zoneOf(e)||inZone(e,'Board')));
   if(cp.length){s.d=Object.assign({},s.d,{Effects:(s.d.Effects||[]).concat(cp)});EV(G,{k:'trig',u:s.uid})}
   break}
+ case'CopySelf':{if(G.over||s.gone||s.hp<=0||!s.uid)break;   // "Copy this unit in a random lane": a fresh copy of the card (not 'played', so no When Played)
+  const ls=[0,1,2,3].filter(i=>!me.ln[i]);if(!ls.length)break;const i=ls[R(ls.length)];
+  const nu=mk(s.id,s.o);L(G,s.d.Name+' copies itself into lane '+(i+1));place(G,me,nu,i);aura(G);announce(G,nu,1);break}
  case'CopyLastEnemyCard':{if(c.rp)break;let h=null;
   for(let i=G.hist.length-1;i>=0;i--){const x=G.hist[i];if(x.p==s.o||x.tf||x.uid===s.uid||!CD[x.id])continue;h=x;break}
   if(!h)break;
@@ -452,7 +455,7 @@ case'LoseHealth':ts.forEach(t=>{if(t.h)dmg(G,t,a.Amount||1,null,2);else if(!t.kw
   ls.forEach(i=>{if(me.ln[i]||G.over)return;const pool=me.disc.filter(x=>CD[x.id].Type=='Unit'&&cardOK(CD[x.id],a.Filter));if(!pool.length)return;
    const pk=pool[R(pool.length)];me.disc.splice(me.disc.indexOf(pk),1);const nu=mk(pk.id,s.o);nu.atk+=pk.ba||0;nu.cba=pk.ba||0;nu.cr=pk.red||0;if(pk.unk)nu.kw.add('Unkillable');place(G,me,nu,i);L(G,nu.d.Name+' rises from the discard');
    if((!c.sm||c.rp)&&!G.over)fire(G,'OnPlayed',nu,{tf:RULES.summonTriggers?0:1,nosac:1,sm:1,nr:1,ask:1});
-   if(RULES.summonTriggers&&!G.over)announce(G,nu)});break}
+   if(RULES.summonTriggers&&!G.over)announce(G,nu,1)});break}
  case'MoveRight':{const i=s.lane+1;if(i<4&&!me.ln[i]&&me.ln[s.lane]==s){me.ln[s.lane]=null;place(G,me,s,i);if(a.ThenAttack){const v=G.p[1-s.o].ln[s.lane];if(v&&!v.gone&&v.hp>0&&engage(v,s))strike(G,s)}}break}
  case'SpendBlood':me.b=a.Amount!=null?Math.max(0,me.b-a.Amount):0;break
  case'LoseBlood':ts.forEach(t=>{if(!t.h)return;const q=G.p[t.p],n=Math.max(0,Math.floor(a.Amount||0));if(n>0){q.b=Math.max(0,q.b-n);L(G,(t.p?'Enemy loses ':'You lose ')+n+' Blood');EV(G,{k:'snd',n:'debuff'})}});break
@@ -507,7 +510,8 @@ function transformUnit(G,u,id){const d=CD[id],p=G.p[u.o],from=u.id,oa=u.atk,oh=u
 function place(G,p,u,i){EV(G,{k:'in',u:u.uid});u.lane=i;u.o=p.i;u.gone=0;p.ln[i]=u;if(!u.placed){u.placed=1;u.atk+=p.gb.a;u.hp+=p.gb.h;u.mx+=p.gb.h;u.lh=u.hp;
   if(G.en&&p.i==1&&G.en.mod.stat){u.atk+=G.en.mod.stat;u.hp+=G.en.mod.stat;u.mx+=G.en.mod.stat;u.lh=u.hp}}
  if(!G.sim&&p.ln.some(w=>w&&w.id==907&&!w.gone)&&p.ln.some(w=>w&&w.id==908&&!w.gone))acu(G,p,'reunion')}
-function announce(G,u){if(G.over||!u)return;const p=G.p[u.o];
+function announce(G,u,sm){if(G.over||!u)return;const p=G.p[u.o];
+ if(sm)p.ln.slice().forEach(w=>w&&w!==u&&fire(G,'OnFriendlyUnitSummoned',w,{u,t:u}));   // entered NOT from hand (summon / copy / rise)
  p.ln.slice().forEach(w=>w&&w!==u&&fire(G,'OnPlayed',w,{u,lis:1}));
  p.ln.slice().forEach(w=>w&&w!==u&&fire(G,'OnFriendlyUnitPlayed',w,{u}));
  G.p[1-u.o].ln.slice().forEach(w=>w&&fire(G,'OnEnemyUnitPlayed',w,{u}))}
