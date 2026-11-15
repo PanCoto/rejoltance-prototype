@@ -1,5 +1,7 @@
 /* ============================================================
-   Version + changelog. Edit only this file to publish updates.
+   Version + changelogs. Edit only this file to publish updates.
+   There are TWO separate changelogs: CHANGELOG (normal build) and CHANGELOG_EXP
+   (shown instead when "Experimental changes" is on in Settings).
 
    Format (newest entry FIRST):
      ## v1.0.1 - 2026-11-12        <- version - date (date optional)
@@ -7,11 +9,37 @@
      - **Card Name**: Cost 3 -> 2  <- **bold** works anywhere
      plain lines become paragraphs
 
-   Also update GAME_VERSION below so the main menu label matches.
+   Showing cards:
+     - A **bold** text that is exactly a card name becomes hoverable: the card pops up.
+     - {{Card Name}} or {{123}} (name or card Id) does the same without bold text.
+     - A line on its own like   [[cards: Black Cat, 101, Morsel]]   shows those cards
+       as a row of pictures (hover one to zoom it). Use it under a "### New Cards" title.
+     Names are looked up in the cards of the build being viewed, so in CHANGELOG use
+     cards.js cards and in CHANGELOG_EXP use cards-exp.js cards. Unknown names stay plain text.
+
+   Also update GAME_VERSION / GAME_VERSION_EXP below so the main menu label matches.
    ============================================================ */
-const GAME_STAGE='Pre-alpha',GAME_VERSION='1.0.1';
+const GAME_STAGE='Pre-alpha',GAME_VERSION='0.0.2',GAME_VERSION_EXP='PTB 0.0.2';
 const CHANGELOG=`
-## v1.0.1 - 2026-11-10
+## v0.0.2 - 2026-11-15
+### Balance Overhaul
+- The whole card pool was rebalanced. **Most cards are now more expensive**: 86 of the 113 existing cards cost more (usually +1, strong cards +2), and none got cheaper. This replaces the card values listed in older entries; hover a card to see its current stats.
+- Biggest price hikes (+2): **Mouse** (now 5 cost, 5/12), **Widows Spider**, **Thor**, **Double Tap**, **Mindstrucker**, **One-Punch Man**, **Chainsaw Guy** and **Blighteinstein**.
+- 31 cards had their Attack and/or Health changed, mostly to compensate for the new costs.
+- About 70 card descriptions were reworded and several abilities were reworked.
+- 19 cards were renamed (for example Librarian is now **Mindstrucker**, Therapist is now **Synth-Medic** and Knockback is now **Knock-out**).
+### New Cards
+- 20 new cards. Hover a card to zoom it.
+[[cards: 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120]]
+### New Tokens
+- Created by other cards (they cannot be put in decks).
+[[cards: 913, 914, 935, 936, 937, 938, 915, 916, 917, 918, 919, 920, 924, 926, 928, 934]]
+### Fixes
+- **Soul Harvest** now draws the Units destroyed last round from both your discard pile and the enemy's (yours first, up to a full hand) and deals damage equal to the cards drawn.
+- Online: fixed a desync where, when a Hero died during combat (for example to Deadbeat), the owner got the Defeat screen but the opponent stayed stuck in the combat phase.
+- Changelog: numbers (for example "Health 1 -> 2") no longer pop up a card by accident.
+- New premade deck: NewCardsShowcase, built from the new cards.
+## v0.0.1 - 2026-11-10
 ### Card Changes
 - **Adaptive Unit** [BUFF] : Health 1 -> **2**
 - **Echo Chamber** [BUFF] : Cost 5 -> **4**
@@ -28,7 +56,7 @@ const CHANGELOG=`
 - **Echo Chamber** now supports sacrifice effects. Every "When Played: You may Sacrifice a Friendly Unit" card you have played can be replayed with **one** shared sacrifice: pick a Friendly Unit once and all of their sacrifice payouts (damage, stat gain, extra draws...) use it.
 - Units summoned by a replayed effect (for example a unit created by Echo Chamber replaying Attentive Parent) now trigger their own When Played, and you can choose to Sacrifice a unit for them.
 - Heroes now have a Max HP (20 by default), so heals and Lifesteal respect increases to it.
-## v1.0.0 - 2026-11-09
+## v0.0.0 - 2026-11-09
 ### Card Changes
 -  **Rustler** [NERF] : Cost 10 -> **12**
 - **The Pale** [REWORK] : "Silence all Units." -> "Summon an exact copy of a friendly unit that costs 4 or less in an empty lane of your choice."
@@ -36,4 +64,8 @@ const CHANGELOG=`
 - **Echo Chamber** [NERFED] : Cost 4 -> **5**
 ### Fixes
 - Summoned / Transformed / Revived units with when played abilities will now do them correclty, letting the owner target the unit of their choosing if such targeting is required.
+`;
+
+// Changelog of the EXPERIMENTAL build (Settings -> Experimental changes). Same format as above. Empty since v1.0.2 (the experimental changes were promoted to the normal build); add an entry when you start a new experiment.
+const CHANGELOG_EXP=`
 `;

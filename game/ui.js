@@ -84,7 +84,7 @@ function glossary(x,live,d){const out=[],late=[],seen=new Set();
   refs.forEach(r=>{const t=CD[r.id];(t.Keywords||[]).forEach(k=>addKw(k,t,late));scan(t.Description,t,late)})}
  return out.concat(late)}
 function showZoom(x,live){const d=x.d||CD[x.id];const gl=glossary(x,live,d).join('<br>');
- const z=$('zoom');z.classList.toggle('zr',$('bld').style.display=='block');
+ const z=$('zoom');z.classList.toggle('zr',$('bld').style.display=='block'||!!window.RJ_ZR);   // RJ_ZR: changelog sets it so the zoom opens on the side away from the hovered card
  z.innerHTML=cardHTML(x,live,live&&x.o?'e':'')+(gl?`<div id="gl"${gl.replace(/<[^>]+>/g,'').length>330?' class="sm"':''}>${gl}</div>`:'');z.style.display='block'}
 const hideZoom=()=>{if(!stickyZoom)$('zoom').style.display='none'};
 const findLive=uid=>[...G.p[0].ln,...G.p[1].ln].find(v=>v&&v.uid==uid);
@@ -94,6 +94,7 @@ function cardOf(t){let x=null,live=false;
  if(t.dataset.u&&G){x=findLive(t.dataset.u);live=!!x}
  if(!x&&t.dataset.c&&G)x=G.p[0].hand.find(v=>v.uid==t.dataset.c);
  if(!x&&t.dataset.cid)x={id:+t.dataset.cid,uid:0,ba:+t.dataset.ba||0};
+ if(x&&!live&&t.dataset.fc!=null&&!t.dataset.u&&!t.dataset.c)x.fc=+t.dataset.fc;   // changelog cards: show the printed cost
  return x?{x,live}:null}
 const cardKey=t=>t.dataset.u?'u'+t.dataset.u:t.dataset.c?'c'+t.dataset.c:'i'+t.dataset.cid;
 // Click-to-pin: a clicked card stays zoomed until it is clicked again, another card is clicked, or the board is clicked.

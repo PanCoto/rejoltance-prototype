@@ -1,13 +1,9 @@
 /* ============================================================
-   EXPERIMENTAL CARDS - full rewrite matching the xlsx spreadsheet.
-   - IDs 1-100 keep cards.js IDs.
-   - New cards from xlsx: 101-110.
-   - Original tokens: 900-912. New tokens: 913-924.
-   - [KEYWORD] no longer in descriptions (engine renders them).
-   - Subtypes balanced ~23 per type.
-   - "Sacrifice:" in description = "When Played: You may sacrifice
-     a friendly unit; if you do, [Y]". Spells with sacrifice are
-     mandatory; Units are optional.
+   EXPERIMENTAL CARDS (Settings -> Experimental changes).
+   As of v1.0.2 this is an exact copy of cards.js, so the experimental
+   build currently has NO differences. To try a change: edit the cards
+   in THIS file only; when it is ready, copy the list into cards.js
+   (rename CARDS_EXP -> CARDS) and write the changelog entry.
    ============================================================ */
 const CARDS_EXP = [
 
@@ -1742,7 +1738,7 @@ const CARDS_EXP = [
       { Trigger: "OnPlayed",
         Actions: [{
           Type: "AddCardToHand", Target: "FriendlyHero",
-          Filter: { Ids: [915, 916, 917, 918, 919, 920, 921, 922, 923, 924, 925, 926, 927, 928, 929, 930, 931, 932, 933, 934], Token: true },
+          Filter: { Ids: [915, 916, 917, 918, 919, 920, 924, 926, 928, 934], Token: true },
           Count: { Count: "MissingHealth", Div: 3, Max: 10 },
           FreeThisTurn: true,
         }] },
@@ -1824,7 +1820,7 @@ const CARDS_EXP = [
     Name: "Soul Harvest",
     Type: "Spell",
     Cost: 5,
-    Description: "Draw the Friendly Units that were Destroyed last Round. Deal damage equal to the cards drawn to an Enemy Unit or Hero.",
+    Description: "Draw the Friendly and Enemy Units that were Destroyed last Round. Deal damage equal to the cards drawn to an Enemy Unit or Hero.",
     Effects: [
       { Trigger: "OnPlayed",
         Actions: [
@@ -1869,8 +1865,9 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Human"],
     Cost: 7,
-    Attack: 4,
-    Health: 4,
+    Attack: 5,
+    Health: 5,
+    Keywords: ["SilenceImmune"],
     Description: "When Destroyed: Destroy an Enemy Unit.",
     Effects: [
       { Trigger: "OnDeath",
@@ -2043,13 +2040,15 @@ const CARDS_EXP = [
     ],
   },
 
-  {
+  // ---- Blessings (conjured by Abyss Lector). Pool of 10, each worth roughly 3 Blood of effect. ----
+{
     Id: 915, Name: "Blessing of Might", Type: "Spell", Subtypes: ["Token"], Cost: 3,
     Description: "Give a Friendly Unit +3/+3.",
     Effects: [{ Trigger: "OnPlayed", Targeting: "TargetFriendlyUnit",
       Actions: [{ Type: "BuffStats", Target: "SelectedTarget", BuffAtk: 3, BuffHp: 3 }] }],
   },
-  {
+
+{
     Id: 916, Name: "Blessing of Warding", Type: "Spell", Subtypes: ["Token"], Cost: 3,
     Description: "Give a Friendly Unit Soul Guard and +1/+1.",
     Effects: [{ Trigger: "OnPlayed", Targeting: "TargetFriendlyUnit",
@@ -2058,7 +2057,8 @@ const CARDS_EXP = [
         { Type: "BuffStats", Target: "SelectedTarget", BuffAtk: 1, BuffHp: 1 },
       ] }],
   },
-  {
+
+{
     Id: 917, Name: "Blessing of Mending", Type: "Spell", Subtypes: ["Token"], Cost: 3,
     Description: "Heal Your Hero for 4 and all Friendly Units for 4.",
     Effects: [{ Trigger: "OnPlayed",
@@ -2067,13 +2067,15 @@ const CARDS_EXP = [
         { Type: "Heal", Target: "AllFriendlyUnits", Amount: 4 },
       ] }],
   },
-  {
+
+{
     Id: 918, Name: "Blessing of Wisdom", Type: "Spell", Subtypes: ["Token"], Cost: 3,
     Description: "Draw 2 cards.",
     Effects: [{ Trigger: "OnPlayed",
       Actions: [{ Type: "DrawCard", Target: "FriendlyHero", Amount: 2 }] }],
   },
-  {
+
+{
     Id: 919, Name: "Blessing of Vengeance", Type: "Spell", Subtypes: ["Token"], Cost: 3,
     Description: "Deal 3 Damage to an Enemy Unit and 1 Damage to the Enemy Hero.",
     Effects: [{ Trigger: "OnPlayed", Targeting: "TargetEnemyUnit",
@@ -2082,7 +2084,8 @@ const CARDS_EXP = [
         { Type: "DealDamage", Target: "EnemyHero", Amount: 1 },
       ] }],
   },
-  {
+
+{
     Id: 920, Name: "Blessing of Silence", Type: "Spell", Subtypes: ["Token"], Cost: 3,
     Description: "Silence an Enemy Unit and Stun it.",
     Effects: [{ Trigger: "OnPlayed", Targeting: "TargetEnemyUnit",
@@ -2091,25 +2094,8 @@ const CARDS_EXP = [
         { Type: "ApplyStatus", Target: "TargetEnemyUnit", StatusKeyword: "Stunned" },
       ] }],
   },
-  {
-    Id: 921, Name: "Blessing of Fortune", Type: "Spell", Subtypes: ["Token"], Cost: 3,
-    Description: "Add a random card to Your Hand. It costs 0 this turn.",
-    Effects: [{ Trigger: "OnPlayed",
-      Actions: [{ Type: "AddCardToHand", Target: "FriendlyHero", FreeThisTurn: true }] }],
-  },
-  {
-    Id: 922, Name: "Blessing of Rebirth", Type: "Spell", Subtypes: ["Token"], Cost: 3,
-    Description: "Return a Friendly Unit to Your Hand. It costs 3 less.",
-    Effects: [{ Trigger: "OnPlayed", Targeting: "TargetFriendlyUnit",
-      Actions: [{ Type: "ReturnToHand", Target: "SelectedTarget", CostChange: -3 }] }],
-  },
-  {
-    Id: 923, Name: "Blessing of Fury", Type: "Spell", Subtypes: ["Token"], Cost: 3,
-    Description: "All Friendly Units get +2 ATK.",
-    Effects: [{ Trigger: "OnPlayed",
-      Actions: [{ Type: "BuffStats", Target: "AllFriendlyUnits", BuffAtk: 2, BuffHp: 0 }] }],
-  },
-  {
+
+{
     Id: 924, Name: "Blessing of Fortitude", Type: "Spell", Subtypes: ["Token"], Cost: 3,
     Description: "Your Hero gains +3 Max HP and heals 4.",
     Effects: [{ Trigger: "OnPlayed", Actions: [
@@ -2117,70 +2103,22 @@ const CARDS_EXP = [
       { Type: "Heal", Target: "FriendlyHero", Amount: 4 },
     ] }],
   },
-  {
-    Id: 925, Name: "Blessing of Frost", Type: "Spell", Subtypes: ["Token"], Cost: 3,
-    Description: "Stun all Enemy Units.",
-    Effects: [{ Trigger: "OnPlayed",
-      Actions: [{ Type: "ApplyStatus", Target: "AllEnemyUnits", StatusKeyword: "Stunned" }] }],
-  },
-  {
+
+{
     Id: 926, Name: "Blessing of Meteors", Type: "Spell", Subtypes: ["Token"], Cost: 3,
     Description: "Deal 2 Damage to all Enemy Units.",
     Effects: [{ Trigger: "OnPlayed",
       Actions: [{ Type: "DealDamage", Target: "AllEnemyUnits", Amount: 2 }] }],
   },
-  {
-    Id: 927, Name: "Blessing of Wildfire", Type: "Spell", Subtypes: ["Token"], Cost: 3,
-    Description: "Apply Burn 2 to all Enemy Units.",
-    Effects: [{ Trigger: "OnPlayed",
-      Actions: [
-        { Type: "ApplyStatus", Target: "AllEnemyUnits", StatusKeyword: "Burning" },
-        { Type: "ApplyStatus", Target: "AllEnemyUnits", StatusKeyword: "Burning" },
-      ] }],
-  },
-  {
+
+{
     Id: 928, Name: "Blessing of Revival", Type: "Spell", Subtypes: ["Token"], Cost: 3,
-    Description: "Summon a Random Friendly Unit that costs 4 or less from Your Discard Pile.",
+    Description: "Summon a Random Friendly Unit that costs 3 or less from Your Discard Pile.",
     Effects: [{ Trigger: "OnPlayed",
-      Actions: [{ Type: "Reanimate", Filter: { MaxCost: 4 } }] }],
+      Actions: [{ Type: "Reanimate", Filter: { MaxCost: 3 } }] }],
   },
-  {
-    Id: 929, Name: "Blessing of Echoes", Type: "Spell", Subtypes: ["Token"], Cost: 3,
-    Description: "Summon an Exact copy of a Friendly Unit that costs 3 or less in an empty lane of Your choice.",
-    Effects: [{ Trigger: "OnPlayed", Targeting: "TargetFriendlyUnit",
-      Actions: [{ Type: "CopyUnit", Target: "SelectedTarget", Where: { MaxCost: 3 } }] }],
-  },
-  {
-    Id: 930, Name: "Blessing of Frenzy", Type: "Spell", Subtypes: ["Token"], Cost: 3,
-    Description: "A Friendly Unit gets +1 ATK and does a Bonus Attack.",
-    Effects: [{ Trigger: "OnPlayed", Targeting: "TargetFriendlyUnit",
-      Actions: [
-        { Type: "BuffStats", Target: "SelectedTarget", BuffAtk: 1 },
-        { Type: "BonusAttack", Target: "SelectedTarget" },
-      ] }],
-  },
-  {
-    Id: 931, Name: "Blessing of Plenty", Type: "Spell", Subtypes: ["Token"], Cost: 3,
-    Description: "Gain 4 Blood this round.",
-    Effects: [{ Trigger: "OnPlayed",
-      Actions: [{ Type: "AddResource", Amount: 4 }] }],
-  },
-  {
-    Id: 932, Name: "Blessing of Banishment", Type: "Spell", Subtypes: ["Token"], Cost: 3,
-    Description: "Return an Enemy Unit to its owner's Hand. It costs 2 more.",
-    Effects: [{ Trigger: "OnPlayed",
-      Actions: [{ Type: "ReturnToHand", Target: "TargetEnemyUnit", CostChange: 2 }] }],
-  },
-  {
-    Id: 933, Name: "Blessing of Fangs", Type: "Spell", Subtypes: ["Token"], Cost: 3,
-    Description: "Give a Friendly Unit Lifesteal and +2 ATK.",
-    Effects: [{ Trigger: "OnPlayed", Targeting: "TargetFriendlyUnit",
-      Actions: [
-        { Type: "ApplyStatus", Target: "SelectedTarget", StatusKeyword: "Lifesteal" },
-        { Type: "BuffStats", Target: "SelectedTarget", BuffAtk: 2 },
-      ] }],
-  },
-  {
+
+{
     Id: 934, Name: "Blessing of Wings", Type: "Spell", Subtypes: ["Token"], Cost: 3,
     Description: "Give a Friendly Unit Flying and +2/+1.",
     Effects: [{ Trigger: "OnPlayed", Targeting: "TargetFriendlyUnit",

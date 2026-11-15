@@ -37,7 +37,7 @@ const startAudio=()=>musicStart();
 const flipLog=s=>String(s).replace(/^(You|Enemy)\b/,m=>m=='You'?'Enemy':'You');
 const mev=e=>{const x=Object.assign({},e);if(x.o!=null)x.o=1-x.o;if(x.h!=null)x.h=1-x.h;if(x.us)x.us=x.us.map(y=>Object.assign({},y,{o:1-y.o}));return x};
 function snap(G){
- const uc=u=>{if(!u)return null;const x=Object.assign({},u);delete x.d;x.kw=[...u.kw];x.o=1-u.o;return x};
+ const uc=u=>{if(!u)return null;const x=Object.assign({},u);delete x.d;delete x.hurtQ;x.kw=[...u.kw];x.o=1-u.o;return x};   // hurtQ = engine-internal queue whose entries point back at the unit (circular): a unit killed mid-lane (e.g. by the hero dying) still holds it and JSON.stringify threw, so the guest never got the game-over state
  const hid=c=>({uid:c.uid,id:0}),cp=c=>Object.assign({},c);
  const side=(p,own)=>({ac:own?p.ac:{un:[]},fk:p.ac?p.ac.fk:0,i:1-p.i,hp:p.hp,mhp:p.mhp,fr:p.fr,mb:p.mb,b:p.b,gb:p.gb,sp:p.sp,sc:p.sc,fat:p.fat||0,
   hand:own?p.hand.map(cp):p.hand.map(hid),
@@ -49,7 +49,8 @@ function snap(G){
   p:[side(G.p[1],1),side(G.p[0],0)]}))}
 function unsnap(s,ev){s.p.forEach(p=>p.ln.forEach(u=>{if(u){u.kw=new Set(u.kw);u.d=CD[u.id]}}));s.ev=ev||[];s.q=null;return s}
 function netPush(x){if(!NET||!NET.host||!G)return;
- const m=Object.assign({t:'st',s:snap(G),ev:NET.ev.map(mev)},x||{});NET.ev=[];netSend(m)}
+ let m;try{m=Object.assign({t:'st',s:snap(G),ev:NET.ev.map(mev)},x||{})}catch(e){console.error('snapshot failed',e);return}   // never let a snapshot error abort the host's flow
+ NET.ev=[];netSend(m)}
 const descr=v=>Array.isArray(v)?{m:v.map(u=>u.uid)}:typeof v=='number'?{n:v}:v&&v.h?{h:v.p}:v&&v.kw?{u:v.uid}:{c:v.uid};
 const armSync=()=>{if(!NET)return;clearTimeout(NET.syncT);NET.syncT=setTimeout(()=>netSend({t:'sync'}),3500)};
 // The online guest chooses targets for their own effects that the engine parked in G.pq (summons, transforms, evolving, Echo Chamber, Dual Wield's 2nd cast).

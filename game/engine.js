@@ -429,8 +429,8 @@ case'LoseHealth':ts.forEach(t=>{if(t.h)dmg(G,t,a.Amount||1,null,2);else if(!t.kw
   if(any)EV(G,{k:'snd',n:'debuff'});break}
  case'TutorCard':{let i=c.tut?me.deck.findIndex(x=>x.uid==c.tut.uid):-1;if(i<0)i=me.deck.reduce((b,c2,k)=>CD[c2.id].Cost>CD[me.deck[b].id].Cost?k:b,0);const got=me.deck.length&&me.hand.length<HAND_MAX;if(got)me.hand.push(me.deck.splice(i,1)[0]);shuf(me.deck);if(got)gained(G,me,'tutor');break}
  case'ShuffleDeck':shuf(me.deck);break;
- case'DrawKilledLastRound':{const pool=me.disc.filter(x=>x.nf!=null&&x.dt===G.turn-1&&CD[x.id].Type=='Unit');let n=0;
-  pool.forEach(x=>{if(me.hand.length>=HAND_MAX)return;me.disc.splice(me.disc.indexOf(x),1);delete x.dt;me.hand.push(x);n++;gained(G,me,'discard')});
+ case'DrawKilledLastRound':{const ep=G.p[1-me.i],last=x=>x.nf!=null&&x.dt===G.turn-1&&CD[x.id].Type=='Unit';let n=0;   // Units destroyed last round, yours first, then the enemy's; each one drawn is +1 damage
+  [me,ep].forEach(pl=>pl.disc.filter(last).forEach(x=>{if(me.hand.length>=HAND_MAX)return;pl.disc.splice(pl.disc.indexOf(x),1);delete x.dt;me.hand.push(x);n++;gained(G,me,'discard')}));
   c.drawn=n;L(G,'Soul Harvest - '+n+' card'+(n==1?'':'s')+' drawn');break}
  case'CopyDestroyed':{if(c.rp)break;const side=a.Side||'Enemy';let dd=null;
   for(let i=(G.dead||[]).length-1;i>=0;i--){const x=G.dead[i];if(x.uid===s.uid||!CD[x.id])continue;if(side=='Enemy'&&x.o==s.o)continue;if(side=='Friendly'&&x.o!=s.o)continue;dd=x;break}

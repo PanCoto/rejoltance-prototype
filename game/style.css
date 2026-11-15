@@ -754,5 +754,11 @@ body.ld,body.ld *{cursor:progress!important}
 #cllist ul{margin:0;padding-left:28px;display:flex;flex-direction:column;gap:5px}
 #cllist li,#cllist p{font-size:26px;color:#bbb;line-height:1.3;margin:0}
 #cllist li b{color:#fff;font-weight:700}
+#cllist .clc{cursor:help;border-bottom:2px solid #fff}
+#cllist .clc:hover{color:#fff}
+#cllist .clg{display:flex;flex-wrap:wrap;gap:16px;margin:12px 0 4px}
+#cllist .clg>div{width:200px}
+#cllist .clg .card{cursor:help}
+#cllist .clg .card:hover{box-shadow:0 0 0 3px #888,0 0 16px #000}
 .hero.htg{box-shadow:0 0 0 6px #ff2b2b,0 0 28px 6px #ff2b2b;cursor:pointer;z-index:3}
 .hero.htg:hover{box-shadow:0 0 0 6px #fff,0 0 28px 6px #fff}
