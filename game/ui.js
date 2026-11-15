@@ -121,7 +121,7 @@ const PH={U:'Units',B:'Unit and Actions',A:'Actions'};
 // done it after TM_GRACE more seconds (lag, animations, a frozen tab). The countdown shows next to "Phase :" and turns red for the last 5 seconds.
 // Choosing a target before combat (Occultist etc.) has its own, shorter limit PRE_SEC; when it runs out the engine picks the target itself, exactly like it does for the bot.
 // There is no timer against the bot, in Endless Mode, or in Mirror Match vs the bot.
-const PHASE_SEC=30,PRE_SEC=10,TM_GRACE=4,MULL_SEC=30,ORDER_SEC=15;   // MULL_SEC: swap cards, ORDER_SEC: go first / second
+const PHASE_SEC=60,PRE_SEC=10,TM_GRACE=4,MULL_SEC=30,ORDER_SEC=15;   // MULL_SEC: swap cards, ORDER_SEC: go first / second
 const TM={key:'',end:0,iv:0,wd:0};
 function tmStop(){clearInterval(TM.iv);clearTimeout(TM.wd);TM.iv=TM.wd=0;TM.key='';const p=$('phase');if(p)p.style.color=''}
 const tmLeft=()=>TM.key?Math.max(0,Math.ceil((TM.end-Date.now())/1000)):0;
