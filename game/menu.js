@@ -14,7 +14,6 @@ const openSet=()=>{$('setmenu').classList.toggle('ig',$('game').style.display=='
  openPanel('setmenu')};
 $('sopen').onclick=openSet;$('mu').onclick=openSet;
 ['tutback','frback','botback','setclose','mirback','achback','pfback','fdback','clback'].forEach(i=>$(i).onclick=closePanels);
-PANELS.forEach(k=>$(k).addEventListener('click',e=>{if(e.target===$(k))closePanels()}));
 addEventListener('keydown',e=>{if(e.key!='Escape')return;if($('game').style.display=='block'){if($('setmenu').style.display=='flex')closePanels();return}
  if($('lobby').style.display=='flex')$('lcancel').click();else closePanels()});
 $('rndprem').checked=lsGet('rj_rndpool')!=='mine';
@@ -58,20 +57,28 @@ const clInline=(el,t)=>t.split(/(\*\*.+?\*\*|\{\{.+?\}\})/).forEach(s=>{if(!s)re
 const clGallery=(ent,list)=>{const ids=list.split(',').map(x=>clId(x)).filter(i=>i!=null);if(!ids.length)return;
  const g=document.createElement('div');g.className='clg';
  ids.forEach(id=>{const w=document.createElement('div');w.innerHTML=cardHTML({id,fc:CD[id].Cost,ba:0},false,'','data-fc="'+CD[id].Cost+'"');g.appendChild(w)});ent.appendChild(g)};
-const renderChangelog=()=>{const box=$('cllist'),exp=!!window.RJ_EXP,src=exp?CHANGELOG_EXP:CHANGELOG;box.textContent='';let ent=null,sec=null,ul=null,n=0;
- $('cltitle').textContent=exp?'Experimental Changelog':'Changelog';
+// Updates has two pages made from the same data (changelog.js): "Patch Notes" (everything except balance) and "Balance Changes"
+// (sections whose title starts with "Balance" or "Card Changes"). Entries with nothing for the chosen page are skipped.
+let CLK='patch';
+const isBal=t=>/^(balance|card changes)/i.test(t);
+const renderChangelog=kind=>{CLK=kind||CLK;const bal=CLK=='bal',box=$('cllist'),exp=!!window.RJ_EXP,src=exp?CHANGELOG_EXP:CHANGELOG;box.textContent='';let ent=null,ul=null,n=0,inc=!bal;
+ const flush=()=>{if(ent&&ent.children.length>1){box.appendChild(ent);n++}ent=null};
+ $('cltitle').textContent=(exp?'Experimental ':'')+(bal?'Balance Changes':'Patch Notes');
  for(const raw of src.split('\n')){const l=raw.trim();if(!l)continue;let m;
-  if(m=l.match(/^##\s+(.*?)(?:\s+[-\u2013]\s+(\d{4}-\d{2}-\d{2}))?$/)){n++;ent=document.createElement('section');ent.className='cle';const h=document.createElement('h3');h.textContent=m[1];if(m[2]){const d=document.createElement('small');d.textContent=m[2];h.appendChild(d)}ent.appendChild(h);box.appendChild(ent);sec=ul=null}
+  if(m=l.match(/^##\s+(.*?)(?:\s+[-\u2013]\s+(\d{4}-\d{2}-\d{2}))?$/)){flush();ent=document.createElement('section');ent.className='cle';const h=document.createElement('h3');h.textContent=m[1];if(m[2]){const d=document.createElement('small');d.textContent=m[2];h.appendChild(d)}ent.appendChild(h);ul=null;inc=!bal}
   else if(!ent)continue;
-  else if(m=l.match(/^###\s+(.*)$/)){sec=document.createElement('h4');sec.textContent=m[1];ent.appendChild(sec);ul=null}
+  else if(m=l.match(/^###\s+(.*)$/)){inc=isBal(m[1])==bal;ul=null;if(inc){const h4=document.createElement('h4');h4.textContent=m[1];ent.appendChild(h4)}}
+  else if(!inc)continue;
   else if(m=l.match(/^\[\[\s*cards?\s*:\s*(.+?)\s*\]\]$/i)){clGallery(ent,m[1]);ul=null}
   else if(m=l.match(/^[-*]\s+(.*)$/)){if(!ul){ul=document.createElement('ul');ent.appendChild(ul)}const li=document.createElement('li');clInline(li,m[1]);ul.appendChild(li)}
   else{const p=document.createElement('p');clInline(p,l);ent.appendChild(p);ul=null}}
- $('clsub').textContent=n?(exp?'Changes in the experimental build, newest first':'Balance changes and updates, newest first'):'No entries yet';box.scrollTop=0};
+ flush();
+ $('clsub').textContent=!n?(bal?'No balance changes yet':'No entries yet'):bal?(exp?'Card balance changes in the experimental build, newest first':'Card balance changes, newest first'):(exp?'Changes in the experimental build, newest first':'New content, changes and fixes, newest first');box.scrollTop=0};
 // The zoomed card sits at the left edge by default; in the changelog it opens on the opposite side of whatever is hovered, so it doesn't hide it.
 $('cllist').addEventListener('mouseover',e=>{const t=e.target.closest&&e.target.closest('[data-cid]');if(t){const r=t.getBoundingClientRect();window.RJ_ZR=(r.left+r.right)/2<innerWidth/2}});
 $('cllist').addEventListener('mouseleave',()=>{window.RJ_ZR=false});
-$('clopen').onclick=()=>{renderChangelog();openPanel('clmenu')};
+$('clopen').onclick=()=>{renderChangelog('patch');openPanel('clmenu')};
+$('balopen').onclick=()=>{renderChangelog('bal');openPanel('clmenu')};
 
 
 /* ---- main menu: left nav + card panel (see mockups) ---- */
@@ -119,3 +126,11 @@ function demoStart(){
  flow().then(()=>{if(DEMO&&my==gid)setTimeout(()=>{if(DEMO&&my==gid){DEMO=false;demoStart()}},4000)})}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!DEMO)demoStart()});
 demoStart();
+
+
+/* ---- full-screen views: every menu pop-up becomes its own screen like the Card Collection (Back top-left, title in the header bar) ---- */
+{const VW={tutmenu:'tutback',frmenu:'frback',mirmenu:'mirback',botmenu:'botback',achmenu:'achback',rkmenu:'rkback',acctmenu:'pfback',fdmenu:'fdback',avpick:'avback',clmenu:'clback',setmenu:'setclose',lobby:'lcancel'};
+ Object.keys(VW).forEach(id=>{const o=$(id),orig=$(VW[id]),h2=o.querySelector('.panel>h2');o.classList.add('vw');
+  const hd=document.createElement('div');hd.className='vhead';
+  const b=document.createElement('button');b.className='ghost vback';b.innerHTML='&lsaquo; Back';b.onclick=()=>orig.click();hd.appendChild(b);
+  if(h2)hd.appendChild(h2);o.insertBefore(hd,o.firstChild);orig.classList.add('vbx')})}

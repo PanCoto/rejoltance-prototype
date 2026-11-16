@@ -17,6 +17,10 @@
      Names are looked up in the cards of the build being viewed, so in CHANGELOG use
      cards.js cards and in CHANGELOG_EXP use cards-exp.js cards. Unknown names stay plain text.
 
+   Updates menu: "Patch Notes" shows every section EXCEPT balance ones; "Balance Changes" shows only sections whose
+   title starts with "Balance" or "Card Changes" (put card stat / text changes there, everything else elsewhere).
+   An entry with nothing for a page is skipped on that page.
+
    Also update GAME_VERSION / GAME_VERSION_EXP below so the main menu label matches.
    ============================================================ */
 const GAME_STAGE='Pre-alpha',GAME_VERSION='0.0.3',GAME_VERSION_EXP='PTB 0.0.2';
@@ -24,9 +28,11 @@ const CHANGELOG=`
 ## v0.0.3 - 2026-11-16
 ### UI Overhaul
 - The game uses now the **new** main menu on both the standard and experimental branches of the game.
-- The main menu is now a list of sections on the left (Play offline, Play online, Collection, Settings, Profile, Extras, News) with a panel of cards on the right. Click a section to open its panel, click it again to close it.
+- The main menu is now a list of sections on the left (Play offline, Play online, Collection, Settings, Social, Extras, Updates) with a panel of cards on the right. Click a section to open its panel, click it again to close it.
 - Menu keyboard controls: Up/Down change the section, Right/Left move between the cards, Enter confirms and Esc closes the panel.
-- Everything was regrouped: Tutorial, Play with the bot, Mirror Match UP and Endless Mode are under Play offline; Ranked, Quick Match, Play with a friend and online Mirror Match UP under Play online; Profile and Friends under Profile; Achievements under Extras; Changelog under News.
+- Everything was regrouped: Tutorial, Play with the bot, Mirror Match UP and Endless Mode are under Play offline; Ranked, Quick Match, Play with a friend and online Mirror Match UP under Play online; Profile and Friends under Social; Achievements under Extras.
+- The old pop-up windows are gone. Ranked, Quick Match / Play with a friend, Mirror Match, Play with the bot, Endless Mode, Tutorial, Settings, Profile, Friends, Achievements and the lobby now open as full screens like the Card Collection, with the Back button in the top left corner.
+- **Updates** (previously News) has two pages: **Patch Notes** (new content, changes and fixes) and **Balance Changes** (only card balance changes).
 - **Mirror Match UP** offline now starts straight away against the bot. Hosting or joining a Mirror Match is available under Play online.
 - **Quick Match** is now a separate card in Play online.
 - The Tutorial text (how a round works) has its own screen instead of being shown in the menu.

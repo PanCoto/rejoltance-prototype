@@ -769,3 +769,16 @@ body.ld,body.ld *{cursor:progress!important}
 #menu.watch{box-shadow:none}
 body.watching #game.bgdemo{opacity:1}
 #game.bgdemo #sur,#game.bgdemo #hs,#game.bgdemo #mu{display:none}
+
+
+/* ===== full-screen views (replace the old pop-up windows): header bar with Back top-left, same look as the Card Collection ===== */
+#stage .ovl.vw{background:var(--bg);-webkit-backdrop-filter:none;backdrop-filter:none;justify-content:flex-start;align-items:center;gap:0;z-index:75}
+#stage .vw .vhead{position:absolute;left:0;top:0;width:100%;height:96px;box-sizing:border-box;border-bottom:4px solid var(--ln);display:flex;align-items:center;gap:28px;padding:0 30px;text-align:left;z-index:2;background:var(--bg)}
+#stage .vw .vhead h2{margin:0;font-size:46px;color:#ddd;letter-spacing:3px;flex:1;text-align:left}
+#stage .ovl.vw button.vback{height:62px;font-size:30px;padding:0 30px;border-color:#2e2e2e;color:#aaa;flex:none}
+#stage .ovl.vw button.vback:hover{border-color:#fff;color:#fff}
+#stage .vw .vbx{display:none!important}
+#stage .vw .panel{margin-top:96px;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;height:960px!important;min-height:960px!important;max-height:960px!important}
+#stage .vw .btns:not(:has(*:not(.vbx))){display:none}
+#stage #acctmenu.vw .panel.prof{padding-top:14px}
+#stage #lobby.vw .panel{gap:14px}
