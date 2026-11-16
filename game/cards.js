@@ -1719,10 +1719,13 @@ const CARDS = [
     Cost: 5,
     Attack: 2,
     Health: 4,
-    Description: "When Played: The Enemy Hero gains 2 Ashes from Clashes. When this Does Damage: Shuffle 2 Ashes from Clashes to the Enemy's Hero deck.",
+    Description: "When Played: The Enemy Hero gains an Ashes from Clashes and You Shuffle an Ashes from Clashes into the Enemy's deck. When this Does Damage: Shuffle 2 Ashes from Clashes into the Enemy's deck.",
     Effects: [
       { Trigger: "OnPlayed",
-        Actions: [{ Type: "AddCardToHand", Target: "EnemyHero", ValueParam: 914, Count: 2 }] },
+        Actions: [
+          { Type: "AddCardToHand", Target: "EnemyHero", ValueParam: 914, Count: 1 },
+          { Type: "AddCardToEnemyDeck", ValueParam: 914, Count: 1 },
+        ] },
       { Trigger: "OnDamagedEnemyUnit", Condition: { Condition: "IsSelf" },
         Actions: [{ Type: "AddCardToEnemyDeck", ValueParam: 914, Count: 2 }] },
       { Trigger: "OnDamagedEnemyHero", Condition: { Condition: "IsSelf" },
@@ -2052,10 +2055,10 @@ const CARDS = [
   {
     Id: 914, Name: "Ashes from Clashes", Type: "Spell", Subtypes: ["Token"],
     Cost: 0,
-    Description: "Deal 1 Damage to a Friendly Unit or Friendly Hero. Start of Round: If this is in your Hand, gain Ashes from Clashes.",
+    Description: "Deal damage to a Friendly Unit or Friendly Hero equal to the number of Ashes from Clashes You have played this game. Start of Round: If this is in your Hand, gain Ashes from Clashes.",
     Effects: [
       { Trigger: "OnPlayed", Targeting: "TargetFriendlyUnitOrHero",
-        Actions: [{ Type: "DealDamage", Target: "SelectedTarget", Amount: 1 }] },
+        Actions: [{ Type: "DealDamage", Target: "SelectedTarget", Amount: { Count: "AshesPlayed" } }] },
       { Trigger: "OnStartOfRound", Zone: "Hand",
         Actions: [{ Type: "AddCardToHand", Target: "FriendlyHero", ValueParam: 914 }] },
     ],

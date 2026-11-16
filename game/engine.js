@@ -43,6 +43,7 @@ function countOf(G,s,sp,c){const me=G.p[s.o!=null?s.o:0],op=G.p[1-me.i];c=c||{};
   case'BurningUnits':return all().filter(w=>w.kw.has('Burning')).length;case'MarkedUnits':return all().filter(w=>w.kw.has('Marked')).length;
   case'DamagedUnits':return all().filter(w=>w.hp<w.mx).length;
   case'CardsInHand':return me.hand.length;case'EnemyCardsInHand':return op.hand.length;
+  case'AshesPlayed':return G.hist.filter(h=>h.p==me.i&&h.id==914).length;   // Ashes from Clashes you have played this game (the one being played counts)
   case'Blood':return me.b;case'MaxBlood':return me.mb;case'DeckSize':return me.deck.length;case'DiscardSize':return me.disc.length;
   case'FriendlyHeroHp':return me.hp;case'EnemyHeroHp':return op.hp;
   case'MissingHealth':return Math.max(0,(me.mhp||20)-me.hp);

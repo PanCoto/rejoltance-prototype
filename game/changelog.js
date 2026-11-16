@@ -45,7 +45,14 @@ const CHANGELOG=`
 ### New Cards
 [[cards: 121]]
 - **Con Artist** (Aberration, 3 cost, 1/4): While in Play: You may play Units during Action phase. Normally Units can only be played in the Unit phases.
+- New premade deck: AshesTempo, built around **The Lighter**.
+### Balance Changes
+- **The Lighter** [REWORK] : "When Played: The Enemy Hero gains 2 Ashes from Clashes. When this Does Damage: Shuffle 2 Ashes from Clashes to the Enemy's Hero deck." -> "When Played: The Enemy Hero gains **an** Ashes from Clashes **and You Shuffle an Ashes from Clashes into the Enemy's deck**. When this Does Damage: Shuffle 2 Ashes from Clashes into the Enemy's deck."
+- **Ashes from Clashes** [REWORK] : "Deal 1 Damage to a Friendly Unit or Friendly Hero." -> "Deal damage to a Friendly Unit or Friendly Hero **equal to the number of Ashes from Clashes You have played this game**." Only Ashes played by the player who received them count. The first one deals 1, the second 2, the third 3 and so on.
+- **Bone Baronet** [BUFF] : Health 1 -> **3**, "When Destroyed: Gain The Tempting Goblet." -> "When Destroyed: **Shuffle** The Tempting Goblet **into Your Deck**."
+- **Black Cat** [REWORK] : Cost 1 -> **0**, Attack 1 -> **0**
 ### Fixes
+- The Host / Join / Quick Match screens no longer build up piece by piece. While the room is being created or the connection is opening they show a short loading line, then the whole screen appears at once.
 - Bots playing in the menu background think faster, so they do not slow the menu down.
 ### Known Issues
 - When starting a match against the bot/player there is a chance that the visual artifacts from the main menu simulation will be displayed on board (such us lane glowing red until the combat starts in that lane).

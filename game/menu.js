@@ -134,3 +134,14 @@ demoStart();
   const hd=document.createElement('div');hd.className='vhead';
   const b=document.createElement('button');b.className='ghost vback';b.innerHTML='&lsaquo; Back';b.onclick=()=>orig.click();hd.appendChild(b);
   if(h2)hd.appendChild(h2);o.insertBefore(hd,o.firstChild);orig.classList.add('vbx')})}
+
+
+/* ---- lobby (Host / Join / Quick Match ...): while the room is still being created / the connection is still opening, the content is hidden
+        behind a short "loading" line and shown all at once when ready, so nothing pops in piece by piece and shifts the layout ---- */
+{const L0=lobby,MIN=650;let t0=0,tm=null;
+ const isLoad=(ti,o)=>!o.code&&!o.join&&!o.match&&(/^(Creating room|Joining )/.test(ti)||/^(Contacting|Connecting)/.test(o.status||''));
+ const reveal=()=>{tm=null;const lb=$('lobby');lb.classList.remove('ldg');lb.classList.remove('lrev');void lb.offsetWidth;lb.classList.add('lrev')};
+ lobby=function(ti,o){o=o||{};const lb=$('lobby');L0(ti,o);
+  if(isLoad(ti,o)){if(!lb.classList.contains('ldg'))t0=Date.now();lb.classList.add('ldg');lb.classList.remove('lrev');$('lloadt').textContent=(ti||'Loading').replace(/\.+$/,'')}
+  else if(lb.classList.contains('ldg')&&!tm){const wait=Math.max(0,MIN-(Date.now()-t0));if(wait)tm=setTimeout(reveal,wait);else reveal()}
+  else if(!lb.classList.contains('ldg')&&!lb.classList.contains('lrev'))lb.classList.add('lrev')}}
