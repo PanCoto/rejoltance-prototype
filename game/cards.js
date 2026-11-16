@@ -41,19 +41,22 @@ const CARDS = [
   },
 
   {
-    Id: 3,
-    Name: "Bone Baronet",
-    Type: "Unit",
-    Subtypes: ["Aberration"],
-    Cost: 2,
-    Attack: 1,
-    Health: 1,
-    Description: "When Destroyed: Gain The Tempting Goblet.",
-    Effects: [
-      { Trigger: "OnDeath",
-        Actions: [{ Type: "AddCardToHand", Target: "FriendlyHero", ValueParam: 900 }] },
-    ],
-  },
+  Id: 3,
+  Name: "Bone Baronet",
+  Type: "Unit",
+  Subtypes: ["Aberration"],
+  Cost: 2,
+  Attack: 1,
+  Health: 3,
+  Description: "When Destroyed: Shuffle The Tempting Goblet into Your Deck.",
+  Effects: [
+    { Trigger: "OnDeath",
+      Actions: [
+        { Type: "AddCardToDeck", Target: "FriendlyHero", ValueParam: 900 },
+        { Type: "ShuffleDeck", Target: "FriendlyHero" },
+      ] },
+  ],
+},
 
   {
     Id: 4,
@@ -185,8 +188,8 @@ const CARDS = [
     Name: "Black Cat",
     Type: "Unit",
     Subtypes: ["Animal"],
-    Cost: 1,
-    Attack: 1,
+    Cost: 0,
+    Attack: 0,
     Health: 1,
     Description: "When Sacrificed: Return to Your Hand instead. It costs 0 this turn.",
     Effects: [

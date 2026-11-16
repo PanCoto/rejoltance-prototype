@@ -415,6 +415,15 @@ case'AddCardToHand':{
     op.deck.push({uid:UID++,id});
   }
   shuf(op.deck);break}
+  case'AddCardToDeck':{
+    const p = G.p[s.o];
+    if(!p) break;
+    const id = a.ValueParam;
+    if(id == null || !CD[id]) break;
+    const n = a.Count || 1;
+    for(let i = 0; i < n; i++) p.deck.push({ uid: UID++, id });
+    L(G, 'Added ' + CD[id].Name + ' to deck');
+    break;}
 case'ReturnToHand':unitsOnly.filter(t=>!t.gone&&(!a.IfAlive||t.hp>0)).forEach(t=>{const o=G.p[t.o];if(o.ln[t.lane]!==t)return;EV(G,{k:'bnc',id:t.id,atk:t.atk,hp:Math.max(t.hp,0),o:t.o,lane:t.lane});L(G,t.d.Name+' returned to hand');o.ln[t.lane]=null;t.gone=1;if((o.hand.length<HAND_MAX||RULES.fullHandRework)&&(t.id<900||RULES.tokensReturnToHand)){o.hand.push({uid:UID++,id:t.id,unk:t.kw.has('Unkillable')?1:0,...((t.cr||a.CostChange)?{red:(t.cr||0)-(a.CostChange||0)}:{}),...(t.cba?{ba:t.cba}:{}),...(a.FreeThisTurn?{z:G.turn}:{})});gained(G,o,'bounce')}if(t.o!=me.i)acn(G,me,'bnc',1,3,'revolving')});break
  case'SacrificeUnits':{
   const list=(c.sacs||[]).filter(u=>u&&!u.gone&&u!==s&&u.o==s.o&&me.ln[u.lane]===u);let ga=0,gh=0;
