@@ -24,10 +24,23 @@ const CHANGELOG=`
 ## v0.0.3 - 2026-11-16
 ### UI Overhaul
 - The game uses now the **new** main menu on both the standard and experimental branches of the game.
-- Added the ability to watch the games between the bots on the Main Menu.
+- The main menu is now a list of sections on the left (Play offline, Play online, Collection, Settings, Profile, Extras, News) with a panel of cards on the right. Click a section to open its panel, click it again to close it.
+- Menu keyboard controls: Up/Down change the section, Right/Left move between the cards, Enter confirms and Esc closes the panel.
+- Everything was regrouped: Tutorial, Play with the bot, Mirror Match UP and Endless Mode are under Play offline; Ranked, Quick Match, Play with a friend and online Mirror Match UP under Play online; Profile and Friends under Profile; Achievements under Extras; Changelog under News.
+- **Mirror Match UP** offline now starts straight away against the bot. Hosting or joining a Mirror Match is available under Play online.
+- **Quick Match** is now a separate card in Play online.
+- The Tutorial text (how a round works) has its own screen instead of being shown in the menu.
 - Added the shortcut to the "Decks" screen through: collection -> decks.
+- The version label under the game title is scaled to the width of the title.
+- Added the ability to watch the games between the bots on the Main Menu. Bots play automatically in the dimmed background; the "Watch bots" button hides the menu so you can follow the match with sound and music (Esc, Enter or Space returns to the menu).
+### Music
+- New main menu theme and a separate calmer theme for the Collection / Decks screen. The themes crossfade when you switch screens and follow the Music volume slider.
+- In "Watch bots" mode the in-game music plays; the background match on the menu is silent.
 ### New Cards
 [[cards: 121]]
+- **Con Artist** (Aberration, 3 cost, 1/4): While in Play: You may play Units during Action phase. Normally Units can only be played in the Unit phases.
+### Fixes
+- Bots playing in the menu background think faster, so they do not slow the menu down.
 ### Known Issues
 - When starting a match against the bot/player there is a chance that the visual artifacts from the main menu simulation will be displayed on board (such us lane glowing red until the combat starts in that lane).
 - Tutorial match option not working properly.
@@ -77,6 +90,14 @@ const CHANGELOG=`
 `;
 
 const CHANGELOG_EXP=`
+## v0.0.3 - 2026-11-16
+### UI Overhaul
+- The new main menu (sections on the left, cards on the right, keyboard controls, Watch bots mode, Decks shortcut in the Collection) is now also used on the experimental branch. See the standard changelog for the full list.
+### Music
+- New main menu and Collection / Decks screen themes.
+### New Cards
+[[cards: 121]]
+- **Con Artist** (Aberration, 3 cost, 1/4): While in Play: You may play Units during Action phase.
 ## PTB - Max copies test
 ### Deck Building
 - New setting **Max 2 copies per card** (Settings, only shown while Experimental changes are on). When it is on, player-built decks can have at most 2 copies of the same card.
