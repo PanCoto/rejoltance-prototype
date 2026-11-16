@@ -39,6 +39,11 @@ const CHANGELOG=`
 - Added the shortcut to the "Decks" screen through: collection -> decks.
 - The version label under the game title is scaled to the width of the title.
 - Added the ability to watch the games between the bots on the Main Menu. Bots play automatically in the dimmed background; the "Watch bots" button hides the menu so you can follow the match with sound and music (Esc, Enter or Space returns to the menu).
+### Tutorial
+- New **guided tutorial** (Play offline -> Tutorial -> Start tutorial): a short, fully scripted match against a Training Bot that holds your hand through the basics with pop-ups. It highlights what to click and only lets you do the step it asks for. It takes about 5 minutes.
+- It covers the goal and the Heroes, the lanes, your hand, deck and discard pile, how to read a card, Mulligan, Blood, the phases of a round, playing Units and Actions, targeting, Mark, Taunt, Flying and how Combat resolves lane by lane.
+- Nothing in it is random: the cards, the draw order and the opponent's moves are fixed. The tutorial uses its own copies of the cards, so card balance changes never affect it. **Exit tutorial** (bottom left) leaves at any time.
+- The Tutorial card in the menu is marked NEW until you finish the tutorial once.
 ### Music
 - New main menu theme and a separate calmer theme for the Collection / Decks screen. The themes crossfade when you switch screens and follow the Music volume slider.
 - In "Watch bots" mode the in-game music plays; the background match on the menu is silent.
@@ -56,7 +61,6 @@ const CHANGELOG=`
 - Bots playing in the menu background think faster, so they do not slow the menu down.
 ### Known Issues
 - When starting a match against the bot/player there is a chance that the visual artifacts from the main menu simulation will be displayed on board (such us lane glowing red until the combat starts in that lane).
-- Tutorial match option not working properly.
 ## v0.0.2 - 2026-11-15
 ### Balance Overhaul
 - The whole card pool was rebalanced. **Most cards are now more expensive**: 86 of the 113 existing cards cost more (usually +1, strong cards +2), and none got cheaper. This replaces the card values listed in older entries; hover a card to see its current stats.
@@ -106,6 +110,8 @@ const CHANGELOG_EXP=`
 ## v0.0.3 - 2026-11-16
 ### UI Overhaul
 - The new main menu (sections on the left, cards on the right, keyboard controls, Watch bots mode, Decks shortcut in the Collection) is now also used on the experimental branch. See the standard changelog for the full list.
+### Tutorial
+- The new guided tutorial (Play offline -> Tutorial -> Start tutorial) is also available on the experimental branch. See the standard changelog for details.
 ### Music
 - New main menu and Collection / Decks screen themes.
 ### New Cards
