@@ -96,7 +96,7 @@ $('balopen').onclick=()=>{renderChangelog('bal');openPanel('clmenu')};
  const watch=on=>{window.WATCH=on;if(on){startAudio();musicNewGame();musicStart()}else musicUpdate();menu.classList.toggle('watch',on);document.body.classList.toggle('watching',on);$('mwatch').textContent=on?'Back to menu':'Watch bots'};
  $('mwatch').onclick=()=>watch(!menu.classList.contains('watch'));
  secs.forEach((s,si)=>cardsOf(si).forEach((c,ci)=>{c.addEventListener('mouseenter',()=>{card=ci;render()});c.addEventListener('click',()=>{card=ci;render()})}));
- $('ttut').onclick=()=>openPanel('tutmenu');
+ $('ttut').onclick=()=>openPanel('tutmenu');$('tutgo').onclick=()=>TUT.start();$('ttut').classList.toggle('todo',lsGet('rj_tut')!=='1');
  $('bdecks').onclick=()=>{$('bopen').click();document.querySelector('#btabs [data-tab="decks"]').click()};   // open the collection, then jump to its Decks tab
  const overlayOpen=()=>[...document.querySelectorAll('#stage .ovl')].some(o=>getComputedStyle(o).display!='none');
  addEventListener('keydown',e=>{if(menu.style.display!='flex'||overlayOpen()||e.ctrlKey||e.metaKey||e.altKey)return;

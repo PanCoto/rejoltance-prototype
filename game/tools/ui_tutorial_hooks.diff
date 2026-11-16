@@ -1,0 +1,76 @@
+--- ui.js	2026-11-16 22:35:49.092501627 +0000
++++ ui.js	2026-11-16 22:35:49.092501627 +0000
+@@ -157,7 +157,7 @@
+ const noMoves=()=>{const me=G.p[0];return!me.hand.some((c,i)=>playable(G,me,i))};
+ function asClear(){if(AS.t){clearTimeout(AS.t);AS.t=0}if(AS.msg){AS.msg=false;const b=$('msg');if(b&&(b.textContent||'').indexOf('No playable cards')==0)say('')}}
+ function autoSkip(){
+- const idle=G&&!G.over&&G.turn>=1&&G.step<3&&mine()&&!pend&&sel==null&&!castMode&&$('game').style.display=='block'&&$('mul').style.display!='flex'&&$('modal').style.display!='flex';
++ const idle=G&&!G.tut&&!G.over&&G.turn>=1&&G.step<3&&mine()&&!pend&&sel==null&&!castMode&&$('game').style.display=='block'&&$('mul').style.display!='flex'&&$('modal').style.display!='flex';
+  if(!idle||!noMoves()){asClear();return}
+  if(AS.t)return;
+  say('No playable cards - skipping this phase');AS.msg=true;
+@@ -187,7 +187,7 @@
+  $('ehp').textContent=Math.max(0,op.hp);$('php').textContent=Math.max(0,me.hp);
+  $('ehero').classList.toggle('htg',tg.some(x=>x&&x.h&&x.p==1));$('phero').classList.toggle('htg',tg.some(x=>x&&x.h&&x.p==0));
+  $('ehp').className='hpn'+(op.hp<=7?' lo':'');$('php').className='hpn'+(me.hp<=7?' lo':'');
+- $('enb').textContent=NET?(OPN||'Opponent'):'Botzacy';$('pnb').textContent=DEMO?'Botzacy II':myName()||'Playerzacy';
++ $('enb').textContent=NET?(OPN||'Opponent'):(G.tut?'Training Bot':'Botzacy');$('pnb').textContent=DEMO?'Botzacy II':myName()||'Playerzacy';
+  $('game').classList.toggle('et',G.act==1);$('enb').className='nbar'+(G.act==1?' act':'');$('pnb').className='nbar'+(G.act==0?' act':'');
+  const hs=h=>RULES.fullHandRework?`${h.length}/${HAND_MAX}`:h.length;$('ecn').textContent=`hand ${hs(op.hand)} - deck ${op.deck.length}`;$('pcn').textContent=`hand ${hs(me.hand)} - deck ${me.deck.length}`;$('edots').innerHTML=dots(op);$('pdots').innerHTML=dots(me);
+  const top=me.disc[me.disc.length-1];$('pile').className=top?'':'empty';$('pile').innerHTML=top?cardHTML(top,0):'';$('pc').textContent=me.disc.length+'x';$('dc').textContent=me.deck.length?me.deck.length+'x':'Fatigue '+((me.fat||0)+1);
+@@ -492,7 +492,7 @@
+  return sleep(LUN.length?340:140)}
+ function recoil(){LUN.forEach(x=>{const el=document.querySelector(`#board [data-u="${x.uid}"]`);if(!el)return;el.style.zIndex=6;
+   el.animate([{transform:`translateY(${x.off}px) scale(1.08)`},{transform:'translateY(0) scale(1)'}],{duration:480,easing:'cubic-bezier(.2,.75,.25,1)'})});LUN=[]}
+-async function combat(my){for(let i=0;i<4&&!G.over&&my==gid;i++){flash=i;render();
++async function combat(my){for(let i=0;i<4&&!G.over&&my==gid;i++){flash=i;render();await tutCue('lane',i);if(my!=gid)return;
+   const pre={mv:{0:null,1:null}};   // lane moves (AI AL) are all settled here, before the attack animation; lane() must not decide again
+   for(const o of [0,1]){const mu=G.p[o].ln[i],mo=preMoves(G,mu);if(!mo)continue;
+    const to=o==0&&!DEMO?await chooseMove(mu,mo):botMove(G,mu,mo);if(my!=gid)return;
+@@ -502,16 +502,17 @@
+   if(NET){const o1=preTargets(G,G.p[1].ln[i]);if(o1)pre[1]=o1.length==1?o1[0]:await askPre(i,o1);if(my!=gid)return}
+   say('');render();
+   await strikeLane(i);if(my!=gid)return;lane(G,i,pre);flash=-1;const pb=G.ev.some(x=>x.k=='atk'&&x.post);render();anim();recoil();if(NET)netPush({t:'lane',i});await sleep(pb?1150:650);if(G.pq&&G.pq.length){await askPending(my);if(my!=gid)return}}}
++const tutCue=(n,a)=>window.TUT&&G&&G.tut?TUT.cue(n,a):0,tutFix=()=>{if(G&&G.tut)TUT.fix()},tutEnemyMove=()=>TUT.enemyMove();
+ async function flow(){busy=true;const my=gid;
+  while(!G.over&&my==gid){
+-  if(G.step>=3){say('Combat!');netPush();await combat(my);if(G.over||my!=gid)break;endRound(G);if(G.pq&&G.pq.length){render();anim();await askPending(my);if(G.over||my!=gid)break}
+-  startRound(G);say('');render();anim();if(G.pq&&G.pq.length){await askPending(my);if(my!=gid)break}continue}
+-  if(G.act==0&&!DEMO){busy=false;say('');render();netPush();return}
++  if(G.step>=3){say('Combat!');netPush();await tutCue('combat');if(my!=gid)break;await combat(my);if(G.over||my!=gid)break;endRound(G);if(G.pq&&G.pq.length){render();anim();await askPending(my);if(G.over||my!=gid)break}
++  startRound(G);tutFix();say('');render();anim();await tutCue('round');if(my!=gid)break;if(G.pq&&G.pq.length){await askPending(my);if(my!=gid)break}continue}
++  if(G.act==0&&!DEMO){await tutCue('myphase');if(my!=gid)return;busy=false;say('');render();netPush();return}
+   if(NET){say('Opponent: '+PH[G.allow]+'…');render();netPush();return}
+-  const o=DEMO?G.act:1;say((DEMO?'':'Enemy: ')+PH[G.allow]+'…');render();let n=0;
+-  while(n++<20&&!G.over&&my==gid){await sleep(450);if(my!=gid)return;const m=demoPlan(o);if(!m)break;
++  const o=DEMO?G.act:1;say((DEMO?'':'Enemy: ')+PH[G.allow]+'…');render();await tutCue('enemyphase');if(my!=gid)return;let n=0;
++  while(n++<20&&!G.over&&my==gid){await sleep(450);if(my!=gid)return;const m=G.tut?tutEnemyMove():demoPlan(o);if(!m)break;
+    const bc=G.p[o].hand[m.ci],fc=bc?cost(G,G.p[o],bc):null;if(DEMO)await sleep(300);else await flyCard(m.id,heroFrom(),m.sp?centerRect():slotRect(1,m.ln),{out:!!m.sp,dur:m.sp?480:380,hold:300,fc,ba:bc&&bc.ba});if(my!=gid)return;
+-   play(G,G.p[o],m.ci,m.ln,m.pk);render();anim();if(G.pq&&G.pq.length){await askPending(my);if(my!=gid)return}}
++   play(G,G.p[o],m.ci,m.ln,m.pk);render();anim();if(G.tut){await sleep(600);await tutCue('enemyplayed',m);if(my!=gid)return}if(G.pq&&G.pq.length){await askPending(my);if(my!=gid)return}}
+   if(G.pq&&G.pq.length){await askPending(my);if(my!=gid)return}
+   await sleep(300);if(my!=gid)return;nextStep(G)}
+  if(my==gid){render();netPush()}}
+@@ -528,7 +529,7 @@
+ $('deckb').onclick=()=>{if(G)viewPile('Your deck ('+G.p[0].deck.length+') - sorted by cost',G.p[0].deck.slice().sort((a,b)=>cmpC(CD[a.id],CD[b.id])))};
+ $('pile').title='Click to view your discard pile';$('deckb').title='Click to view the cards left in your deck';
+ function closeMul(){viewing=false;$('mh').style.removeProperty('--cw');$('mul').style.display='none';$('mok').textContent='Confirm';$('mok').onclick=mulOK}
+-function finish(){if($('ov').style.display=='flex')return;$('ovd').style.display=$('ovr').style.display=='none'?'none':'';$('ovdk').textContent=ovDeckLabel();$('ovt').textContent=G.over.left?'OPPONENT LEFT':G.over.draw?'DRAW':G.over.sur&&G.over.win==1?'SURRENDERED':G.over.win==0?'VICTORY':'DEFEAT';sfx(G.over.left||(!G.over.draw&&G.over.win==0)?'victory':'defeat',{pitch:0});endHook();$('ov').style.display='flex'}
++function finish(){if(G.tut){if(window.TUT)TUT.finish();return}if($('ov').style.display=='flex')return;$('ovd').style.display=$('ovr').style.display=='none'?'none':'';$('ovdk').textContent=ovDeckLabel();$('ovt').textContent=G.over.left?'OPPONENT LEFT':G.over.draw?'DRAW':G.over.sur&&G.over.win==1?'SURRENDERED':G.over.win==0?'VICTORY':'DEFEAT';sfx(G.over.left||(!G.over.draw&&G.over.win==0)?'victory':'defeat',{pitch:0});endHook();$('ov').style.display='flex'}
+ // Endless Mode: the run ends when you die (or surrender). Score = total damage dealt to the Boss; best score is saved locally.
+ function endHook(){achEnd();if($('ovmm'))$('ovmm').textContent='';if(typeof mmEnd=='function')mmEnd();if(G.mir||G.en)$('ovd').style.display='none';
+  if(G.en){const sc=G.en.dealt,b=Math.max(sc,+lsGet('rj_endless_best')||0);lsSet('rj_endless_best',b);$('ovt').textContent='RUN OVER';$('ovdk').textContent='Score: '+sc+'  -  Best: '+b+(sc>=b&&sc>0?'  (new record!)':'');$('ovr').textContent='New run'}}
+@@ -565,11 +566,11 @@
+  mulligan(G,G.p[0],ids);botMull(G,G.p[1]);
+  askOrder(v=>{decideStart(G,v,'first');startRound(G);flow()})};
+ $('mok').onclick=mulOK;
+-function start(){if(extRes)extRes();unpin();bpClear();pkResolve();musicNewGame();if(NET)netLeave();$('ovr').style.display='';$('ovr').textContent='Rematch';gid++;
++function start(){if(window.TUT&&TUT.active)TUT.stop();if(extRes)extRes();unpin();bpClear();pkResolve();musicNewGame();if(NET)netLeave();$('ovr').style.display='';$('ovr').textContent='Rematch';gid++;
+  if(MODE=='mirror'){const m=mirrorDeck();G=newGame(m,m,{mir:1})}else if(MODE=='endless')G=newGame(ALL[$('d0').value].c,mirrorDeck(BOSS_BAN),{endless:1}); // the Boss always plays a random deck - it can't be rigged
+  else G=newGame(ALL[$('d0').value].c,ALL[$('d1').value].c);busy=true;sel=pend=null;castMode=false;stickyZoom=false;
+  show('game');$('ov').style.display='none';say('');render();showMul()}
+-function toMenu(){if(extRes)extRes();unpin();bpClear();$('dkpick').style.display='none';if(NET)netLeave();$('ovr').style.display='';$('ovr').textContent='Rematch';gid++;$('ov').style.display='none';$('mul').style.display='none';$('hist').style.display='none';show('menu');$('zoom').style.display='none';G=null;musicUpdate()}
++function toMenu(){if(window.TUT&&TUT.active)TUT.stop();if(extRes)extRes();unpin();bpClear();$('dkpick').style.display='none';if(NET)netLeave();$('ovr').style.display='';$('ovr').textContent='Rematch';gid++;$('ov').style.display='none';$('mul').style.display='none';$('hist').style.display='none';show('menu');$('zoom').style.display='none';G=null;musicUpdate()}
+ $('go').onclick=()=>{$('botmenu').style.display='none';start();musicStart()};
+ $('ovb').onclick=toMenu;
+ const cmpC=(a,b)=>(a.Cost-b.Cost)||((a.Type==b.Type)?0:a.Type=='Unit'?-1:1)||a.Name.localeCompare(b.Name);
