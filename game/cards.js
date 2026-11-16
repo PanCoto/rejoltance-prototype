@@ -191,11 +191,11 @@ const CARDS = [
     Cost: 0,
     Attack: 0,
     Health: 1,
-    Description: "When Sacrificed: Return to Your Hand instead. It costs 0 this turn.",
+    Description: "When Sacrificed: Return to Your Hand instead. It costs 1 more this turn.",
     Effects: [
       { Trigger: "OnSacrificed",
         Zone: "Board",
-        Actions: [{ Type: "ReturnToHand", Target: "Self", FreeThisTurn: true }] },
+        Actions: [{ Type: "ReturnToHand", Target: "Self", ExpensiveThisTurn: true }] },
     ],
   },
 

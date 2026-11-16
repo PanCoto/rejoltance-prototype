@@ -128,9 +128,15 @@ function costMods(G,p,c){const d=CD[c.id],out=[];
   if(!cardOK(d,flt)||!cond(e.Condition,src,{},G))return;
   if(a.FirstEachRound&&(p.fr||{})[(flt&&flt.Type)||'Any']===G.turn)return;
   if(amt)out.push({src,amt})})})}));return out}
-function cost(G,p,c){const d=CD[c.id];if(c.z&&c.z===G.turn)return 0;let x=d.Cost;
- costMods(G,p,c).forEach(m=>x+=m.amt);
- x-=(c.red||0);return Math.max(0,x)}
+function cost(G,p,c){
+  const d=CD[c.id];
+  if(c.z&&c.z===G.turn)return 0;
+  let x=d.Cost;
+  costMods(G,p,c).forEach(m=>x+=m.amt);
+  x-=(c.red||0);
+  if(c.exp&&c.exp===G.turn)x+=1;
+  return Math.max(0,x)
+}
 function chk(G){if(G.en&&G.p[1].hp<=0)G.p[1].hp+=20*Math.ceil((1-G.p[1].hp)/20);
  if(G.over&&!G.over.hpWin)return;
  const dead=G.p.filter(p=>p.hp<=0);
@@ -425,7 +431,31 @@ case'AddCardToHand':{
     for(let i = 0; i < n; i++) p.deck.push({ uid: UID++, id });
     L(G, 'Added ' + CD[id].Name + ' to deck');
     break;}
-case'ReturnToHand':unitsOnly.filter(t=>!t.gone&&(!a.IfAlive||t.hp>0)).forEach(t=>{const o=G.p[t.o];if(o.ln[t.lane]!==t)return;EV(G,{k:'bnc',id:t.id,atk:t.atk,hp:Math.max(t.hp,0),o:t.o,lane:t.lane});L(G,t.d.Name+' returned to hand');o.ln[t.lane]=null;t.gone=1;if((o.hand.length<HAND_MAX||RULES.fullHandRework)&&(t.id<900||RULES.tokensReturnToHand)){o.hand.push({uid:UID++,id:t.id,unk:t.kw.has('Unkillable')?1:0,...((t.cr||a.CostChange)?{red:(t.cr||0)-(a.CostChange||0)}:{}),...(t.cba?{ba:t.cba}:{}),...(a.FreeThisTurn?{z:G.turn}:{})});gained(G,o,'bounce')}if(t.o!=me.i)acn(G,me,'bnc',1,3,'revolving')});break
+case'ReturnToHand':
+  unitsOnly
+    .filter(t=>!t.gone&&(!a.IfAlive||t.hp>0))
+    .forEach(t=>{
+      const o=G.p[t.o];
+      if(o.ln[t.lane]!==t)return;
+      EV(G,{k:'bnc',id:t.id,atk:t.atk,hp:Math.max(t.hp,0),o:t.o,lane:t.lane});
+      L(G,t.d.Name+' returned to hand');
+      o.ln[t.lane]=null;
+      t.gone=1;
+      if((o.hand.length<HAND_MAX||RULES.fullHandRework)&&(t.id<900||RULES.tokensReturnToHand)){
+        o.hand.push({
+          uid:UID++,
+          id:t.id,
+          unk:t.kw.has('Unkillable')?1:0,
+          ...((t.cr||a.CostChange)?{red:(t.cr||0)-(a.CostChange||0)}:{}),
+          ...(t.cba?{ba:t.cba}:{}),
+          ...(a.FreeThisTurn?{z:G.turn}:{}),
+          ...(a.ExpensiveThisTurn?{exp:G.turn}:{})
+        });
+        gained(G,o,'bounce')
+      }
+      if(t.o!=me.i)acn(G,me,'bnc',1,3,'revolving')
+    });
+  break
  case'SacrificeUnits':{
   const list=(c.sacs||[]).filter(u=>u&&!u.gone&&u!==s&&u.o==s.o&&me.ln[u.lane]===u);let ga=0,gh=0;
   list.forEach(v=>{if(v.gone)return;c.last=v;c.sacd=1;const va=v.atk,vh=Math.max(0,v.hp);sacrifice(G,v,s);if(a.Absorb){ga+=va;gh+=vh}else{ga++;gh++}});
