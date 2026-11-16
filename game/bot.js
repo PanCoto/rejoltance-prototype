@@ -75,7 +75,7 @@ function sig(G,me){const a=G.p[me],b=G.p[1-me];
  return[a.hp,b.hp,a.b,a.hand.map(c=>c.id+':'+(c.red||0)).sort().join(),a.ln.map(u=>u?u.id+'/'+u.atk+'/'+u.hp+[...u.kw].join(''):'-').join('|'),b.ln.map(u=>u?u.id+'/'+u.atk+'/'+u.hp+[...u.kw].join(''):'-').join('|'),b.hand.length].join(';')}
 
 function botPlanSmart(G,p){
- const t0=Date.now(),BUDGET=140,BEAM=5,DEPTH=5;
+ const t0=Date.now(),BUDGET=window.DEMO?45:140,BEAM=5,DEPTH=5;
  return BW.look>0?botSearchLook(G,p,t0,BUDGET*Math.max(1,BW.worlds||1),BEAM,DEPTH):botSearchClassic(G,p,t0,BUDGET,BEAM,DEPTH)}
 
 function bpRng(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}

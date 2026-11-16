@@ -10,7 +10,7 @@ function sfxInit(){
 function sfxLoad(n,i){const url='sfx/'+n.toLowerCase()+'_'+i+SFX_EXT;
  if(SFX.mode=='web')fetch(url).then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>SFX.ctx.decodeAudioData(b)).then(buf=>SFX.bufs[n].push(buf)).catch(()=>{});
  else{const a=new Audio();a.preload='auto';a.addEventListener('canplaythrough',()=>{if(!SFX.aud[n].includes(a))SFX.aud[n].push(a)},{once:true});a.src=url}}
-function sfx(n,o){o=o||{};if(SFX.vol<=0||!SFX.started)return;
+function sfx(n,o){o=o||{};if((window.DEMO&&!window.WATCH)||SFX.vol<=0||!SFX.started)return;
  if(o.delay){const d=o.delay;o=Object.assign({},o,{delay:0});setTimeout(()=>sfx(n,o),d);return}
  const t=performance.now();if(t-(SFX.last[n]||0)<45)return;SFX.last[n]=t;
  const rate=o.pitch===0?1:1+(Math.random()-.5)*.08,vol=Math.min(1,SFX.vol*(o.v||1));

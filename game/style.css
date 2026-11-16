@@ -114,7 +114,7 @@ select,input{font-family:inherit;font-size:28px;background:#000;color:var(--hi);
 .tabs{display:flex;gap:12px;margin-bottom:10px}.tabs button{height:50px;font-size:24px;border-radius:25px}
 #ovt{font-size:130px;font-weight:700;color:#ddd;letter-spacing:8px}
 #ovl-rot{display:none}
-#menu h1 span{color:var(--red)}
+#menu h1 span{color:#c4c4c4}
 textarea{font-family:inherit;background:#000;color:var(--hi);border:3px solid #3a3a3a;padding:10px 14px;outline:0}
 input,textarea{user-select:text}
 button.pri{background:var(--red);border-color:var(--red);color:#fff}
@@ -471,27 +471,6 @@ body.hn .hc[data-n]::before{content:attr(data-n);position:absolute;left:50%;top:
 #ovmm{font-size:44px;color:#ff4a50;letter-spacing:2px;min-height:52px;font-family:var(--fd)}#ovmm:empty{display:none}
 #rkdc{font-size:28px;color:#ccc;text-align:left}#rkdcrow .rkbt{grid-column:3}#rkdel{border-color:#5a1a1d;color:#ff4a50}
 
-/* ===== main menu: grouped layout (Play online / Play solo / Special & decks) ===== */
-#menu{flex-direction:column;align-items:center;justify-content:center;gap:46px;padding:0 80px;text-align:center}
-#menu .mtop{width:1760px;display:flex;align-items:center;justify-content:space-between}
-#menu h1{margin:0;font-size:120px;color:#ccc;letter-spacing:6px;line-height:1}#menu h1 span{color:var(--red)}
-#menu .mutil{display:flex;gap:18px}
-#menu .mutil button{height:78px;font-size:32px;padding:0 30px;border-radius:39px;display:flex;align-items:center;gap:16px;border-color:#3a3a3a;color:#bbb;white-space:nowrap}
-#menu .mutil button svg{width:34px;height:34px;flex:none}
-#menu .mutil button:hover{border-color:var(--red);color:#fff}
-#achopen b{color:var(--red)}#achopen .aico{width:34px;height:34px;background:#000;border:3px solid #777;display:inline-block;flex:none}
-#menu .mgrid{width:1760px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:40px}
-#menu .mgrp{display:flex;flex-direction:column;gap:26px;min-width:0}
-#menu .mgrp h3{margin:0;display:flex;align-items:center;gap:20px;font-size:32px;color:#777;letter-spacing:5px;text-transform:uppercase;text-align:left}
-#menu .mgrp h3::after{content:"";flex:1;height:4px;background:#222}
-#menu .tile{height:250px;border-radius:30px;border:4px solid #2e2e2e;background:#000;display:grid;grid-template-columns:130px minmax(0,1fr);align-items:center;gap:28px;padding:0 34px;color:#bdbdbd;text-align:left}
-#menu .tile svg{width:130px;height:130px}
-#menu .tile .tt{display:flex;flex-direction:column;gap:10px;min-width:0}
-#menu .tile b{font-size:46px;line-height:1.05;color:#ddd;letter-spacing:1px}
-#menu .tile small{font-size:25px;line-height:1.2;color:#777;font-weight:400;letter-spacing:1px}
-#menu .tile:hover{border-color:var(--red);color:#e6e6e6;box-shadow:0 0 0 2px #c4161c55}
-#menu p{width:1300px;font-size:21px;color:#555;line-height:1.4;margin:0}
-body[data-font=dys] #menu .tile b{font-size:36px}body[data-font=dys] #menu .tile small{font-size:20px}body[data-font=dys] #menu .mgrp h3{font-size:26px}
 
 /* ===== profile: header chip, avatars, profile panel, picture picker ===== */
 .av{width:64px;height:64px;flex:none;background:#000;border:3px solid #3a3a3a;overflow:hidden;display:flex;align-items:center;justify-content:center;font-style:normal}
@@ -499,9 +478,6 @@ body[data-font=dys] #menu .tile b{font-size:36px}body[data-font=dys] #menu .tile
 .av i{font-style:normal;font-family:var(--fd);font-size:40px;color:#888;line-height:1}
 .rkr em.av{width:56px;height:56px;border-radius:12px}.rkr em.av i{font-size:34px}
 .rkr:hover{border-color:#5a5a5a}.rkr.me:hover{border-color:var(--red)}
-#menu #pchip{height:78px;border-radius:39px;padding:0 30px 0 8px;display:flex;align-items:center;gap:16px;text-align:left}
-#pchip .av{width:60px;height:60px;border-color:#777}#pchip .av i{font-size:36px}
-#pchip .pi{display:flex;flex-direction:column;gap:2px;min-width:0}#pchip b{font-size:32px;color:inherit;line-height:1;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#pchip small{font-size:20px;color:#ff4a50;line-height:1;letter-spacing:1px;font-weight:400}
 #acctmenu .panel.prof{width:1300px;max-width:1300px}
 .pfbody{display:grid;grid-template-columns:340px minmax(0,1fr);gap:56px;width:100%;align-items:start;margin-top:8px}
 .pfl{display:flex;flex-direction:column;align-items:center;gap:16px}
@@ -525,13 +501,6 @@ body[data-font=dys] #menu .tile b{font-size:36px}body[data-font=dys] #menu .tile
 .avc span{font-size:18px;color:#aaa;padding:4px 6px;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .avc:hover,.avc.on{border-color:var(--red)}
 .rkbt{display:flex;gap:10px}
-/* header sizing: logo + profile chip + 2 buttons must fit in 1760px */
-#menu h1{font-size:92px;letter-spacing:4px}
-#menu .mtop{gap:24px}
-#menu .mutil{gap:14px;flex:none}
-#menu .mutil button{height:72px;font-size:28px;padding:0 24px;gap:12px}
-#menu #pchip{padding:0 26px 0 6px}#pchip .av{width:58px;height:58px}#pchip b{font-size:30px;max-width:200px}
-#achopen .aico,#menu .mutil button svg{width:28px;height:28px}
 .pfav{flex:none}#pfchg{white-space:nowrap;flex:none;padding:0 16px;width:100%}.pfnm input,.pfnm button{flex:none}
 #pfdel[hidden]{display:none}
 #acctmenu .pfav{width:300px;height:300px;padding:0;border-radius:26px}
@@ -542,7 +511,6 @@ body[data-font=dys] #menu .tile b{font-size:36px}body[data-font=dys] #menu .tile
 #avgrid .avc{aspect-ratio:auto;height:210px;min-height:0}
 
 /* friends */
-#menu #fdopen{position:relative}#fdopen b{color:var(--red);min-width:0}#fdopen b:empty{display:none}
 #fdmenu .panel{width:1300px;max-width:1300px}
 .fdsearch{display:flex;gap:14px;width:100%}.fdsearch input{flex:1;font-size:30px}.fdsearch button{height:64px;font-size:28px}
 #fdres,#fdlist{width:100%;max-height:360px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:8px;text-align:left}
@@ -554,11 +522,6 @@ body[data-font=dys] #menu .tile b{font-size:36px}body[data-font=dys] #menu .tile
 .fdrow button{height:50px;font-size:24px;padding:0 20px}.fdrow button[data-a=remove]{border-color:#5a1a1d;color:#ff4a50}
 .fdempty{font-size:26px;color:#777;padding:14px 4px;text-align:center}
 #pffr{border-color:var(--red)}
-/* header: five items must fit in 1760px */
-#menu h1{font-size:80px;letter-spacing:3px}
-#menu .mutil{gap:12px}
-#menu .mutil button{height:68px;font-size:26px;padding:0 20px;gap:10px}
-#menu #pchip{padding:0 22px 0 6px}#pchip .av{width:54px;height:54px}#pchip b{font-size:28px;max-width:170px}#pchip small{font-size:18px}
 
 /* profile pictures are circles */
 .av,.rkr em.av,.fdrow .av,#pchip .av{border-radius:50%}
@@ -733,12 +696,6 @@ body.ld,body.ld *{cursor:progress!important}
 #acctmenu .hrow em,#acctmenu #pfmsg{color:#ddd}
 #stage #acctmenu #pffr,#stage #acctmenu #pffr.pri{border-color:#fff;color:#fff;background:transparent}
 
-/* ===== main menu: build label under the logo + Changelog pill ===== */
-#menu .mlogo{display:flex;flex-direction:column;align-items:flex-end;gap:0;flex:none}
-#menu .mlogo small{margin-top:-16px;margin-right:4px;line-height:1}
-#menu .mlogo small{font-size:22px;color:#888;letter-spacing:1px;font-family:var(--fd);white-space:nowrap}
-#menu .mutil button.txt{justify-content:center}
-@media (max-width:1700px){#menu .mlogo small{font-size:20px}}
 
 /* ===== match-found lobby: deck picker centred and same width as the timer bar ===== */
 #stage #lobby #ldrow{align-self:center;margin-left:auto;margin-right:auto;width:min(980px,90vw);box-sizing:border-box}
@@ -762,3 +719,50 @@ body.ld,body.ld *{cursor:progress!important}
 #cllist .clg .card:hover{box-shadow:0 0 0 3px #888,0 0 16px #000}
 .hero.htg{box-shadow:0 0 0 6px #ff2b2b,0 0 28px 6px #ff2b2b;cursor:pointer;z-index:3}
 .hero.htg:hover{box-shadow:0 0 0 6px #fff,0 0 28px 6px #fff}
+
+/* ===== main menu: nav list + card panel (per mockup) ===== */
+#menu{--mframe:6px;box-shadow:inset 0 0 0 var(--mframe) #2a2a2a;   /* grey frame around the main menu: change --mframe (0px = none) */
+ font-family:Jer,var(--fb)}
+#menu h1,#menu button,#menu small,#menu b{font-family:Jer,var(--fb)}
+#menu .mlogo{position:absolute;left:80px;top:60px;display:flex;flex-direction:column;align-items:flex-end}
+#menu h1{margin:0;font-size:148px;line-height:1;color:#c4c4c4;letter-spacing:0;text-transform:uppercase;font-weight:700}
+#menu h1 span{color:#c4c4c4}
+#menu .mlogo small{margin-top:-14px;font-size:59px;line-height:1;color:#8a8a8a;letter-spacing:0;font-weight:700;text-transform:lowercase}
+#mnav{position:absolute;left:73px;top:305px;width:320px;display:flex;flex-direction:column}
+#mnav button{width:100%;height:72px;box-sizing:border-box;border:0;border-radius:0;background:transparent;color:#c4c4c4;font-size:59px;font-weight:700;text-align:left;padding:0 22px;letter-spacing:0;text-transform:uppercase;white-space:nowrap}
+#mnav button.on{background:#8f8f8f;color:#0a0a0a;height:65px;margin-bottom:7px}
+#mnav button:not(.on):hover{color:#fff}
+#mpanel{position:absolute;left:422px;top:275px;width:1427px;height:658px;box-sizing:border-box;border:10px solid #333;background:#000;overflow:hidden;display:none;scroll-behavior:smooth}
+#menu.open #mpanel{display:block}
+.msec{display:none;width:max-content;position:absolute;left:0;top:0;height:100%;padding:27px 37px 0;gap:42px;box-sizing:border-box;transition:transform .25s}
+.msec.on{display:flex}
+#menu .mc{flex:none;width:358px;height:574px;box-sizing:border-box;padding:0;display:flex;flex-direction:column;background:#000;border:4px solid #3a3a3a;border-radius:6px;color:#555;font-size:36px;cursor:pointer}
+#menu .mc .mci{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:#2c2c2c;transition:color .15s}
+#menu .mc .mci svg{width:150px;height:150px}
+#menu .mc .mcl{flex:none;height:98px;border-top:4px solid #3a3a3a;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.05;padding:0 10px;font-weight:700;text-transform:uppercase;font-size:42px;white-space:nowrap;color:#555;transition:color .15s}
+#menu .mc.on,#menu .mc:hover{border-color:#cfcfcf}
+#menu .mc.on .mcl,#menu .mc:hover .mcl{color:#fff;border-top-color:#cfcfcf}
+#menu .mc.on .mci,#menu .mc:hover .mci{color:#8a8a8a}
+#menu .mc .mcl b{color:#9a9a9a;margin-left:10px}
+#menu .mc .mcl b:empty{display:none}
+#menu #pchip .av{width:150px;height:150px;border-color:#555}
+#menu #pchip .av i{font-size:90px}
+#menu #pchip b{font-size:30px;color:#aaa;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#menu #pchip small{font-size:22px;color:#8a8a8a;font-weight:400}
+#tutmenu .tutp{max-width:900px;font-size:30px;line-height:1.4;color:#aaa;margin:10px 0 24px;text-align:center}
+#menu .mc.on .mcl{font-size:46px}
+#menu{z-index:2}
+#game.bgdemo{display:block!important;opacity:.1;pointer-events:none;z-index:1}
+/* menu: no red, label counters on their own line, watch-bots mode */
+#menu svg [fill="#c4161c"]{fill:#6a6a6a}
+#menu .mc .mcl{flex-direction:column;gap:0}
+#menu .mc .mcl b{color:#9a9a9a;margin:0;font-size:34px;line-height:1}
+#menu #pchip small{color:#8a8a8a}
+#menu .mc.on .mcl b,#menu .mc:hover .mcl b{color:#cfcfcf}
+#game.bgdemo{transition:opacity .35s}
+#mwatch{position:absolute;right:50px;bottom:40px;height:64px;box-sizing:border-box;padding:0 26px;border:4px solid #3a3a3a;border-radius:6px;background:#000;color:#8a8a8a;font-size:38px;font-weight:700;text-transform:uppercase;letter-spacing:0}
+#mwatch:hover{border-color:#cfcfcf;color:#fff}
+#menu.watch>:not(#mwatch){visibility:hidden}
+#menu.watch{box-shadow:none}
+body.watching #game.bgdemo{opacity:1}
+#game.bgdemo #sur,#game.bgdemo #hs,#game.bgdemo #mu{display:none}

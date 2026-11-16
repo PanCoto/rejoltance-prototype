@@ -3,24 +3,46 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#000000"><meta name="apple-mobile-web-app-capable" content="yes">
 <title>RE:Joltance</title>
-<link rel="stylesheet" href="style.css?v=20261116">
+<link rel="stylesheet" href="style.css?v=20261125">
 </head><body>
 <div id="stage">
  <div class="scr" id="menu">
-  <div class="mtop"><div class="mlogo"><h1>RE<span>:</span>Joltance</h1><small id="mver"></small></div>
-   <div class="mutil"><button id="clopen" class="txt" title="Version history and balance changes">Changelog</button><button id="pchip" title="Your profile"><span class="av" id="pchipav"></span><span class="pi"><b id="pchipn"></b><small id="pchips"></small></span></button><button id="fdopen" title="Friends">Friends <b id="fdcnt"></b></button><button id="achopen" title="Achievements"><span class="aico"></span>Achievements <b id="achcnt"></b></button><button id="sopen" title="Settings"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M7 0h2v2.2l1.7.7 1.6-1.5 1.4 1.4-1.5 1.6.7 1.7H15v2h-2.2l-.7 1.7 1.5 1.6-1.4 1.4-1.6-1.5-1.7.7V16H7v-2.2l-1.7-.7-1.6 1.5-1.4-1.4 1.5-1.6-.7-1.7H1V7h2.2l.7-1.7-1.5-1.6 1.4-1.4 1.6 1.5 1.7-.7z"/><circle cx="8" cy="8" r="2.4" fill="#000"/></svg>Settings</button></div></div>
-  <div class="mgrid">
-   <section class="mgrp"><h3>Play online</h3>
-    <button class="tile feat" id="rkopen"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M3 1h10v5h-1v2h-1v1H9v2h3v3H4v-3h3V9H5V8H4V6H3z"/><path fill="#c4161c" d="M0 2h3v3H1v2h2v1H1V6H0zM13 2h3v4h-1v2h-2V7h2V5h-2z"/><path fill="#050505" d="M6 3h4v2H6z"/></svg><span class="tt"><b>Ranked</b><small>Climb the leaderboard</small></span></button>
-    <button class="tile" id="tfriend"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M2 2h4v4H2zM1 6h6v4H1zM1 10h2v4H1zM5 10h2v4H5zM10 2h4v4h-4zM9 6h6v4H9zM9 10h2v4H9zM13 10h2v4h-2z"/><path fill="#c4161c" d="M7 7h2v2H7z"/></svg><span class="tt"><b>Play with a friend</b><small>Quick match, host or join a room</small></span></button></section>
-   <section class="mgrp"><h3>Play solo</h3>
-    <button class="tile" id="tbot"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M7 0h2v2H7zM3 2h10v8H3zM1 4h2v4H1zM13 4h2v4h-2zM4 11h8v4H4z"/><path fill="#050505" d="M5 5h2v2H5zM9 5h2v2H9zM5 8h6v1H5z"/></svg><span class="tt"><b>Play with the bot</b><small>Practice against the AI</small></span></button>
-    <button class="tile" id="tendless"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M2 5h4v2H4v2h2v2H2zM10 5h4v2h-2v2h2v2h-4z"/><path fill="#c4161c" d="M6 7h4v2H6z"/></svg><span class="tt"><b>Endless Mode</b><small>Bot Boss - beat your high score</small></span></button></section>
-   <section class="mgrp"><h3>Special &amp; decks</h3>
-    <button class="tile" id="tmirror"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M1 3h5v10H1zM10 3h5v10h-5z"/><path fill="#c4161c" d="M7 2h2v12H7z"/><path fill="#050505" d="M2 5h3v2H2zM11 5h3v2h-3zM2 9h3v1H2zM11 9h3v1h-3z"/></svg><span class="tt"><b>Mirror Match UP</b><small>Same deck, same draws - vs bot or online</small></span></button>
-    <button class="tile" id="bopen"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M1 4h8v10H1zM7 2h8v10H7z"/><path fill="#050505" d="M8 3h6v8H8z"/><path fill="#c4161c" d="M9 5h4v2H9zM9 8h3v1H9z"/></svg><span class="tt"><b>Card Collection</b><small>Browse cards and build decks</small></span></button></section>
+  <div class="mlogo"><h1>RE<span>:</span>Joltance</h1><small id="mver"></small></div>
+  <button id="mwatch" title="Hide the menu and watch the bots play (Esc to return)">Watch bots</button>
+  <nav id="mnav">
+   <button data-sec="0">Play offline</button><button data-sec="1">Play online</button><button data-sec="2">Collection</button><button data-sec="3">Settings</button><button data-sec="4">Profile</button><button data-sec="5">Extras</button><button data-sec="6">News</button>
+  </nav>
+  <div id="mpanel">
+   <div class="msec" data-sec="0">
+    <button class="mc " id="ttut"><span class="mci"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M2 2h12v10H2zM4 13h8v2H4z"/><path fill="#050505" d="M4 4h8v1H4zM4 6h8v1H4zM4 8h5v1H4z"/></svg></span><span class="mcl">Tutorial</span></button>
+    <button class="mc " id="tbot"><span class="mci"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M7 0h2v2H7zM3 2h10v8H3zM1 4h2v4H1zM13 4h2v4h-2zM4 11h8v4H4z"/><path fill="#050505" d="M5 5h2v2H5zM9 5h2v2H9zM5 8h6v1H5z"/></svg></span><span class="mcl">Play with the bot</span></button>
+    <button class="mc " id="tmirror"><span class="mci"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M1 3h5v10H1zM10 3h5v10h-5z"/><path fill="#c4161c" d="M7 2h2v12H7z"/><path fill="#050505" d="M2 5h3v2H2zM11 5h3v2h-3zM2 9h3v1H2zM11 9h3v1h-3z"/></svg></span><span class="mcl">Mirror Match UP</span></button>
+    <button class="mc " id="tendless"><span class="mci"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M2 5h4v2H4v2h2v2H2zM10 5h4v2h-2v2h2v2h-4z"/><path fill="#c4161c" d="M6 7h4v2H6z"/></svg></span><span class="mcl">Endless Mode</span></button>
+   </div>
+   <div class="msec" data-sec="1">
+    <button class="mc " id="rkopen"><span class="mci"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M3 1h10v5h-1v2h-1v1H9v2h3v3H4v-3h3V9H5V8H4V6H3z"/><path fill="#c4161c" d="M0 2h3v3H1v2h2v1H1V6H0zM13 2h3v4h-1v2h-2V7h2V5h-2z"/><path fill="#050505" d="M6 3h4v2H6z"/></svg></span><span class="mcl">Ranked</span></button>
+    <button class="mc" id="tquick"><span class="mci"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M9 0h3L8 6h5L5 16l2-7H3z"/></svg></span><span class="mcl">Quick Match</span></button>
+    <button class="mc" id="tfriend"><span class="mci"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M2 2h4v4H2zM1 6h6v4H1zM1 10h2v4H1zM5 10h2v4H5zM10 2h4v4h-4zM9 6h6v4H9zM9 10h2v4H9zM13 10h2v4h-2z"/><path fill="#c4161c" d="M7 7h2v2H7z"/></svg></span><span class="mcl">Play with a friend</span></button>
+    <button class="mc" id="tmirroron"><span class="mci"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M1 3h5v10H1zM10 3h5v10h-5z"/><path fill="#c4161c" d="M7 2h2v12H7z"/><path fill="#050505" d="M2 5h3v2H2zM11 5h3v2h-3zM2 9h3v1H2zM11 9h3v1h-3z"/></svg></span><span class="mcl">Mirror Match UP</span></button>
+   </div>
+   <div class="msec" data-sec="2">
+    <button class="mc " id="bopen"><span class="mci"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M1 4h8v10H1zM7 2h8v10H7z"/><path fill="#050505" d="M8 3h6v8H8z"/><path fill="#c4161c" d="M9 5h4v2H9zM9 8h3v1H9z"/></svg></span><span class="mcl">Card Collection</span></button>
+    <button class="mc " id="bdecks"><span class="mci"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M1 5h10v10H1zM3 3h10v10H3zM5 1h10v10H5z"/><path fill="#050505" d="M6 2h8v8H6z"/><path fill="#c4161c" d="M8 4h4v2H8z"/></svg></span><span class="mcl">Decks</span></button>
+   </div>
+   <div class="msec" data-sec="3">
+    <button class="mc" id="sopen"><span class="mci"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M7 0h2v2.2l1.7.7 1.6-1.5 1.4 1.4-1.5 1.6.7 1.7H15v2h-2.2l-.7 1.7 1.5 1.6-1.4 1.4-1.6-1.5-1.7.7V16H7v-2.2l-1.7-.7-1.6 1.5-1.4-1.4 1.5-1.6-.7-1.7H1V7h2.2l.7-1.7-1.5-1.6 1.4-1.4 1.6 1.5 1.7-.7z"/><circle cx="8" cy="8" r="2.4" fill="#000"/></svg></span><span class="mcl">Settings</span></button>
+   </div>
+   <div class="msec" data-sec="4">
+    <button class="mc" id="pchip"><span class="mci"><span class="av" id="pchipav"></span><b id="pchipn"></b><small id="pchips"></small></span><span class="mcl">Profile</span></button>
+    <button class="mc" id="fdopen"><span class="mci"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M2 2h4v4H2zM1 6h6v4H1zM1 10h2v4H1zM5 10h2v4H5zM10 2h4v4h-4zM9 6h6v4H9zM9 10h2v4H9zM13 10h2v4h-2z"/></svg></span><span class="mcl">Friends <b id="fdcnt"></b></span></button>
+   </div>
+   <div class="msec" data-sec="5">
+    <button class="mc" id="achopen"><span class="mci"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M3 1h10v5h-1v2h-1v1H9v2h3v3H4v-3h3V9H5V8H4V6H3z"/></svg></span><span class="mcl">Achievements <b id="achcnt"></b></span></button>
+   </div>
+   <div class="msec" data-sec="6">
+    <button class="mc" id="clopen"><span class="mci"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M2 1h12v14H2z"/><path fill="#050505" d="M4 3h8v2H4zM4 7h8v1H4zM4 10h8v1H4zM4 12h5v1H4z"/></svg></span><span class="mcl">Changelog</span></button>
+   </div>
   </div>
-  <p>Each round: the starting player plays Units, then the other player plays Units and Actions, then the starter plays Actions. After that all four lanes fight. Click a card in your hand, then a glowing lane, target, or (for spells without a target) anywhere on the board.</p>
  </div>
  <div class="scr" id="bld">
   <div id="bhead">
@@ -67,6 +89,9 @@
  </div>
  <div id="zoom"></div><div id="apop"></div>
  <div id="chpop"><em class="av" id="chav"></em><div class="ct"><b id="chname"></b><small>challenges you to a friendly match</small></div><button id="chyes" class="pri">Accept</button><button id="chno" class="chn">Decline</button></div>
+<div class="ovl bk" id="tutmenu"><div class="panel"><h2>Tutorial</h2><div class="sub">How a round works</div>
+  <p class="tutp">Each round: the starting player plays Units, then the other player plays Units and Actions, then the starter plays Actions. After that all four lanes fight. Click a card in your hand, then a glowing lane, target, or (for spells without a target) anywhere on the board.</p>
+  <div class="btns"><button id="tutback">Back</button></div></div></div>
 <div class="ovl bk" id="frmenu"><div class="panel"><h2>Play with a friend</h2><div class="sub">1 vs 1 online - no account needed</div>
   <div class="btns"><button class="opt" id="mquick"><b>Quick Match</b><small>Find a random opponent automatically</small></button><button class="opt" id="mhost"><b>Host Online</b><small>Create a room and share the code</small></button><button class="opt" id="mjoin"><b>Join Online</b><small>Enter your friend's room code</small></button></div>
   <div class="btns"><button id="frback">Back</button></div></div></div>
@@ -146,5 +171,5 @@
 </div>
 <div id="rot">Please rotate your device to landscape (this game is designed for a wide screen).</div>
 <audio id="au" loop></audio>
-<script src="cards.js?v=20261117"></script><script src="decks.js?v=20261117"></script><script src="live-config.js"></script><script src="cards-live.js"></script><script src="cards-exp.js?v=20261117"></script><script src="decks-exp.js?v=20261119"></script><script src="img-index.js"></script><script src="engine.js?v=20261116"></script><script src="bot.js"></script><script src="sfx.js"></script><script src="music.js"></script><script src="share.js"></script><script src="ui.js?v=20261118"></script><script src="peerjs.min.js"></script><script src="net-config.js"></script><script src="turn-secret.js" onerror="void 0"></script><script src="net.js?v=20261118"></script><script src="changelog.js?v=20261117"></script><script src="menu.js?v=20261120"></script><script src="mm.js?v=20261109"></script><script src="ach.js"></script>
+<script src="cards.js?v=20261117"></script><script src="decks.js?v=20261117"></script><script src="live-config.js"></script><script src="cards-live.js"></script><script src="cards-exp.js?v=20261117"></script><script src="decks-exp.js?v=20261119"></script><script src="img-index.js"></script><script src="engine.js?v=20261116"></script><script src="bot.js"></script><script src="sfx.js?v=20261124"></script><script src="music.js?v=20261124"></script><script src="share.js"></script><script src="ui.js?v=20261124"></script><script src="peerjs.min.js"></script><script src="net-config.js"></script><script src="turn-secret.js" onerror="void 0"></script><script src="net.js?v=20261118"></script><script src="changelog.js?v=20261117"></script><script src="menu.js?v=20261125"></script><script src="mm.js?v=20261109"></script><script src="ach.js"></script>
 </body></html>

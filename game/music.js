@@ -65,7 +65,7 @@ function musicSwitch(i){MUS.want=i;
 // New game: start again on a random slow track.
 function musicNewGame(){MUS.fast=false;MUS.egg=false;musicSwitch(mpick('slow'))}
 // Late game / low health (either hero) -> latch over to a random fast track for the rest of the game.
-function musicLate(){if(MUS.force||typeof G==='undefined'||!G||G.over||document.getElementById('game').style.display!='block')return false;
+function musicLate(){if(MUS.force||typeof G==='undefined'||!G||G.over||document.getElementById('game').style.display!='block'&&!window.WATCH)return false;
  return G.p[0].hp<=8||G.p[1].hp<=6||G.turn>=9}
 // The fast twin of the track that is (about to be) playing; if it is already a fast one, stay on it.
 function musicTwin(){const c=MUS.want!=null?MUS.want:MUS.track,T=MTRACKS[c];return T&&T.twin!=null?T.twin:(T&&T.kind=='fast'?c:mpick('fast'))}
@@ -76,9 +76,9 @@ let htmlTrack=-1;
 function htmlSet(i){const a=document.getElementById('au'),P=MTRACKS[htmlTrack],U=MTRACKS[i];let off=0;
  if(P&&P.twin===i&&a.currentTime>0)off=(Math.round((a.currentTime%P.loop)/(P.loop/P.bars))%P.bars)*(U.loop/U.bars);   // same bar of the twin
  htmlTrack=i;a.src=U.mix;a.load();a.addEventListener('loadedmetadata',()=>{try{a.currentTime=off}catch(e){}},{once:true})}
-const inGameNow=()=>typeof G!=='undefined'&&G&&document.getElementById('game').style.display=='block';
+const inGameNow=()=>typeof G!=='undefined'&&G&&(document.getElementById('game').style.display=='block'||!!window.WATCH);
 function musicTargets(){
- const inG=typeof G!=='undefined'&&G&&document.getElementById('game').style.display=='block';
+ const inG=typeof G!=='undefined'&&G&&(document.getElementById('game').style.display=='block'||!!window.WATCH);
  let hp=20,ehp=20,turn=0,over=null;
  if(MUS.force){hp=MUS.force.hp==null?20:MUS.force.hp;ehp=MUS.force.ehp==null?20:MUS.force.ehp;turn=MUS.force.turn||1}
  else if(inG){hp=G.p[0].hp;ehp=G.p[1].hp;turn=G.turn;over=G.over}

@@ -3,7 +3,10 @@ let G,sel=null,pend=null,busy=false,flash=-1,mulSel=new Set(),castMode=false,pen
 let ALL=[],gid=0,NET=null,MODE='bot';// MODE: 'bot' | 'mirror' | 'endless' (online games use NET)
 function fit(){const s=Math.min(innerWidth/1920,innerHeight/1080);$('stage').style.transform=`translate(-50%,-50%) scale(${s})`}
 addEventListener('resize',fit);fit();
-const show=id=>{['menu','bld','game'].forEach(k=>$(k).style.display=k==id?(k=='menu'?'flex':'block'):'none');
+var DEMO=false;
+function demoPlan(o){if(!DEMO)return botPlan(G,G.p[1]);const w=BW.worlds;BW.worlds=1;try{return botPlan(G,G.p[o])}finally{BW.worlds=w}}   // true while the menu background plays a bot-vs-bot game (menu.js demoStart)
+function demoOff(){window.WATCH=false;if(!DEMO)return;DEMO=false;gid++;$('game').classList.remove('bgdemo')}
+const show=id=>{if(id!='menu')demoOff();else setTimeout(()=>{if(typeof demoStart=='function')demoStart()},250);['menu','bld','game'].forEach(k=>$(k).style.display=k==id?(k=='menu'?'flex':'block'):'none');
  ['frmenu','mirmenu','rkmenu','botmenu','achmenu','acctmenu','avpick','fdmenu','clmenu','lobby','dkpick','dkprev'].forEach(k=>{const e=$(k);if(e)e.style.display='none'});
  if(id!='game'){const e=$('setmenu');if(e)e.style.display='none'}};
 document.querySelectorAll('.ring').forEach(c=>{const x=c.getContext('2d');for(let i=0;i<60;i++)for(let j=0;j<60;j++){const r=Math.hypot(i-29.5,j-29.5);
@@ -184,7 +187,7 @@ function render(){
  $('ehp').textContent=Math.max(0,op.hp);$('php').textContent=Math.max(0,me.hp);
  $('ehero').classList.toggle('htg',tg.some(x=>x&&x.h&&x.p==1));$('phero').classList.toggle('htg',tg.some(x=>x&&x.h&&x.p==0));
  $('ehp').className='hpn'+(op.hp<=7?' lo':'');$('php').className='hpn'+(me.hp<=7?' lo':'');
- $('enb').textContent=NET?(OPN||'Opponent'):'Botzacy';$('pnb').textContent=myName()||'Playerzacy';
+ $('enb').textContent=NET?(OPN||'Opponent'):'Botzacy';$('pnb').textContent=DEMO?'Botzacy II':myName()||'Playerzacy';
  $('game').classList.toggle('et',G.act==1);$('enb').className='nbar'+(G.act==1?' act':'');$('pnb').className='nbar'+(G.act==0?' act':'');
  const hs=h=>RULES.fullHandRework?`${h.length}/${HAND_MAX}`:h.length;$('ecn').textContent=`hand ${hs(op.hand)} - deck ${op.deck.length}`;$('pcn').textContent=`hand ${hs(me.hand)} - deck ${me.deck.length}`;$('edots').innerHTML=dots(op);$('pdots').innerHTML=dots(me);
  const top=me.disc[me.disc.length-1];$('pile').className=top?'':'empty';$('pile').innerHTML=top?cardHTML(top,0):'';$('pc').textContent=me.disc.length+'x';$('dc').textContent=me.deck.length?me.deck.length+'x':'Fatigue '+((me.fat||0)+1);
@@ -207,7 +210,7 @@ function render(){
  const pl=G.hist.filter(x=>x.t==G.turn).slice(-4);let s='';for(let i=0;i<4;i++){const x=pl[i-(4-pl.length)];s+=x&&i>=4-pl.length?`<div class="s"><img src="${artSrc(x.id)}" alt="" onerror="artErr(this,${x.id})"></div>`:'<div class="s"></div>'}
  $('strip').innerHTML=s+`<div class="w">${(G.log[G.log.length-1]||'').replace(/^— |—$/g,'').slice(0,16)}</div>`;
  const act=mine()&&!(pend&&pend.ext);$('end').disabled=!act;$('end').textContent=G.step>=3?'Combat…':act?'End Turn':'Enemy…';
- refreshPin();musicUpdate();achPoll();tmSync();autoSkip();if(G.over)finish()}
+ if(DEMO){if(window.WATCH)musicUpdate();return}refreshPin();musicUpdate();achPoll();tmSync();autoSkip();if(G.over)finish()}
 function info(x,live){showZoom(x,live)}
 // Pop-up banner for Endless Mode boss events (upgrades, new deck). Several in one round are shown one after another.
 const BPQ=[];let bpBusy=false;
@@ -369,7 +372,7 @@ async function askPending(my){const was=busy;busy=true;
   if(it.k=='eff'&&!it.death&&(!it.u||it.u.gone||it.u.hp<=0))continue;   // 'When Destroyed' items belong to a unit that is already gone
   const ow=it.k=='eff'?it.u.o:it.pi,ks=apicks(G,G.p[ow],it.d,[],null);let pk=[];
   if(ks.length){
-   if(ow==0)pk=await askExt(it);
+   if(ow==0&&!DEMO)pk=await askExt(it);
    else if(NET){render();anim();pk=await askRemote(it)}
    else pk=botAskPicks(G,it);
    if(my!=gid||!G)return}
@@ -492,10 +495,10 @@ function recoil(){LUN.forEach(x=>{const el=document.querySelector(`#board [data-
 async function combat(my){for(let i=0;i<4&&!G.over&&my==gid;i++){flash=i;render();
   const pre={mv:{0:null,1:null}};   // lane moves (AI AL) are all settled here, before the attack animation; lane() must not decide again
   for(const o of [0,1]){const mu=G.p[o].ln[i],mo=preMoves(G,mu);if(!mo)continue;
-   const to=o==0?await chooseMove(mu,mo):botMove(G,mu,mo);if(my!=gid)return;
+   const to=o==0&&!DEMO?await chooseMove(mu,mo):botMove(G,mu,mo);if(my!=gid)return;
    if(to!=null&&mo.includes(to)){moveLane(G,mu,to);render();anim();if(NET)netPush();await sleep(500)}}
   const opts=preTargets(G,G.p[0].ln[i]);
-  if(opts)pre[0]=opts.length==1?opts[0]:await choosePre(G.p[0].ln[i]);
+  if(opts)pre[0]=opts.length==1?opts[0]:DEMO?null:await choosePre(G.p[0].ln[i]);
   if(NET){const o1=preTargets(G,G.p[1].ln[i]);if(o1)pre[1]=o1.length==1?o1[0]:await askPre(i,o1);if(my!=gid)return}
   say('');render();
   await strikeLane(i);if(my!=gid)return;lane(G,i,pre);flash=-1;const pb=G.ev.some(x=>x.k=='atk'&&x.post);render();anim();recoil();if(NET)netPush({t:'lane',i});await sleep(pb?1150:650);if(G.pq&&G.pq.length){await askPending(my);if(my!=gid)return}}}
@@ -503,12 +506,12 @@ async function flow(){busy=true;const my=gid;
  while(!G.over&&my==gid){
   if(G.step>=3){say('Combat!');netPush();await combat(my);if(G.over||my!=gid)break;endRound(G);if(G.pq&&G.pq.length){render();anim();await askPending(my);if(G.over||my!=gid)break}
   startRound(G);say('');render();anim();if(G.pq&&G.pq.length){await askPending(my);if(my!=gid)break}continue}
-  if(G.act==0){busy=false;say('');render();netPush();return}
+  if(G.act==0&&!DEMO){busy=false;say('');render();netPush();return}
   if(NET){say('Opponent: '+PH[G.allow]+'…');render();netPush();return}
-  say('Enemy: '+PH[G.allow]+'…');render();let n=0;
-  while(n++<20&&!G.over&&my==gid){await sleep(450);if(my!=gid)return;const m=botPlan(G,G.p[1]);if(!m)break;
-   const bc=G.p[1].hand[m.ci],fc=bc?cost(G,G.p[1],bc):null;await flyCard(m.id,heroFrom(),m.sp?centerRect():slotRect(1,m.ln),{out:!!m.sp,dur:m.sp?480:380,hold:300,fc,ba:bc&&bc.ba});if(my!=gid)return;
-   play(G,G.p[1],m.ci,m.ln,m.pk);render();anim();if(G.pq&&G.pq.length){await askPending(my);if(my!=gid)return}}
+  const o=DEMO?G.act:1;say((DEMO?'':'Enemy: ')+PH[G.allow]+'…');render();let n=0;
+  while(n++<20&&!G.over&&my==gid){await sleep(450);if(my!=gid)return;const m=demoPlan(o);if(!m)break;
+   const bc=G.p[o].hand[m.ci],fc=bc?cost(G,G.p[o],bc):null;if(DEMO)await sleep(300);else await flyCard(m.id,heroFrom(),m.sp?centerRect():slotRect(1,m.ln),{out:!!m.sp,dur:m.sp?480:380,hold:300,fc,ba:bc&&bc.ba});if(my!=gid)return;
+   play(G,G.p[o],m.ci,m.ln,m.pk);render();anim();if(G.pq&&G.pq.length){await askPending(my);if(my!=gid)return}}
   if(G.pq&&G.pq.length){await askPending(my);if(my!=gid)return}
   await sleep(300);if(my!=gid)return;nextStep(G)}
  if(my==gid){render();netPush()}}

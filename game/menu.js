@@ -1,17 +1,19 @@
-const PANELS=['frmenu','botmenu','setmenu','mirmenu','achmenu','rkmenu','acctmenu','avpick','fdmenu','clmenu'];
+const PANELS=['tutmenu','frmenu','botmenu','setmenu','mirmenu','achmenu','rkmenu','acctmenu','avpick','fdmenu','clmenu'];
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}},lsSet=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
 const openPanel=id=>{PANELS.forEach(k=>$(k).style.display=k==id?'flex':'none')},closePanels=()=>openPanel('');
 const botPanel=m=>{MODE=m;const en=m=='endless';$('botmenu').classList.toggle('endless',en);$('ebest').textContent=en?'Best score: '+(+lsGet('rj_endless_best')||0):'';$('bott').textContent=en?'Endless Mode':'Play with the bot';$('pk1').closest('.pkcol').style.display=en?'none':'';document.querySelector('#botmenu .pkcols').style.gridTemplateColumns=en?'1fr':'';
  $('botdiff').textContent=en?'Deal as much damage to the Boss as you can. He plays a random deck, never runs out of cards and gets stronger every 20 damage.':'Solo practice against the bot';openPanel('botmenu');pkReveal('pk0','pk1')};
 $('tfriend').onclick=()=>{MODE='online';openPanel('frmenu')};
 $('tbot').onclick=()=>botPanel('bot');$('tendless').onclick=()=>botPanel('endless');
-$('tmirror').onclick=()=>{MODE='mirror';openPanel('mirmenu')};
+$('tmirror').onclick=()=>{MODE='mirror';$('mirbot').click()};   // offline: straight into a Mirror Match vs the bot
+$('tmirroron').onclick=()=>{MODE='mirror';openPanel('mirmenu')};$('mirbot').style.display='none';   // online: host / join
+$('tquick').onclick=()=>{MODE='online';$('mquick').click()};
 $('mirbot').onclick=()=>{MODE='mirror';closePanels();start();musicStart()};
 $('mirhost').onclick=()=>{LB='mirmenu';startAudio();hostRoom(true)};$('mirjoin').onclick=()=>{LB='mirmenu';joinLobby('',true)};
 const openSet=()=>{$('setmenu').classList.toggle('ig',$('game').style.display=='block');
  openPanel('setmenu')};
 $('sopen').onclick=openSet;$('mu').onclick=openSet;
-['frback','botback','setclose','mirback','achback','pfback','fdback','clback'].forEach(i=>$(i).onclick=closePanels);
+['tutback','frback','botback','setclose','mirback','achback','pfback','fdback','clback'].forEach(i=>$(i).onclick=closePanels);
 PANELS.forEach(k=>$(k).addEventListener('click',e=>{if(e.target===$(k))closePanels()}));
 addEventListener('keydown',e=>{if(e.key!='Escape')return;if($('game').style.display=='block'){if($('setmenu').style.display=='flex')closePanels();return}
  if($('lobby').style.display=='flex')$('lcancel').click();else closePanels()});
@@ -65,3 +67,50 @@ const renderChangelog=()=>{const box=$('cllist'),exp=!!window.RJ_EXP,src=exp?CHA
 $('cllist').addEventListener('mouseover',e=>{const t=e.target.closest&&e.target.closest('[data-cid]');if(t){const r=t.getBoundingClientRect();window.RJ_ZR=(r.left+r.right)/2<innerWidth/2}});
 $('cllist').addEventListener('mouseleave',()=>{window.RJ_ZR=false});
 $('clopen').onclick=()=>{renderChangelog();openPanel('clmenu')};
+
+
+/* ---- main menu: left nav + card panel (see mockups) ---- */
+{const menu=$('menu'),navB=[...document.querySelectorAll('#mnav button')],secs=[...document.querySelectorAll('#mpanel .msec')],panel=$('mpanel');
+ let sec=0,card=0,opened=false;const mem=secs.map(()=>0);
+ const cardsOf=i=>[...secs[i].querySelectorAll('.mc')];
+ const render=()=>{menu.classList.toggle('open',opened);
+  navB.forEach((b,i)=>b.classList.toggle('on',i==sec));
+  secs.forEach((s,i)=>s.classList.toggle('on',opened&&i==sec));
+  cardsOf(sec).forEach((c,i)=>c.classList.toggle('on',opened&&i==card));
+  if(opened){const c=cardsOf(sec)[card];if(c){const l=c.offsetLeft-37,r=c.offsetLeft+c.offsetWidth+37-panel.clientWidth;
+   const cur=panel.scrollLeft;panel.scrollLeft=r>cur?r:l<cur?l:cur}}};
+ const pick=(i,open)=>{mem[sec]=card;sec=i;card=mem[i]||0;if(open)opened=true;render()};
+ navB.forEach((b,i)=>{b.onclick=()=>{if(i==sec&&opened){opened=false;render()}else pick(i,true)}});   // clicking the open section again closes its panel
+ const watch=on=>{window.WATCH=on;if(on){startAudio();musicNewGame();musicStart()}else musicUpdate();menu.classList.toggle('watch',on);document.body.classList.toggle('watching',on);$('mwatch').textContent=on?'Back to menu':'Watch bots'};
+ $('mwatch').onclick=()=>watch(!menu.classList.contains('watch'));
+ secs.forEach((s,si)=>cardsOf(si).forEach((c,ci)=>{c.addEventListener('mouseenter',()=>{card=ci;render()});c.addEventListener('click',()=>{card=ci;render()})}));
+ $('ttut').onclick=()=>openPanel('tutmenu');
+ $('bdecks').onclick=()=>{$('bopen').click();document.querySelector('#btabs [data-tab="decks"]').click()};   // open the collection, then jump to its Decks tab
+ const overlayOpen=()=>[...document.querySelectorAll('#stage .ovl')].some(o=>getComputedStyle(o).display!='none');
+ addEventListener('keydown',e=>{if(menu.style.display!='flex'||overlayOpen()||e.ctrlKey||e.metaKey||e.altKey)return;
+  if(menu.classList.contains('watch')){if(e.key=='Escape'||e.key=='Enter'||e.key==' '){watch(false);e.preventDefault()}return}
+  const n=cardsOf(sec).length;let h=true;
+  if(e.key=='ArrowDown')pick((sec+1)%navB.length,false);
+  else if(e.key=='ArrowUp')pick((sec+navB.length-1)%navB.length,false);
+  else if(e.key=='ArrowRight'){if(!opened){opened=true;render()}else{card=Math.min(n-1,card+1);render()}}
+  else if(e.key=='ArrowLeft'){if(opened){card=Math.max(0,card-1);render()}}
+  else if(e.key=='Enter'){if(!opened){opened=true;render()}else cardsOf(sec)[card].click()}
+  else if(e.key=='Escape'&&opened){opened=false;render()}
+  else h=false;
+  if(h)e.preventDefault()});
+ panel.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){panel.scrollLeft+=e.deltaY;e.preventDefault()}},{passive:false});
+ render()}
+
+
+/* ---- menu background: automatic bot-vs-bot games (see demoStart / flow() in ui.js) ---- */
+function demoStart(){
+ if($('menu').classList.contains('watch')&&$('menu').style.display!='flex'){$('menu').classList.remove('watch');document.body.classList.remove('watching')}
+ if(DEMO||document.hidden||$('menu').style.display!='flex'||typeof DECKS=='undefined'||!DECKS.length)return;
+ gid++;const my=gid,pick=()=>DECKS[Math.floor(Math.random()*DECKS.length)].c;
+ DEMO=true;G=newGame(pick(),pick());busy=true;sel=pend=null;castMode=false;
+ botMull(G,G.p[0]);botMull(G,G.p[1]);decideStart(G,'first','first');startRound(G);
+ $('game').classList.add('bgdemo');say('');render();
+ if(window.WATCH)musicNewGame();
+ flow().then(()=>{if(DEMO&&my==gid)setTimeout(()=>{if(DEMO&&my==gid){DEMO=false;demoStart()}},4000)})}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!DEMO)demoStart()});
+demoStart();
