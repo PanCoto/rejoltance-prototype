@@ -39,6 +39,11 @@ pct('musv','rj_mus',100,musicSetVol);
 
 /* ---- build version label + changelog (data lives in changelog.js) ---- */
 $('mver').textContent=GAME_STAGE+' Build v. '+(window.RJ_EXP?GAME_VERSION_EXP:GAME_VERSION)+(window.RJ_EXP?' [EXPERIMENTAL]':'');
+// The grey version line under the title is scaled so it is exactly as wide as the title itself (re-fitted when fonts load / the text changes).
+const fitVer=()=>{const t=document.querySelector('#menu .mlogo h1'),v=$('mver');if(!t||!v||!v.textContent)return;
+ v.style.fontSize='100px';const w=v.offsetWidth,tw=t.offsetWidth;if(w>0&&tw>0)v.style.fontSize=(100*tw/w)+'px'};   // offsetWidth ignores the stage's scale transform
+fitVer();if(document.fonts){document.fonts.ready.then(fitVer);document.fonts.addEventListener('loadingdone',fitVer)}addEventListener('load',fitVer);addEventListener('resize',fitVer);if(window.ResizeObserver)new ResizeObserver(fitVer).observe(document.querySelector('#menu .mlogo h1'));
+
 // Cards in the changelog: look a card up by Id or by name in the cards of the current build (CD is built from CARDS, or CARDS_EXP when Experimental is on).
 let CLN=null;
 const clId=(k,byName)=>{k=String(k).trim();if(/^\d+$/.test(k))return byName?null:CD[+k]?+k:null;   // byName: **bold** text is only ever a card NAME, so "**2**" (a changed number) is not card #2
