@@ -19,8 +19,18 @@
 
    Also update GAME_VERSION / GAME_VERSION_EXP below so the main menu label matches.
    ============================================================ */
-const GAME_STAGE='Pre-alpha',GAME_VERSION='0.0.2',GAME_VERSION_EXP='PTB 0.0.2';
+const GAME_STAGE='Pre-alpha',GAME_VERSION='0.0.3',GAME_VERSION_EXP='PTB 0.0.2';
 const CHANGELOG=`
+## v0.0.3 - 2026-11-16
+### UI Overhaul
+- The game uses now the **new** main menu on both the standard and experimental branches of the game.
+- Added the ability to watch the games between the bots on the Main Menu.
+- Added the shortcut to the "Decks" screen through: collection -> decks.
+### New Cards
+[[cards: 121]]
+### Known Issues
+- When starting a match against the bot/player there is a chance that the visual artifacts from the main menu simulation will be displayed on board (such us lane glowing red until the combat starts in that lane).
+- Tutorial match option not working properly.
 ## v0.0.2 - 2026-11-15
 ### Balance Overhaul
 - The whole card pool was rebalanced. **Most cards are now more expensive**: 86 of the 113 existing cards cost more (usually +1, strong cards +2), and none got cheaper. This replaces the card values listed in older entries; hover a card to see its current stats.

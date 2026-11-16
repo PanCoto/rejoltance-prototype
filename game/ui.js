@@ -380,7 +380,7 @@ async function askPending(my){const was=busy;busy=true;
  if(my==gid){busy=was;if(G)render()}}   // redraw: the hand / End button were last drawn while busy
 function selectHand(i){const me=G.p[0];pend=null;castMode=false;sel=sel==i?null:i;say('');render();if(sel==null)return;
  const c=me.hand[i],d=CD[c.id];
- if(!playable(G,me,i)){const why=cost(G,me,c)>me.b?'not enough Blood':G.allow=='U'&&d.Type!='Unit'?'only Units now':G.allow=='A'&&d.Type!='Spell'&&!d.ActionPlay?'only Actions now':'no valid target';say(`Can't play ${d.Name} now (${why})`);return}
+ if(!playable(G,me,i)){const why=cost(G,me,c)>me.b?'not enough Blood':G.allow=='U'&&d.Type!='Unit'?'only Units now':G.allow=='A'&&d.Type!='Spell'&&!d.ActionPlay&&!(d.Type=='Unit'&&unitsInAction(me))?'only Actions now':'no valid target';say(`Can't play ${d.Name} now (${why})`);return}
  if(d.Type=='Spell'){const ks=apicks(G,me,d);if(ks.length)begin(i,null);else{castMode=true;render();say(`<b>${d.Name}</b>: click anywhere on the board to cast`,1)}}
  else say(`Choose a free lane for ${d.Name}`,1)}
 document.addEventListener('click',e=>{if(!G||G.over||$('game').style.display!='block')return;

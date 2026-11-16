@@ -1940,6 +1940,22 @@ const CARDS_EXP = [
     ],
   },
 
+  {
+    Id: 121,
+    Name: "Con Artist",
+    Type: "Unit",
+    Subtypes: ["Aberration"],
+    Cost: 3,
+    Attack: 1,
+    Health: 4,
+    Description: "While in Play: You may play Units during Action phase.",
+    Effects: [
+      { Trigger: "Passive",
+        Zone: "Board",
+        Actions: [{ Type: "AllowUnitsInAction" }] },
+    ],
+  },
+
   // ==================== ORIGINAL TOKENS (unchanged) ====================
 
   {
