@@ -53,6 +53,10 @@ const MISSING=new Set(),IMGX=window.RJ_IMG||{};
 const artFile=id=>'img/'+(IMGX[+id]||id+'.webp');
 const artSrc=id=>MISSING.has(+id)?'img/missing_texture.webp':artFile(id);
 const artErr=(el,id)=>{el.onerror=null;MISSING.add(+id);el.src='img/missing_texture.webp'};
+// Sprite stages (e.g. Nesting Doll): card.Stages=[1,2] -> img/stages/<Id>_1.webp from 1 death, <Id>_2.webp from 2 deaths. Missing file -> normal art.
+const stageN=(id,dc)=>{const s=(CD[id]&&CD[id].Stages)||[];let n=0;s.forEach((t,i)=>{if((dc||0)>=t)n=i+1});return n};
+const artStage=(id,dc)=>{const n=stageN(id,dc);return n?'img/stages/'+id+'_'+n+'.webp':artSrc(id)};
+const artStageErr=(el,id)=>{el.onerror=()=>artErr(el,id);el.src=artSrc(id)};
 function cardHTML(x,live,cls,data){
  const d=x.d||CD[x.id],unit=d.Type=='Unit';
  const co=x.fc!=null?x.fc:live?(x.paid!=null?x.paid:d.Cost):!G?d.Cost:cost(G,G.p[0],x),cc=!live&&co<d.Cost?' cd':!live&&co>d.Cost?' cu':'';
@@ -62,7 +66,7 @@ function cardHTML(x,live,cls,data){
  const kl=ks.map(k=>`<i class="${BAD.has(k)?'r':''}">${kwLabel(d,k,live?x:null)}</i>`).join(' ');
  const nf=d.Name.length>18?.62:d.Name.length>14?.75:d.Name.length>11?.88:1;
  const sub=unit?(d.Subtypes||[]).join(' '):'Action';
- return`<div class="card ${cls||''}" ${data||''} data-cid="${x.id}" data-ba="${x.ba||0}" style="--nf:${nf}"><img class="art" src="${artSrc(x.id)}" alt="" draggable="false" onerror="artErr(this,${x.id})"><i class="fr"></i><span class="nm">${d.Name}</span><span class="st">- ${sub} -</span><span class="co${cc}">${ROM(co)}</span>`+
+ return`<div class="card ${cls||''}" ${data||''} data-cid="${x.id}" data-ba="${x.ba||0}" style="--nf:${nf}"><img class="art" src="${live?artStage(x.id,x.dc):artSrc(x.id)}" alt="" draggable="false" onerror="${live&&stageN(x.id,x.dc)?`artStageErr(this,${x.id})`:`artErr(this,${x.id})`}"><i class="fr"></i><span class="nm">${d.Name}</span><span class="st">- ${sub} -</span><span class="co${cc}">${ROM(co)}</span>`+
  (unit?`<div class="bx a${au}">${atk}</div><div class="bx h${hc}">${hp}</div>`:'')+
  `<div class="tx">${kl?`<span class="kwl">${kl}</span>`:''}${live&&x.sil?'':`<span>${hl(d.Description)}</span>`}</div></div>`}
 // Cards a card makes, gives or merges into (Bone Baronet -> The Tempting Goblet, Collector -> The Collection...). Used by the hover glossary.
@@ -254,7 +258,7 @@ function fxFlip(e,justIn){const live=findLive(e.u);if(!live)return;
  setTimeout(()=>fxLand(e.u),dl*1000);
  setTimeout(()=>{holdUnits();const el=document.querySelector(`#board [data-u="${e.u}"]`);if(el&&!HOLD.has(e.u))el.style.visibility=''},tot+30);
  fxRm(sl,tot+60)}
-function fxDie(e,v){const sl=fxSlot(e.o,e.lane),f={id:e.id,atk:e.atk,hp:e.hp,mx:e.hp,d:CD[e.id],kw:new Set()};
+function fxDie(e,v){const sl=fxSlot(e.o,e.lane),f={id:e.id,atk:e.atk,hp:e.hp,mx:e.hp,d:CD[e.id],kw:new Set(),dc:e.dc||0};
  sl.insertAdjacentHTML('beforeend',cardHTML(f,1,(e.o?'e ':'')+'dying '+v));
  if(v=='burnd'){sl.insertAdjacentHTML('beforeend','<div class=\"char\"></div><div class=\"flm1\"></div><div class=\"emb\">'+[0,1,2,3].map(i=>`<b style=\"left:${22+i*18}%;--dx:${i%2?14:-14}px;animation-delay:${(i*.12).toFixed(2)}s\"></b>`).join('')+'</div>');fxRm(sl,1200)} else if(v=='aoed'){sl.insertAdjacentHTML('beforeend','<div class="fxr" style="--c:#ff2b2b"></div>');fxRm(sl,1000)}
  else fxRm(sl,900)}

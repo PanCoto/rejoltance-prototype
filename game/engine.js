@@ -357,7 +357,7 @@ function act(G,a,s,c){
   const auraKw=Object.keys(t.ag||{}).filter(k=>!(t.agc&&t.agc[k]));
   nu.atk=t.atk-(t.aurA||0);nu.hp=t.hp;nu.mx=t.mx;nu.lh=t.hp;
   nu.kw=new Set([...t.kw].filter(k=>!auraKw.includes(k)));
-  nu.sil=t.sil||0;nu.rg=t.rg||0;nu.cr=t.cr||0;nu.cba=t.cba||0;nu.paid=t.paid==null?null:t.paid;
+  nu.sil=t.sil||0;nu.dc=t.dc||0;nu.rg=t.rg||0;nu.cr=t.cr||0;nu.cba=t.cba||0;nu.paid=t.paid==null?null:t.paid;
   nu.agc=Object.assign({},t.agc);nu.ag={};nu.agn=0;nu.sgd=0;
   nu.sgn=Math.max(0,(t.sgn||0)-(t.agn||0));if((t.agn||0)>0&&nu.sgn<=0)nu.kw.delete('SoulGuard');
   nu.bn=nu.kw.has('Burning')?(t.bn||0):0;
@@ -480,9 +480,23 @@ case'LoseHealth':ts.forEach(t=>{if(t.h)dmg(G,t,a.Amount||1,null,2);else if(!t.kw
   const cp=(src.Effects||[]).filter(e=>e.Trigger=='OnPlayed'?inZone(e,'Board'):(!zoneOf(e)||inZone(e,'Board')));
   if(cp.length){s.d=Object.assign({},s.d,{Effects:(s.d.Effects||[]).concat(cp)});EV(G,{k:'trig',u:s.uid})}
   break}
+ case'RespawnSelf':{   // When Destroyed: come back in the same lane with changed stats; gone for good when max HP would drop below 1
+  if(G.over||!s.uid||s.lane<0||me.ln[s.lane]||(s.kw.has('Unkillable')&&!s.sil))break;   // Unkillable units already return to hand instead
+  const hp=s.mx+(a.BuffHp||0);
+  if(hp<1){L(G,s.d.Name+' is gone for good');break}
+  const nu=mk(s.id,s.o);
+  nu.atk=Math.max(0,s.atk-(s.aurA||0)+(a.BuffAtk||0));
+  nu.hp=nu.mx=nu.lh=hp;
+  nu.dc=(s.dc||0)+1;
+  nu.placed=1;
+  place(G,me,nu,s.lane);
+  L(G,s.d.Name+' returns as '+nu.atk+'/'+nu.hp);
+  aura(G);
+  if(RULES.summonTriggers&&!G.over)announce(G,nu,1);
+  break}
  case'CopySelf':{if(G.over||s.gone||s.hp<=0||!s.uid)break;   // "Copy this unit in a random lane": a fresh copy of the card (not 'played', so no When Played)
   const ls=[0,1,2,3].filter(i=>!me.ln[i]);if(!ls.length)break;const i=ls[R(ls.length)];
-  const nu=mk(s.id,s.o);L(G,s.d.Name+' copies itself into lane '+(i+1));place(G,me,nu,i);aura(G);announce(G,nu,1);break}
+  const nu=mk(s.id,s.o);nu.dc=s.dc||0;L(G,s.d.Name+' copies itself into lane '+(i+1));place(G,me,nu,i);aura(G);announce(G,nu,1);break}
  case'CopyLastEnemyCard':{if(c.rp)break;let h=null;
   for(let i=G.hist.length-1;i>=0;i--){const x=G.hist[i];if(x.p==s.o||x.tf||x.uid===s.uid||!CD[x.id])continue;h=x;break}
   if(!h)break;
@@ -558,7 +572,7 @@ function announce(G,u,sm){if(G.over||!u)return;const p=G.p[u.o];
 function hpOne(G,u){if(!RULES.hpOneTrigger||G.over||!u||u.gone)return;
  G.p[u.o].ln.slice().forEach(w=>w&&!w.gone&&fire(G,'OnFriendlyUnitHpOne',w,{u}))}
 function killUnit(G,u,lane){const p=G.p[u.o],unk=u.kw.has('Unkillable')&&!u.sil;if(!G.sim&&!u.sacF&&p.ac)p.ac.lost++;
- EV(G,{k:'die',id:u.id,atk:u.atk,hp:Math.max(u.hp,0),o:p.i,lane,uid:u.uid,bt:G.bt?1:0});
+ EV(G,{k:'die',id:u.id,atk:u.atk,hp:Math.max(u.hp,0),o:p.i,lane,uid:u.uid,dc:u.dc||0,bt:G.bt?1:0});
  p.ln[lane]=null;u.gone=1;(G.dead=G.dead||[]).push({o:u.o,id:u.id,uid:u.uid,t:G.turn,...(u.d!==CD[u.id]?{d:u.d}:{})});
  if(!unk&&u.id<900)p.disc.push({uid:UID++,id:u.id,nf:u.uid,dt:G.turn,unk:u.kw.has('Unkillable')?1:0,...(u.cr?{red:u.cr}:{}),...(u.cba?{ba:u.cba}:{})});
  fire(G,'OnDeath',u,{u});flushHurt(G,u);units(p).forEach(o=>fire(G,'OnFriendlyUnitDied',o,{u}));fireHand(G,'OnFriendlyUnitDied',p,{u,lane});
