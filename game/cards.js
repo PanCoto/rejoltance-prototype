@@ -596,7 +596,7 @@ const CARDS = [
     Subtypes: ["Human"],
     Cost: 3,
     Attack: 1,
-    Health: 4,
+    Health: 3,
     Keywords: ["AntiAirborne"],
     Description: "Before Combat: Apply Burning to an Enemy Unit.",
     Effects: [
@@ -1489,9 +1489,10 @@ const CARDS = [
     Name: "Unitslinger",
     Type: "Unit",
     Subtypes: ["Human"],
-    Cost: 5,
-    Attack: 3,
-    Health: 5,
+    Cost: 4,
+    Attack: 2,
+    Health: 4,
+    Keywords: ["AntiAirborne"],
     Description: "While in Play: When an Enemy Unit moves, move it here. If it can't be moved, deal 2 Damage to it instead.",
     Effects: [
       { Trigger: "OnEnemyUnitPlayed",
@@ -1978,6 +1979,37 @@ const CARDS = [
     Effects: [
       { Trigger: "OnDeath",
         Actions: [{ Type: "RespawnSelf", Target: "Self", BuffAtk: -2, BuffHp: -2 }] },
+    ],
+  },
+
+  {
+    Id: 123,
+    Name: "Skeleton Dancer",
+    Type: "Unit",
+    Subtypes: ["Aberration"],
+    Cost: 7,
+    Attack: 2,
+    Health: 2,
+    Description: "After Combat Here: Deal 4 Damage an Enemy Unit here. Start of Turn and when Played: Gain +1 Dodge.",
+    Effects: [
+      { Trigger: "OnPostCombatLine",
+        Actions: [{ Type: "DealDamage", Target: "OppositeEnemyUnit", Amount: 4 }] },
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "ApplyStatus", Target: "Self", StatusKeyword: "Dodge" }] },
+      { Trigger: "OnStartOfRound",
+        Actions: [{ Type: "ApplyStatus", Target: "Self", StatusKeyword: "Dodge" }] },
+    ],
+  },
+
+  {
+    Id: 124,
+    Name: "Last Call",
+    Type: "Spell",
+    Cost: 1,
+    Description: "This Round, You may play a Unit during the Action Phase.",
+    Effects: [
+      { Trigger: "OnPlayed",
+        Actions: [{ Type: "GrantActionPlay" }] },
     ],
   },
 

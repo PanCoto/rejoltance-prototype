@@ -68,6 +68,7 @@ const EV=(G,o)=>G.ev.push(o);
 const kwp=(u,k,df)=>((u.d.KeywordParams||{})[k])||df||1;
 const burnN=u=>u&&u.kw&&u.kw.has('Burning')?Math.max(1,u.bn||0):0;
 const sgN=u=>u&&u.kw&&u.kw.has('SoulGuard')?Math.max(1,u.sgn||0):0;
+const dgN=u=>u&&u.kw&&u.kw.has('Dodge')?Math.max(1,u.dgn||0):0;   // Dodge value = how many damage instances this unit will still ignore
 function mk(id,o){const d=CD[id];return{uid:UID++,id,d,o,atk:d.Attack||0,hp:d.Health||0,mx:d.Health||0,kw:new Set(d.Keywords||[]),lane:-1}}
 /* ===== GAME-START SETTINGS - edit these numbers =====
    START_MANA : mana you have in round 1 (it still goes up by 1 every round, max 10).
@@ -316,6 +317,7 @@ function dmg(G,t,n,s,melee){
  if(n>0&&ar)n=Math.max(0,n-ar);
  if(n>0&&t.kw.has('Marked'))n*=2;
  if(n>0&&s&&s.uid&&!s.sp&&s.o!=t.o&&s.kw&&s.kw.has('Deadly')&&!s.sil)n=Math.max(n,t.hp);
+ if(n>0&&t.kw.has('Dodge')&&!t.sil){const dv=dgN(t)-1;t.dgn=Math.max(0,dv);if(dv<=0)t.kw.delete('Dodge');n=0;L(G,t.d.Name+' dodges the damage'+(dv>0?' ('+dv+' Dodge left)':''));EV(G,{k:'trig',u:t.uid})}
  t.hp-=n;EV(G,{k:'dmg',u:t.uid,n});lifesteal(G,s,n);
  if(s&&n>0&&(s.sp||(s.uid&&s.o!=t.o)))later(G,()=>hurtFire(G,t,s.sp?{u:t}:{u:t,t:s}));
  if(s&&s.uid&&!s.sp&&n>0){if(s.kw.has('BurnSource')&&!s.sil&&!t.h){t.bn=burnN(t)+1;t.kw.add('Burning')}if(melee===1)later(G,()=>fire(G,'OnDamagedEnemyUnit',s,{u:s,t}))}
@@ -326,7 +328,7 @@ function killAbsorb(G,s,t){if(!s||s.gone||s.hp<=0||!t||G.over)return;
  L(G,s.d.Name+' absorbs '+t.atk*n+' ATK from '+t.d.Name)}
 function thru(G,x,n){G.bk=1;try{dmg(G,H(1-x.o),n,x,1)}finally{G.bk=0}}
 function status(G,t,k,s){if(t.h)return;
- if(k=='Marked'&&t.kw.has('Marked')){if(s&&s.o!=null&&G.p[s.o]&&G.p[s.o].mk&&t.hp>0){L(G,t.d.Name+' was marked twice and is destroyed');t.hp=0}return}if(k=='Burning')t.bn=burnN(t)+1;if(k=='SoulGuard')t.sgn=sgN(t)+1;t.kw.add(k);EV(G,{k:'trig',u:t.uid});if(!G.sim)EV(G,{k:'fx',t:'st',s:k,u:t.uid});EV(G,{k:'snd',n:k=='Marked'?'mark':k=='Stunned'?'stun':k=='Burning'?'burn':'buff'});
+ if(k=='Marked'&&t.kw.has('Marked')){if(s&&s.o!=null&&G.p[s.o]&&G.p[s.o].mk&&t.hp>0){L(G,t.d.Name+' was marked twice and is destroyed');t.hp=0}return}if(k=='Burning')t.bn=burnN(t)+1;if(k=='SoulGuard')t.sgn=sgN(t)+1;if(k=='Dodge')t.dgn=dgN(t)+1;t.kw.add(k);EV(G,{k:'trig',u:t.uid});if(!G.sim)EV(G,{k:'fx',t:'st',s:k,u:t.uid});EV(G,{k:'snd',n:k=='Marked'?'mark':k=='Stunned'?'stun':k=='Burning'?'burn':'buff'});
  G.p.forEach(p=>p.ln.slice().forEach(u=>u&&u!==t&&fire(G,'OnStatusApplied',u,{t,u:t,st:k})))}
 function act(G,a,s,c){
  c=c||{};a=ra(G,a,s,c); if(a.Condition&&!cond(a.Condition,s,{},G))return;
@@ -360,7 +362,7 @@ function act(G,a,s,c){
   nu.sil=t.sil||0;nu.dc=t.dc||0;nu.rg=t.rg||0;nu.cr=t.cr||0;nu.cba=t.cba||0;nu.paid=t.paid==null?null:t.paid;
   nu.agc=Object.assign({},t.agc);nu.ag={};nu.agn=0;nu.sgd=0;
   nu.sgn=Math.max(0,(t.sgn||0)-(t.agn||0));if((t.agn||0)>0&&nu.sgn<=0)nu.kw.delete('SoulGuard');
-  nu.bn=nu.kw.has('Burning')?(t.bn||0):0;
+  nu.bn=nu.kw.has('Burning')?(t.bn||0):0;nu.dgn=nu.kw.has('Dodge')?dgN(t):0;
   nu.placed=1;
   place(G,me,nu,lane);
   L(G,'Pale Mirror summons a copy of '+t.d.Name);
@@ -387,7 +389,7 @@ function act(G,a,s,c){
   break;
  case'ApplyStatus':unitsOnly.forEach(t=>status(G,t,a.StatusKeyword,s));break;
  case'DestroyUnit':unitsOnly.forEach(t=>{t.hp=0});break;
- case'Silence':if(unitsOnly.length)EV(G,{k:'snd',n:'silence'});unitsOnly.forEach(t=>{t.sil=1;t.rg=0;t.sgn=0;t.agn=0;t.aurA=0;t.ag={};t.bn=0;t.kw=new Set();t.atk=t.d.Attack||0;t.mx=t.d.Health||0;t.hp=Math.min(t.hp,t.mx||1)});break;
+ case'Silence':if(unitsOnly.length)EV(G,{k:'snd',n:'silence'});unitsOnly.forEach(t=>{t.sil=1;t.rg=0;t.sgn=0;t.dgn=0;t.agn=0;t.aurA=0;t.ag={};t.bn=0;t.kw=new Set();t.atk=t.d.Attack||0;t.mx=t.d.Health||0;t.hp=Math.min(t.hp,t.mx||1)});break;
  case'SacrificeUnit':{const cand=units(me).filter(u=>u!=s);const v=c.sac||(a.Target=='SelectedTarget'&&c.t&&!c.t.h&&c.t)||cand.sort((x,y)=>(x.atk+x.hp+CD[x.id].Cost)-(y.atk+y.hp+CD[y.id].Cost))[0];
   if(v&&!v.gone&&!c.nosac){if(a.EscalateCost&&v.kw.has('Unkillable')&&!v.sil){if(v.gb)v.cr=(v.cr||0)-a.EscalateCost;v.gb=a.EscalateCost;v.gbNow=1}c.last=v;c.sacd=1;sacrifice(G,v,s.uid?s:null)}break}
  case'AbsorbStats':{const v=c.sac||c.last;if(v){s.atk+=v.atk;s.hp+=v.hp;s.mx+=v.hp}break}
@@ -535,6 +537,7 @@ case'LoseHealth':ts.forEach(t=>{if(t.h)dmg(G,t,a.Amount||1,null,2);else if(!t.kw
    if(dest>=0&&dest!=t.lane&&!o.ln[dest]&&o.ln[t.lane]===t){o.ln[t.lane]=null;place(G,o,t,dest);L(G,t.d.Name+' is pulled into lane '+(dest+1))}
    else if(a.Else&&a.Else.Amount&&!(a.Else.OncePerTurn&&s.elT===G.turn)){if(a.Else.OncePerTurn)s.elT=G.turn;dmg(G,t,a.Else.Amount,s,2)}});break}
  case'GrantRule':if(a.Rule){me[a.Rule]=1;L(G,'Marking a Marked unit now destroys it')}break;
+ case'GrantActionPlay':{me.apN=(me.apT===G.turn?(me.apN||0):0)+(a.Amount||1);me.apT=G.turn;L(G,(s.o?'Enemy':'You')+' may play a Unit during the Action Phase this round');EV(G,{k:'snd',n:'buff'});break}
  case'PlayNextTwice':me.dw=1;L(G,'Your next action is played twice');break;
   case'ReplayPlayed':{
   if(c.rp||c.nr)break;const SKIP=['SacrificeUnit','SacrificeUnits','AbsorbStats','Merge','Transform','ReplayPlayed'],chainFx=[];
@@ -560,7 +563,7 @@ function transPlay(G,u,c,self){if(!u||u.gone||u.hp<=0||G.over)return;c=c||{};
  if(!self&&!G.over&&!u.gone)announce(G,u)}
 function lastPlayed(G,pi,f,exceptUid){for(let i=G.hist.length-1;i>=0;i--){const e=G.hist[i];if(e.p!=pi||e.uid===exceptUid||!CD[e.id])continue;if(CD[e.id].Type=='Unit'&&cardOK(CD[e.id],f))return e}return null}
 function transformUnit(G,u,id){const d=CD[id],p=G.p[u.o],from=u.id,oa=u.atk,oh=u.hp;
- u.id=id;u.d=d;u.atk=(d.Attack||0)+p.gb.a;u.hp=u.mx=(d.Health||0)+p.gb.h;u.kw=new Set(d.Keywords||[]);u.bn=0;u.sil=0;u.rg=0;u.sgn=0;u.agn=0;u.sgd=0;u.red=0;u.paid=null;u.cr=0;u.cba=0;u.aurA=0;u.ag={};u.agc={};u.lh=u.hp;
+ u.id=id;u.d=d;u.atk=(d.Attack||0)+p.gb.a;u.hp=u.mx=(d.Health||0)+p.gb.h;u.kw=new Set(d.Keywords||[]);u.bn=0;u.sil=0;u.rg=0;u.sgn=0;u.dgn=0;u.agn=0;u.sgd=0;u.red=0;u.paid=null;u.cr=0;u.cba=0;u.aurA=0;u.ag={};u.agc={};u.lh=u.hp;
  EV(G,{k:'tf',u:u.uid,o:u.o,l:u.lane,from,to:id,atk:oa,hp:oh})}
 function place(G,p,u,i){EV(G,{k:'in',u:u.uid});u.lane=i;u.o=p.i;u.gone=0;p.ln[i]=u;if(!u.placed){u.placed=1;u.atk+=p.gb.a;u.hp+=p.gb.h;u.mx+=p.gb.h;u.lh=u.hp;
   if(G.en&&p.i==1&&G.en.mod.stat){u.atk+=G.en.mod.stat;u.hp+=G.en.mod.stat;u.mx+=G.en.mod.stat;u.lh=u.hp}}
@@ -673,9 +676,11 @@ function apicks(G,p,d,got,ln){got=got||[];const out=[];out.f=[];
 function choiceOK(G,p,d,i){const e=(d.Effects||[]).find(x=>x.ChoiceLabels);if(!e)return true;const a=e.Actions[i];
  if(a.Type=='DrawFromDiscard')return p.disc.length>0;const k=actKind(a,e);return!k||req(G,p,k,silBounceF(a),null,d.Type=='Spell',d.ExU).length>0}
 // Passive 'AllowUnitsInAction' (Con Artist): while a non-silenced unit with it is in play, its owner may play Units during the Action phase too.
+const actionPass=(G,p)=>p.apT===G.turn&&(p.apN||0)>0;   // Last Call: permission to play Units in the Action Phase, valid this round only
 const unitsInAction=p=>units(p).some(s=>!s.sil&&!s.gone&&s.hp>0&&(s.d.Effects||[]).some(e=>e.Trigger=='Passive'&&(e.Actions||[]).some(a=>a.Type=='AllowUnitsInAction')));
 function canPlay(G,p,ci,ln){const c=p.hand[ci];if(!c||G.over)return false;if(G.act!=null&&p.i!=G.act)return false;
- const d=CD[c.id];if((G.allow=='U'&&d.Type!='Unit')||(G.allow=='A'&&d.Type!='Spell'&&!d.ActionPlay&&!(d.Type=='Unit'&&unitsInAction(p))))return false;
+ const d=CD[c.id];if((G.allow=='U'&&d.Type!='Unit')||(G.allow=='A'&&d.Type!='Spell'&&!d.ActionPlay&&!(d.Type=='Unit'&&(unitsInAction(p)||actionPass(G,p)))))return false;
+ if(d.Type=='Spell'&&G.allow!='A'&&(d.Effects||[]).some(e=>(e.Actions||[]).some(a=>a.Type=='GrantActionPlay')))return false;   // pointless outside the Action Phase
  if(cost(G,p,c)>p.b)return false;
  if(d.Type=='Unit'&&(ln==null||p.ln[ln]))return false;
  if(d.Type=='Spell'){const pk=picks(d);if(pk.includes('L')&&(d.Effects||[]).some(e=>(e.Actions||[]).some(a=>a.Type=='CopyUnit'))&&!p.ln.some(x=>!x))return false;if(pk.includes('P')&&!units(G.p[1-p.i]).length)return false;if(pk.some((k,i)=>k!='L'&&!req(G,p,k,pk.f[i],null,true).length))return false}return true}
@@ -685,6 +690,7 @@ function play(G,p,ci,ln,pk){if(!canPlay(G,p,ci,ln))return false;
  const ks=apicks(G,p,d,pk,ln);
  if(ks.some((k,i)=>{const v=(pk||[])[i],f=ks.f[i];return f&&v!=null&&v!==NOSAC&&typeof v=='object'&&!unitOK(v,f)}))return false;
  pickCtx(ks,pk,ctx);
+ if(d.Type=='Unit'&&G.allow=='A'&&!d.ActionPlay&&!unitsInAction(p)&&actionPass(G,p))p.apN--;
  const paid=cost(G,p,c);p.b-=paid;p.hand.splice(ci,1);
  if(!G.sim&&p.ac){p.ac.pl++;if(d.Cost>3)p.ac.big=1;acn(G,p,'spent',paid,10,'maxed');if(c.id==900&&ctx.t&&!ctx.t.h&&ctx.t.id==3)acu(G,p,'recursion')}
  const he={p:p.i,t:G.turn,id:c.id,tg:ctx.t?(ctx.t.h?'Hero':ctx.t.d.Name):ctx.sac?ctx.sac.d.Name:''};G.hist.push(he);
@@ -719,6 +725,7 @@ function botPlanBasic(G,p){const op=G.p[1-p.i];
   const pick=ln=>{const pk=[];for(let n=0;n<8;n++){const ks=apicks(G,p,d,pk,ln);if(ks.length<=pk.length)break;const kk=ks[pk.length];pk.push(botPick(G,p,kk,kk=='L'?(ln!=null?[ln]:[]).concat(pk.filter((_,j)=>ks[j]=='L')):null,d.Type=='Spell',ks.f[pk.length]))}return pk};
   if(d.Type=='Spell'){
    if(c.id==914)continue;   // Ashes from Clashes only hurts your own side
+   if((d.Effects||[]).some(e=>(e.Actions||[]).some(a=>a.Type=='GrantActionPlay'))&&(!p.ln.some(x=>!x)||!p.hand.some((h,j)=>j!=i&&CD[h.id].Type=='Unit'&&cost(G,p,h)<=p.b-cost(G,p,c))))continue;
    if(picks(d).includes('S')&&units(p).length<2)continue;
    if((d.Effects||[]).some(e=>e.Trigger=='OnPlayed'&&e.Actions.some(a=>['AllEnemyUnits','AllUnitsOnBoard'].includes(a.Target)&&['DealDamage','DestroyUnit','Silence','BuffStats','ApplyStatus'].includes(a.Type)))&&units(op).length<2)continue;
    if((d.Effects||[]).some(e=>e.Actions.some(a=>a.Type=='Reanimate'&&!(p.disc.some(x=>CD[x.id].Type=='Unit'&&cardOK(CD[x.id],a.Filter))&&p.ln.some(x=>!x)))))continue;

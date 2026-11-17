@@ -28,7 +28,7 @@ function refreshDecks(){ALL=DECKS.concat(loadC().filter(d=>!overCap(d.c)).map(d=
  if(window.renderPickers)renderPickers()}
 refreshDecks();
 const ROM=n=>{if(n<=0)return'0';let s='';for(const[v,r]of[[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']])while(n>=v){s+=r;n-=v}return s};
-const KWD={Flying:'A Unit with Flying skips non-Flying Units and attacks the Hero directly. Only Flying Units can block it.',Armored:'A Unit with Armored takes {n} less damage from each hit.',Unkillable:'When a Unit with Unkillable would be destroyed, it returns to its owner\'s Hand instead.',SoulGuard:'When a Unit with SoulGuard would be destroyed, it survives with 1 HP instead and loses a stack of SoulGuard.',SplashDamage:'When a Unit with Splash attacks, it also deals {n} damage to Enemy Units in the adjacent lanes.',Burning:'A Unit with Burning takes damage equal to its Burning stacks at the end of each round. Applying Burning again adds a stack.',Marked:'A Marked Unit takes double damage.',Stunned:'A Stunned Unit skips its next attack.',Breakthrough:'When a Unit with Breakthrough attacks a Unit, it also damages the Enemy Hero.',Unactionable:'A Unit with Unactionable can\'t be targeted or affected by Enemy Spells.',SilenceImmune:'A Unit with Indomitable can\'t be Silenced.',BounceImmune:'A Unit with Anchored can\'t be Bounced.',Lifesteal:'When a Unit with Lifesteal deals damage, it heals its owner\'s Hero for that amount.',Deadly:'A Unit with Deadly destroys any Unit it damages.',Taunt:'While a Unit with Taunt is in play, damage aimed at its owner\'s Hero hits it instead.',Evolving:'At the end of each round, a Unit with Evolving transforms into a random Unit that costs 1 more, and keeps Evolving. Silence removes it.',Protected:'A Protected Unit can\'t be hurt until the end of the round. Silence removes it.'};
+const KWD={Flying:'A Unit with Flying skips non-Flying Units and attacks the Hero directly. Only Flying Units can block it.',Armored:'A Unit with Armored takes {n} less damage from each hit.',Unkillable:'When a Unit with Unkillable would be destroyed, it returns to its owner\'s Hand instead.',SoulGuard:'When a Unit with SoulGuard would be destroyed, it survives with 1 HP instead and loses a stack of SoulGuard.',SplashDamage:'When a Unit with Splash attacks, it also deals {n} damage to Enemy Units in the adjacent lanes.',Burning:'A Unit with Burning takes damage equal to its Burning stacks at the end of each round. Applying Burning again adds a stack.',Marked:'A Marked Unit takes double damage.',Stunned:'A Stunned Unit skips its next attack.',Breakthrough:'When a Unit with Breakthrough attacks a Unit, it also damages the Enemy Hero.',Unactionable:'A Unit with Unactionable can\'t be targeted or affected by Enemy Spells.',SilenceImmune:'A Unit with Indomitable can\'t be Silenced.',BounceImmune:'A Unit with Anchored can\'t be Bounced.',Lifesteal:'When a Unit with Lifesteal deals damage, it heals its owner\'s Hero for that amount.',Deadly:'A Unit with Deadly destroys any Unit it damages.',Taunt:'While a Unit with Taunt is in play, damage aimed at its owner\'s Hero hits it instead.',Evolving:'At the end of each round, a Unit with Evolving transforms into a random Unit that costs 1 more, and keeps Evolving. Silence removes it.',Protected:'A Protected Unit can\'t be hurt until the end of the round. Silence removes it.',Dodge:'A Unit with Dodge ignores the first damage instance it would take, then its Dodge value goes down by 1. Gaining Dodge again adds to the value. Silence removes it.'};
 const TERMS=[
  ['Sacrifice',/\bSacrifice[ds]?\b/i,'When you Sacrifice a Unit, you destroy one of your own Units.'],
  ['Blood',/\bBlood\b/i,'Blood is the resource used to play cards. It refills every round, up to 10.'],
@@ -40,15 +40,15 @@ const TERMS=[
  ['Move Right',/\bMove Right\b/i,'When a Unit Moves Right, it moves to the next lane on the right, if that lane is empty.'],
  ['Exploding Damage',/\bExploding (Damage|Present)\b/i,'When a card has Exploding Damage, a copy of it goes to the opponent\'s Hand, costing 1 more.'],
  ['Mark',/\bMark(ed)?\b/i,'Marked'],['Stun',/\bStun(ned)?\b/i,'Stunned'],['Burning',/\bBurning\b/i,'Burning'],
- ['SoulGuard',/Soul ?Guard/i,'SoulGuard'],['Unkillable',/\bUnkillable\b/i,'Unkillable'],['Flying',/\bFlying\b/i,'Flying'],['Armored',/\bArmored\b/i,'Armored'],['Unactionable',/\bUnactionable\b/i,'Unactionable'],['SilenceImmune',/\bIndomitable\b/i,'SilenceImmune'],['BounceImmune',/\bAnchored\b/i,'BounceImmune'],['Lifesteal',/\bLifesteal\b/i,'Lifesteal'],['Taunt',/\bTaunt\b/i,'Taunt'],['Deadly',/\bDeadly\b/i,'Deadly'],['Evolving',/\bEvolving\b/i,'Evolving'],['Protected',/\bProtected\b/i,'Protected'],
+ ['SoulGuard',/Soul ?Guard/i,'SoulGuard'],['Unkillable',/\bUnkillable\b/i,'Unkillable'],['Flying',/\bFlying\b/i,'Flying'],['Armored',/\bArmored\b/i,'Armored'],['Unactionable',/\bUnactionable\b/i,'Unactionable'],['SilenceImmune',/\bIndomitable\b/i,'SilenceImmune'],['BounceImmune',/\bAnchored\b/i,'BounceImmune'],['Lifesteal',/\bLifesteal\b/i,'Lifesteal'],['Taunt',/\bTaunt\b/i,'Taunt'],['Deadly',/\bDeadly\b/i,'Deadly'],['Evolving',/\bEvolving\b/i,'Evolving'],['Protected',/\bProtected\b/i,'Protected'],['Dodge',/\bDodge\b/i,'Dodge'],
  ['Merge',/\bMerge[sd]?\b/i,'When all the pieces are on your side, they Merge into one Unit in the Titan Torso\'s lane.']];
 const KNAME={SplashDamage:'Splash',BurnSource:'Burn Source',SilenceImmune:'Indomitable',BounceImmune:'Anchored'};
 const kwNum=(d,k)=>(d.KeywordParams||{})[k]||(k=='Armored'||k=='SplashDamage'?1:'');
 const HIDDEN_KW=new Set(['BurnSource']); // internal keywords: work in the engine, never shown on cards
 const shownKw=a=>a.filter(k=>!HIDDEN_KW.has(k));
-const kwLabel=(d,k,u)=>k=='Armor2'?'Armored 2':k=='Stunned'&&u&&(u.stn||0)>1?'Stunned '+u.stn:k=='Burning'&&u&&(u.bn||0)>1?'Burning '+u.bn:k=='SoulGuard'&&u&&(u.sgn||0)>1?'SoulGuard '+u.sgn:(KNAME[k]||k)+(kwNum(d,k)!==''&&(k=='Armored'||k=='SplashDamage')?' '+kwNum(d,k):'');
+const kwLabel=(d,k,u)=>k=='Armor2'?'Armored 2':k=='Stunned'&&u&&(u.stn||0)>1?'Stunned '+u.stn:k=='Burning'&&u&&(u.bn||0)>1?'Burning '+u.bn:k=='SoulGuard'&&u&&(u.sgn||0)>1?'SoulGuard '+u.sgn:k=='Dodge'&&u&&(u.dgn||0)>1?'Dodge '+u.dgn:(KNAME[k]||k)+(kwNum(d,k)!==''&&(k=='Armored'||k=='SplashDamage')?' '+kwNum(d,k):'');
 const BAD=new Set(['Burning','Marked','Stunned']);
-const hl=t=>(t||'').replace(/\b(Sacrifice[d]?|Mark(?:ed)?|Stunned?|Burning|SoulGuard|Unkillable|Unactionable|Lifesteal|Taunt|Deadly|Evolving|Protected|Flying|Merge[sd]?)\b/g,'<span class="k u">$1</span>').replace(/(\d+ )?\bBlood\b/g,'<span class="k">$&</span>');
+const hl=t=>(t||'').replace(/\b(Sacrifice[d]?|Mark(?:ed)?|Stunned?|Burning|SoulGuard|Unkillable|Unactionable|Lifesteal|Taunt|Deadly|Evolving|Protected|Dodge|Flying|Merge[sd]?)\b/g,'<span class="k u">$1</span>').replace(/(\d+ )?\bBlood\b/g,'<span class="k">$&</span>');
 const MISSING=new Set(),IMGX=window.RJ_IMG||{};
 const artFile=id=>'img/'+(IMGX[+id]||id+'.webp');
 const artSrc=id=>MISSING.has(+id)?'img/missing_texture.webp':artFile(id);
@@ -70,14 +70,20 @@ function cardHTML(x,live,cls,data){
  (unit?`<div class="bx a${au}">${atk}</div><div class="bx h${hc}">${hp}</div>`:'')+
  `<div class="tx">${kl?`<span class="kwl">${kl}</span>`:''}${live&&x.sil?'':`<span>${hl(d.Description)}</span>`}</div></div>`}
 // Cards a card makes, gives or merges into (Bone Baronet -> The Tempting Goblet, Collector -> The Collection...). Used by the hover glossary.
+// Automatic: ANY action that points at another card by id is listed in the hover glossary - no per-action list to maintain.
+// REF_KEYS = action fields that hold a card id; REF_HOW = what the action does with it (decides the wording after the stats).
+// A new action type that uses ValueParam / Into / PartnerInto is picked up by itself; only a new *wording* needs a line in REF_HOW.
+const REF_KEYS=['ValueParam','Into','PartnerInto'];
+const REF_HOW={AddCardToHand:'gain',AddCardToDeck:'deck',AddCardToEnemyDeck:'enemydeck',MakeAUnit:'summon',Merge:'merge',Transform:'transform',TransformInHand:'transform'};
 function tokenRefs(d){const out=[],seen=new Set();
- (d.Effects||[]).forEach(e=>(e.Actions||[]).forEach(a=>{const T=TYPEALIAS[a.Type]||a.Type;let id=null,how=null;
-  if((T=='AddCardToHand'||T=='MakeAUnit')&&a.ValueParam!=null){id=a.ValueParam;how=T=='AddCardToHand'?'gain':'summon'}
-  else if(T=='Merge'&&a.Into!=null){id=a.Into;how='merge'}
-  if(id!=null&&id!=d.Id&&CD[id]&&!seen.has(id)){seen.add(id);out.push({id,how,free:!!a.FreeThisTurn})}}));return out}
+ (d.Effects||[]).forEach(e=>(e.Actions||[]).forEach(a=>{const T=TYPEALIAS[a.Type]||a.Type;
+  REF_KEYS.forEach(k=>{const id=a[k];if(typeof id!='number'||id==d.Id||!CD[id]||seen.has(id))return;
+   seen.add(id);out.push({id,how:REF_HOW[T]||'other',free:!!a.FreeThisTurn})})}));return out}
 function tokBody(r){const t=CD[r.id],unit=t.Type=='Unit',kws=shownKw(t.Keywords||[]).map(k=>kwLabel(t,k)).join(', '),st=(t.Attack||0)+'/'+(t.Health||0);
  let meta=unit?st+(kws?' '+kws:''):'Action';
  if(r.how=='gain')meta+=', '+(r.free?'free this turn':(t.Cost||0)+' Blood');
+ else if(r.how=='deck')meta+=', '+(t.Cost||0)+' Blood, shuffled into your Deck';
+ else if(r.how=='enemydeck')meta+=', '+(t.Cost||0)+' Blood, shuffled into the enemy Deck';
  return`<b>${t.Name}</b> (${meta}): ${t.Description||'No ability.'}`}
 function glossary(x,live,d){const out=[],late=[],seen=new Set();
  const addKw=(k,dd,to)=>{const key=k=='Armor2'?'Armored':k;if(!KWD[key]||seen.has(key))return;seen.add(key);
@@ -384,7 +390,7 @@ async function askPending(my){const was=busy;busy=true;
  if(my==gid){busy=was;if(G)render()}}   // redraw: the hand / End button were last drawn while busy
 function selectHand(i){const me=G.p[0];pend=null;castMode=false;sel=sel==i?null:i;say('');render();if(sel==null)return;
  const c=me.hand[i],d=CD[c.id];
- if(!playable(G,me,i)){const why=cost(G,me,c)>me.b?'not enough Blood':G.allow=='U'&&d.Type!='Unit'?'only Units now':G.allow=='A'&&d.Type!='Spell'&&!d.ActionPlay&&!(d.Type=='Unit'&&unitsInAction(me))?'only Actions now':'no valid target';say(`Can't play ${d.Name} now (${why})`);return}
+ if(!playable(G,me,i)){const why=cost(G,me,c)>me.b?'not enough Blood':G.allow=='U'&&d.Type!='Unit'?'only Units now':G.allow=='A'&&d.Type!='Spell'&&!d.ActionPlay&&!(d.Type=='Unit'&&(unitsInAction(me)||actionPass(G,me)))?'only Actions now':d.Type=='Spell'&&G.allow!='A'&&(d.Effects||[]).some(e=>(e.Actions||[]).some(a=>a.Type=='GrantActionPlay'))?'only in the Action Phase':'no valid target';say(`Can't play ${d.Name} now (${why})`);return}
  if(d.Type=='Spell'){const ks=apicks(G,me,d);if(ks.length)begin(i,null);else{castMode=true;render();say(`<b>${d.Name}</b>: click anywhere on the board to cast`,1)}}
  else say(`Choose a free lane for ${d.Name}`,1)}
 document.addEventListener('click',e=>{if(!G||G.over||$('game').style.display!='block')return;
