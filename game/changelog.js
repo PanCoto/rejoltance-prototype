@@ -66,12 +66,25 @@ const CHANGELOG=`
 ### Known Issues
 - When starting a match against the bot/player there is a chance that the visual artifacts from the main menu simulation will be displayed on board (such us lane glowing red until the combat starts in that lane).
 ## v0.0.2 - 2026-11-15
-### Balance Overhaul
-- The whole card pool was rebalanced. **Most cards are now more expensive**: 86 of the 113 existing cards cost more (usually +1, strong cards +2), and none got cheaper. This replaces the card values listed in older entries; hover a card to see its current stats.
-- Biggest price hikes (+2): **Mouse** (now 5 cost, 5/12), **Widows Spider**, **Thor**, **Double Tap**, **Mindstrucker**, **One-Punch Man**, **Chainsaw Guy** and **Blighteinstein**.
-- 31 cards had their Attack and/or Health changed, mostly to compensate for the new costs.
-- About 70 card descriptions were reworded and several abilities were reworked.
-- 19 cards were renamed (for example Librarian is now **Mindstrucker**, Therapist is now **Synth-Medic** and Knockback is now **Knock-out**).
+### Balance Changes
+- **The big slowdown.** The original card pool was fully rebalanced in this patch. Guiding principle: push almost every cost up by 1 (and the biggest offenders by 2) to slow the game down, then adjust stats, keywords and effects on the cards that would otherwise become unplayable at the new price.
+- **Cost increases.** 86 of the 113 existing cards cost more; none got cheaper in this patch. Eleven cards got **+2**: {{23}} (4 -> 6), {{29}} (5 -> 7), {{33}} (3 -> 5), {{40}} (3 -> 5), {{54}} (3 -> 5), {{68}} (4 -> 6), {{81}} (2 -> 4), {{82}} (2 -> 4), {{88}} (3 -> 5), {{92}} (3 -> 5), {{95}} (2 -> 4). The other 74 originals and {{902}} got +1. The 13 originals that kept their cost: {{2}}, {{4}}, {{7}}, {{9}}, {{13}}, {{45}}, {{50}}, {{51}}, {{61}}, {{77}}, {{78}}, {{86}}, {{89}}, {{93}}.
+- **Stat redistribution (31 cards).** To compensate for the new costs. Highlights: {{23}} 4/4 -> 5/5, {{29}} 5/6 -> 7/5, {{33}} 6/6 -> 5/12, {{48}} 2/2 -> 1/3, {{88}} 2/2 -> 2/4, {{95}} 2/2 -> 1/3. Smaller bumps to the cheap slots: {{1}} hp 2 -> 3, {{39}} hp 1 -> 2, {{75}} hp 1 -> 2, {{76}} atk 1 -> 2; and small nerfs to keep tempo reasonable: {{2}} hp 2 -> 1, {{4}} hp 2 -> 1, {{78}} hp 2 -> 1, {{83}} hp 2 -> 1, {{89}} hp 2 -> 1. See the individual cards for the full list.
+- **Keyword changes.** {{22}}, {{24}}, {{37}}, {{44}} and {{54}} gained **AntiAirborne**. {{43}} lost **Unactionable** (it can now be silenced, bounced and buffed like a normal unit). {{64}} gained **Taunt**.
+- **Effect reworks:**
+  - **Black Rabbitlings** [REWORK] : death heal now targets **a Friendly Unit or Your Hero** (was: Your Hero only).
+  - **Survivalist** [REWORK] : now grants Soul Guard to **all** Friendly Units (including itself); previously it only applied to the others.
+  - **Silence** [NERF] : can now only target **enemy** units (was: any unit).
+  - **Dagger Throw** [NERF] : can no longer target the Enemy Hero; only enemy units.
+  - **Tea Maid** [BUFF] : first-Action discount increased **2 -> 3** to compensate for the +1 cost.
+  - **Thor** [REWORK] : growth zone expanded to **deck, hand, discard and board**.
+  - **Synth-Medic** [REWORK] : was "fully heal a Friendly Unit; +0/+2 if a Machine is on board". Now "heal a Friendly Unit **or Your Hero** for 4; if another Machine is on board, a unit healed this way also gets **+2 HP**".
+  - **Attentive Parent** [BUFF] : now summons Aberrations up to cost **2** (was: up to 1).
+  - **Unitslinger** [CLARIFY] : description changed from "played in another lane" to "moves" — the trigger is still OnEnemyUnitPlayed.
+  - **Corpse Eater** [CLARIFY] : "Play this in its lane" -> "Play this in its place".
+- **Subtype changes.** {{5}} lost Aberration. {{8}} gained Human. {{22}} lost Aberration. {{23}} is now Human/Machine. {{27}} gained Animal. {{34}} gained Aberration. {{36}} gained Human. {{60}} gained Animal. {{78}} is now Human (was: Animal). {{80}} is now Animal. {{82}} is now Animal. {{87}} gained Animal. {{88}} lost Human. {{94}} lost Animal. {{96}} gained Machine.
+- **Renames (19 cards).** {{8}} Clockwork Knight -> **Knight**. {{42}} Mechanic -> **Artificer**. {{48}} Butcher of Gluttony -> **Butcher**. {{62}} Therapist -> **Synth-Medic**. {{64}} Black Dog -> **Black Goat**. {{65}} Ritualist -> **Cuckooist**. {{70}} Titan Head -> **Titan's Head**. {{71}} Titan Torso -> **Titan's Torso**. {{72}} Titan Left Arm -> **Titan's Left Arm**. {{73}} Titan Right Arm -> **Titan's Right Arm**. {{77}} Black Widow Spider -> **Black Spider**. {{78}} Acolyte -> **Cultist**. {{82}} Librarian -> **Mindstrucker**. {{85}} Knockback -> **Knock-out**. {{86}} Disintergrade -> **Disintegrade** (spelling). {{88}} FireGirl -> **Fireplant**. {{91}} Factory -> **Factoid Factory**. {{98}} Doorman -> **Door-Machine**. {{901}} Royal Souldier -> **Royal Soldier** (spelling).
+- **Token changes.** {{902}} now costs **1** (was 0) and also **draws a card**. {{903}} now costs **0** (was 1). {{900}} The Tempting Goblet was not touched in this patch (see 0.0.3).
 ### New Cards
 - 20 new cards. Hover a card to zoom it.
 [[cards: 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120]]
