@@ -40,8 +40,8 @@ const CHANGELOG=`
 - **Dodge**: A Unit with Dodge ignores the first damage instance it would take, then its Dodge value goes down by 1. Gaining Dodge again adds to the value (Dodge 2 ignores two hits). Silence removes it.
 ### New Cards
 [[cards: 123, 124]]
-- **Skeleton Dancer** (Aberration, 5 cost, 2/2): After Combat Here: Deal 4 Damage to the Enemy Unit in this lane. Start of Turn and when Played: Gain +1 Dodge.
-- **Last Call** (Action, 1 cost): This Round, You may play 1 Unit during the Action Phase. It can only be played in the Action Phase and expires at the end of the round. Con Artist and Bug Knight are used first, so they never waste it.
+- **Skeleton Dancer** (Aberration, 7 cost, 2/2): After Combat Here: Deal 4 Damage to an Enemy Unit in this lane. Start of Turn and when Played: Gain +1 Dodge.
+- **Last Call** (Action, 1 cost): This Round, You may play a Unit during the Action Phase. It can only be played in the Action Phase and expires at the end of the round. Con Artist and Bug Knight are used first, so they never waste it.
 ## Balance Patch 5 - 2026-11-17
 ### Balance Changes
 - **Archer** [NERF] : Health 4 -> **3**.
