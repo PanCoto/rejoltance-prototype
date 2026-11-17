@@ -155,7 +155,7 @@ function rkCard(me){
   +'<div class="rkchs">'+chip('Wins',me.wins,'#fff')+chip('Losses',me.losses,'#ff4a50')+chip('Draws',me.draws||0)+chip('Win rate',pct(me.wins,g))+(hs.n?chip('Streak',(hs.ct=='win'?'W':hs.ct=='loss'?'L':'D')+hs.cur):'')+'</div>'}
 function rkRows(lb,me){   // the server sends the list already ordered by rating
  return lb.length?lb.map((p,i)=>{const mine=me&&p.pid&&p.pid==me.pid;
-  return'<div class="rkr'+(mine?' me':'')+'" data-pid="'+esc(p.pid||'')+'" title="View profile"><i>'+(i+1)+'</i><em class="av">'+avHTML(mine?avId()||p.avatar:p.avatar,p.name)+'</em><b>'+esc(p.name)+'</b><u>'+prBadge(p.wins)+'</u><span>'+p.rating+'</span><small>'+p.wins+'-'+p.losses+'</small></div>'}).join(''):'<div class="rkr"><b>No ranked games have been played yet.</b></div>'}
+  return'<div class="rkr'+(mine?' me':'')+(i<3?' top':'')+'" data-pid="'+esc(p.pid||'')+'" title="View profile"><i>'+(i+1)+'</i><em class="av">'+avHTML(mine?avId()||p.avatar:p.avatar,p.name)+'</em><b>'+esc(p.name)+'</b><u>'+prBadge(p.wins)+'</u><span>'+p.rating+'</span><small>'+p.wins+'-'+p.losses+'</small></div>'}).join(''):'<div class="rkr"><b>No ranked games have been played yet.</b></div>'}
 let OPENING=0;   // a screen that needs data opens only once the data has arrived (clicks are ignored while it loads)
 const ldOn=()=>{OPENING=1;document.body.classList.add('ld')},ldOff=()=>{OPENING=0;document.body.classList.remove('ld')};
 async function rkOpen(){
@@ -174,7 +174,7 @@ async function rkOpen(){
   if(err){rk('rksub').textContent='Could not load the ranking: '+err.message;return}
   MM.me=me||null;if(me&&me.avatar&&CD[me.avatar])lsSet('rj_avatar',String(me.avatar));chipRefresh();
   if(needDc()&&!(me&&me.discord)){rk('rkplay').textContent='Link Discord to play';rk('rksub').textContent='Ranked games require a linked Discord account (set up in your Profile).'}
-  rk('rkme').innerHTML=rkCard(me);LBROWS=lb;rk('rklist').innerHTML=rkRows(lb,me);if(window.RJ_EXP){rk('rkplay').disabled=true;rk('rksub').textContent='Ranked is disabled while Experimental changes are on (Settings).'}}
+  rk('rkme').innerHTML=rkCard(me);LBROWS=lb;rk('rklist').innerHTML=rkRows(lb,me);{const mr=rk('rklist').querySelector('.rkr.me');if(mr)requestAnimationFrame(()=>{const L=rk('rklist');L.scrollTop=Math.max(0,mr.offsetTop-L.clientHeight/2+mr.offsetHeight/2)})}if(window.RJ_EXP){rk('rkplay').disabled=true;rk('rksub').textContent='Ranked is disabled while Experimental changes are on (Settings).'}}
  finally{ldOff()}}
 rk('rkopen').onclick=rkOpen;rk('rkback').onclick=closePanels;
 rk('rkprof').onclick=()=>profOpen('',rkOpen);

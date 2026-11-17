@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#000000"><meta name="apple-mobile-web-app-capable" content="yes">
 <title>RE:Joltance</title>
-<link rel="stylesheet" href="style.css?v=20261201">
+<link rel="stylesheet" href="style.css?v=20261205">
 </head><body>
 <div id="stage">
  <div class="scr" id="menu">
@@ -109,16 +109,18 @@
   <div class="pkhint">Use Preview to see every card in a deck. Set a default deck to have it pre-selected everywhere.</div>
   <div class="btns"><button id="go">Start</button><button id="botback">Back</button></div></div></div>
  <div class="ovl bk" id="achmenu"><div class="panel wide"><h2>Achievements</h2><div class="sub" id="achsum"></div><div id="achbar"><i></i></div><div id="achlist"></div><div class="btns"><button id="achback">Back</button></div></div></div>
- <div class="ovl bk" id="rkmenu"><div class="panel wide rkp"><h2>Ranked</h2><div class="sub" id="rksub"></div>
+ <div class="ovl bk" id="rkmenu"><div class="panel wide rkp"><h2>Ranked</h2>
   <div class="rkgrid">
-   <div class="rkl">
+   <aside class="rkl">
     <div id="rkme"></div>
-    <div class="rkdeck"><div class="pkh"><label>Your deck</label><span class="pkcur" id="pknr"></span></div><div class="pkx" id="pkr"></div>
-     <div class="pkhint">Preview shows every card. You pick your final deck again on the match screen.</div></div>
-   </div>
-   <div class="rkrt"><h4>Leaderboard</h4><div id="rklist"></div></div>
+    <div class="rkact"><button id="rkplay" class="rkgo">Play Ranked</button><button id="rkprof" class="rksec">My profile</button></div>
+    <div class="sub rkst" id="rksub"></div>
+   </aside>
+   <section class="rkdeck"><div class="pkh"><label>Your deck</label><span class="pkcur" id="pknr"></span></div><div class="pkx" id="pkr"></div>
+    <div class="pkhint">Preview shows every card. You pick your final deck again on the match screen.</div></section>
+   <section class="rklb"><h4>Leaderboard</h4><div class="rkhd"><i>#</i><span></span><b>Player</b><u>Lvl</u><span>Rating</span><small>W-L</small></div><div id="rklist"></div></section>
   </div>
-  <div class="btns"><button id="rkplay">Play Ranked</button><button id="rkprof">My profile</button><button id="rkback">Back</button></div></div></div>
+  <div class="btns"><button id="rkback">Back</button></div></div></div>
  <div class="ovl bk" id="acctmenu"><div class="panel prof"><h2 id="pft">Profile</h2><div class="sub" id="pfsub"></div>
   <div class="pfbody">
    <div class="pfl"><button id="pfav" class="pfav" title="Change profile picture"></button><button id="pfchg">Change picture</button>
@@ -141,6 +143,7 @@
   <input type="text" id="avq" placeholder="Search cards..." autocomplete="off" spellcheck="false"><div id="avgrid"></div>
   <div class="btns"><button id="avclear">Use initial instead</button><button id="avback">Back</button></div></div></div>
  <div class="ovl bk" id="clmenu"><div class="panel wide clp"><h2 id="cltitle">Changelog</h2><div class="sub" id="clsub"></div>
+  <div id="clbar"><button type="button" id="clexp">Expand all</button><button type="button" id="clcol">Collapse all</button></div>
   <div id="cllist"></div>
   <div class="btns"><button id="clback">Back</button></div></div></div>
  <div class="ovl bk" id="setmenu"><div class="panel"><h2>Settings</h2>  <div class="srow chk"><label for="rndprem">Random includes Premade decks</label><input type="checkbox" id="rndprem" checked title="When on, the Random button can pick premade decks too. When off, it only picks your own decks (premade ones are used only if you have none)."></div>
@@ -173,5 +176,5 @@
 </div>
 <div id="rot">Please rotate your device to landscape (this game is designed for a wide screen).</div>
 <audio id="au" loop></audio>
-<script src="cards.js?v=20261203"></script><script src="decks.js?v=20261117"></script><script src="live-config.js"></script><script src="cards-live.js"></script><script src="cards-exp.js?v=20261203"></script><script src="decks-exp.js?v=20261119"></script><script src="img-index.js"></script><script src="engine.js?v=20261204"></script><script src="bot.js"></script><script src="sfx.js?v=20261124"></script><script src="music.js?v=20261124"></script><script src="share.js"></script><script src="ui.js?v=20261202"></script><script src="peerjs.min.js"></script><script src="net-config.js"></script><script src="turn-secret.js" onerror="void 0"></script><script src="net.js?v=20261118"></script><script src="changelog.js?v=20261203"></script><script src="menu.js?v=20261201"></script><script src="tutorial-data.js?v=20261201"></script><script src="tutorial.js?v=20261201"></script><script src="menumusic.js?v=20261127"></script><script src="mm.js?v=20261109"></script><script src="ach.js"></script>
+<script src="cards.js?v=20261203"></script><script src="decks.js?v=20261117"></script><script src="live-config.js"></script><script src="cards-live.js"></script><script src="cards-exp.js?v=20261203"></script><script src="decks-exp.js?v=20261119"></script><script src="img-index.js"></script><script src="engine.js?v=20261204"></script><script src="bot.js"></script><script src="sfx.js?v=20261124"></script><script src="music.js?v=20261124"></script><script src="share.js"></script><script src="ui.js?v=20261202"></script><script src="peerjs.min.js"></script><script src="net-config.js"></script><script src="turn-secret.js" onerror="void 0"></script><script src="net.js?v=20261118"></script><script src="changelog.js?v=20261205"></script><script src="menu.js?v=20261205"></script><script src="tutorial-data.js?v=20261201"></script><script src="tutorial.js?v=20261201"></script><script src="menumusic.js?v=20261127"></script><script src="mm.js?v=20261205"></script><script src="ach.js"></script>
 </body></html>

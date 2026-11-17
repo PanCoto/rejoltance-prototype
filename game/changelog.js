@@ -21,6 +21,16 @@
    title starts with "Balance" or "Card Changes" (put card stat / text changes there, everything else elsewhere).
    An entry with nothing for a page is skipped on that page.
 
+   Balance patches have their own numbering, independent of the game version (a balance patch can go live without a game update).
+   On the "Balance Changes" page every entry that has balance sections is shown as "Balance Patch N" + its date (the version is not shown).
+   N is counted automatically, oldest entry = 1. To set the number yourself, or to publish a balance patch with no game update, add an
+   entry of its own:
+     ## Balance Patch 12 - 2026-11-17
+     ### Balance Changes
+     - **Card Name**: Cost 3 -> 2
+   Later balance entries continue from that number. An entry with only balance sections does not appear on the Patch Notes page.
+   Both pages show one folding bar per entry (the newest is open, the rest are folded; the player can open / fold them).
+
    Also update GAME_VERSION / GAME_VERSION_EXP below so the main menu label matches.
    ============================================================ */
 const GAME_STAGE='Pre-alpha',GAME_VERSION='0.0.3',GAME_VERSION_EXP='PTB 0.0.2';

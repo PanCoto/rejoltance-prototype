@@ -61,19 +61,49 @@ const clGallery=(ent,list)=>{const ids=list.split(',').map(x=>clId(x)).filter(i=
 // (sections whose title starts with "Balance" or "Card Changes"). Entries with nothing for the chosen page are skipped.
 let CLK='patch';
 const isBal=t=>/^(balance|card changes)/i.test(t);
-const renderChangelog=kind=>{CLK=kind||CLK;const bal=CLK=='bal',box=$('cllist'),exp=!!window.RJ_EXP,src=exp?CHANGELOG_EXP:CHANGELOG;box.textContent='';let ent=null,ul=null,n=0,inc=!bal;
- const flush=()=>{if(ent&&ent.children.length>1){box.appendChild(ent);n++}ent=null};
+// Parse once into entries -> sections -> lines, then build one collapsible bar ("drop bar") per entry for the chosen page.
+const clParse=src=>{const ents=[];let e=null,sc=null,m;
+ for(const raw of src.split('\n')){const l=raw.trim();if(!l)continue;
+  if(m=l.match(/^##\s+(.*?)(?:\s+[-–]\s+(\d{4}-\d{2}-\d{2}))?$/)){e={title:m[1],date:m[2]||'',secs:[]};sc=null;ents.push(e)}
+  else if(!e)continue;
+  else if(m=l.match(/^###\s+(.*)$/)){sc={title:m[1],lines:[]};e.secs.push(sc)}
+  else{if(!sc){sc={title:'',lines:[]};e.secs.push(sc)}sc.lines.push(l)}}
+ return ents};
+// Balance patches have their own numbering (a balance patch can ship without a game update): "## Balance Patch 12 - date" sets the number,
+// every other entry that has balance sections is numbered automatically, oldest = 1 (counting on from the last explicit number).
+const clBalNums=ents=>{const nums=new Map();let c=0;
+ for(let i=ents.length-1;i>=0;i--){const e=ents[i];if(!e.secs.some(x=>isBal(x.title)&&x.lines.length))continue;
+  const m=e.title.match(/^balance\s+patch\s+#?(\d+)/i);c=m?+m[1]:c+1;nums.set(e,c)}
+ return nums};
+const clSetOpen=(sec,on)=>{sec.classList.toggle('open',on);const h=sec.querySelector('.clh');if(h)h.setAttribute('aria-expanded',on?'true':'false')};
+const renderChangelog=kind=>{CLK=kind||CLK;const bal=CLK=='bal',box=$('cllist'),exp=!!window.RJ_EXP,src=exp?CHANGELOG_EXP:CHANGELOG;box.textContent='';
+ const ents=clParse(src),nums=bal?clBalNums(ents):null;let n=0;
  $('cltitle').textContent=(exp?'Experimental ':'')+(bal?'Balance Changes':'Patch Notes');
- for(const raw of src.split('\n')){const l=raw.trim();if(!l)continue;let m;
-  if(m=l.match(/^##\s+(.*?)(?:\s+[-\u2013]\s+(\d{4}-\d{2}-\d{2}))?$/)){flush();ent=document.createElement('section');ent.className='cle';const h=document.createElement('h3');h.textContent=m[1];if(m[2]){const d=document.createElement('small');d.textContent=m[2];h.appendChild(d)}ent.appendChild(h);ul=null;inc=!bal}
-  else if(!ent)continue;
-  else if(m=l.match(/^###\s+(.*)$/)){inc=isBal(m[1])==bal;ul=null;if(inc){const h4=document.createElement('h4');h4.textContent=m[1];ent.appendChild(h4)}}
-  else if(!inc)continue;
-  else if(m=l.match(/^\[\[\s*cards?\s*:\s*(.+?)\s*\]\]$/i)){clGallery(ent,m[1]);ul=null}
-  else if(m=l.match(/^[-*]\s+(.*)$/)){if(!ul){ul=document.createElement('ul');ent.appendChild(ul)}const li=document.createElement('li');clInline(li,m[1]);ul.appendChild(li)}
-  else{const p=document.createElement('p');clInline(p,l);ent.appendChild(p);ul=null}}
- flush();
- $('clsub').textContent=!n?(bal?'No balance changes yet':'No entries yet'):bal?(exp?'Card balance changes in the experimental build, newest first':'Card balance changes, newest first'):(exp?'Changes in the experimental build, newest first':'New content, changes and fixes, newest first');box.scrollTop=0};
+ for(const e of ents){
+  const body=document.createElement('div');body.className='cli';let ul=null,items=0;const names=[];
+  for(const sc of e.secs){if(isBal(sc.title)!=bal)continue;if(!sc.lines.length)continue;ul=null;
+   if(sc.title){const h4=document.createElement('h4');h4.textContent=sc.title;body.appendChild(h4);if(!bal)names.push(sc.title)}
+   for(const l of sc.lines){let m;
+    if(m=l.match(/^\[\[\s*cards?\s*:\s*(.+?)\s*\]\]$/i)){clGallery(body,m[1]);ul=null}
+    else if(m=l.match(/^[-*]\s+(.*)$/)){if(!ul){ul=document.createElement('ul');body.appendChild(ul)}const li=document.createElement('li');clInline(li,m[1]);ul.appendChild(li);items++}
+    else{const p=document.createElement('p');clInline(p,l);body.appendChild(p);ul=null}}}
+  if(!body.children.length)continue;
+  const ent=document.createElement('section');ent.className='cle';
+  const hd=document.createElement('button');hd.type='button';hd.className='clh';
+  const t=document.createElement('span');t.className='clt';t.textContent=bal?'Balance Patch '+nums.get(e):e.title;
+  if(e.date){const d=document.createElement('small');d.textContent=e.date;t.appendChild(d)}
+  const mt=document.createElement('span');mt.className='clm';mt.textContent=bal?(items?items+(items==1?' change':' changes'):''):names.join(' · ');
+  const cv=document.createElement('i');cv.className='clv';
+  hd.append(t,mt,cv);
+  const wrap=document.createElement('div');wrap.className='clb';wrap.appendChild(body);
+  ent.append(hd,wrap);
+  hd.onclick=()=>clSetOpen(ent,!ent.classList.contains('open'));
+  clSetOpen(ent,n==0);   // the newest entry starts open, the rest are folded
+  box.appendChild(ent);n++}
+ $('clsub').textContent=!n?(bal?'No balance changes yet':'No entries yet'):bal?(exp?'Card balance changes in the experimental build, newest first':'Card balance changes, newest first'):(exp?'Changes in the experimental build, newest first':'New content, changes and fixes, newest first');
+ $('clbar').style.visibility=n>1?'':'hidden';box.scrollTop=0};
+$('clexp').onclick=()=>$('cllist').querySelectorAll('.cle').forEach(x=>clSetOpen(x,true));
+$('clcol').onclick=()=>{$('cllist').querySelectorAll('.cle').forEach(x=>clSetOpen(x,false));$('cllist').scrollTop=0};
 // The zoomed card sits at the left edge by default; in the changelog it opens on the opposite side of whatever is hovered, so it doesn't hide it.
 $('cllist').addEventListener('mouseover',e=>{const t=e.target.closest&&e.target.closest('[data-cid]');if(t){const r=t.getBoundingClientRect();window.RJ_ZR=(r.left+r.right)/2<innerWidth/2}});
 $('cllist').addEventListener('mouseleave',()=>{window.RJ_ZR=false});
