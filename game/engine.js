@@ -310,7 +310,7 @@ function dmg(G,t,n,s,melee){
  n=dmgMod(G,t,n,s,melee);
  if(t.h){G.p[t.p].hp-=n;if(!G.sim&&n>0&&G.p[t.p].ac)G.p[t.p].ac.taken+=n;
   if(G.en&&!G.sim&&t.p==1&&n>0){G.en.dealt+=n;G.en.rd=(G.en.rd||0)+n;if(G.en.dealt>=999)acu(G,G.p[0],'unstop');if(G.en.rd>=20)acu(G,G.p[0],'wonder')}EV(G,G.bk?{k:'dmg',h:t.p,n,bk:1,bo:s.o,bl:s.lane}:{k:'dmg',h:t.p,n});L(G,(t.p?'Enemy':'You')+' hero takes '+n);lifesteal(G,s,n);
-  if(s&&s.uid&&!s.sp&&n>0)later(G,()=>G.p[s.o].ln.slice().forEach(w=>w&&fire(G,'OnDamagedEnemyHero',w,{u:s,t:s})));chk(G);return}
+  if(s&&s.uid&&!s.sp&&n>0&&t.p!=s.o)later(G,()=>G.p[s.o].ln.slice().forEach(w=>w&&fire(G,'OnDamagedEnemyHero',w,{u:s,t:s})));chk(G);return}   // only when the hero hurt is the ENEMY hero (Deadbeat hurting its own hero does not count)
  if(n>0&&t.kw.has('Protected'))n=0;
  const ar=t.kw.has('Armored')?kwp(t,'Armored'):t.kw.has('Armor2')?2:0;
  if(n>0&&ar)n=Math.max(0,n-ar);
