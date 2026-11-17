@@ -48,8 +48,9 @@ const CHANGELOG=`
 - New main menu theme and a separate calmer theme for the Collection / Decks screen. The themes crossfade when you switch screens and follow the Music volume slider.
 - In "Watch bots" mode the in-game music plays; the background match on the menu is silent.
 ### New Cards
-[[cards: 121]]
+[[cards: 121, 122]]
 - **Con Artist** (Aberration, 3 cost, 1/4): While in Play: You may play Units during Action phase. Normally Units can only be played in the Unit phases.
+- **Nesting Doll** (Human, 6 cost, 5/3): When Destroyed: Create a copy of this Unit here with -1/-1. It keeps coming back until its max Health would drop below 1, so a 3 Health Doll has to be destroyed 3 times (Silence stops the chain). The artwork changes after each death.
 - New premade deck: AshesTempo, built around **The Lighter**.
 ### Balance Changes
 - **The Lighter** [REWORK] : "When Played: The Enemy Hero gains 2 Ashes from Clashes. When this Does Damage: Shuffle 2 Ashes from Clashes to the Enemy's Hero deck." -> "When Played: The Enemy Hero gains **an** Ashes from Clashes **and You Shuffle an Ashes from Clashes into the Enemy's deck**. When this Does Damage: Shuffle 2 Ashes from Clashes into the Enemy's deck."
@@ -115,8 +116,9 @@ const CHANGELOG_EXP=`
 ### Music
 - New main menu and Collection / Decks screen themes.
 ### New Cards
-[[cards: 121]]
+[[cards: 121, 122]]
 - **Con Artist** (Aberration, 3 cost, 1/4): While in Play: You may play Units during Action phase.
+- **Nesting Doll** (Human, 6 cost, 5/3): When Destroyed: Create a copy of this Unit here with -1/-1. It keeps coming back until its max Health would drop below 1, so a 3 Health Doll has to be destroyed 3 times (Silence stops the chain). The artwork changes after each death.
 ## PTB - Max copies test
 ### Deck Building
 - New setting **Max 2 copies per card** (Settings, only shown while Experimental changes are on). When it is on, player-built decks can have at most 2 copies of the same card.
