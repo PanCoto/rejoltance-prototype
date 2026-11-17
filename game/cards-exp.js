@@ -1977,11 +1977,11 @@ const CARDS_EXP = [
 
   {
     Id: 900, Name: "The Tempting Goblet", Type: "Spell", Subtypes: ["Token"], Cost: 1,
-    Description: "Give a Friendly Unit Unkillable, then Sacrifice it.",
+    Description: "Give a Friendly Unit Unkillable, then Sacrifice it. Afterwards it costs 1 more each time it returns to Your Hand from being Destroyed.",
     Effects: [{ Trigger: "OnPlayed", Targeting: "TargetFriendlyUnit",
       Actions: [
         { Type: "ApplyStatus", Target: "SelectedTarget", StatusKeyword: "Unkillable" },
-        { Type: "SacrificeUnit", Target: "SelectedTarget" },
+        { Type: "SacrificeUnit", Target: "SelectedTarget", EscalateCost: 1 },
       ] }],
   },
 

@@ -51,10 +51,13 @@ const CHANGELOG=`
 [[cards: 121, 122]]
 - **Con Artist** (Aberration, 3 cost, 1/4): While in Play: You may play Units during Action phase. Normally Units can only be played in the Unit phases.
 - **Nesting Doll** (Human, 6 cost, 5/3): When Destroyed: Create a copy of this Unit here with -1/-1. It keeps coming back until its max Health would drop below 1, so a 3 Health Doll has to be destroyed 3 times (Silence stops the chain). The artwork changes after each death.
-- New premade deck: AshesTempo, built around **The Lighter**.
+- New premade deck: AshesTempo, built around **Cinderwright**.
 ### Balance Changes
-- **The Lighter** [REWORK] : "When Played: The Enemy Hero gains 2 Ashes from Clashes. When this Does Damage: Shuffle 2 Ashes from Clashes to the Enemy's Hero deck." -> "When Played: The Enemy Hero gains **an** Ashes from Clashes **and You Shuffle an Ashes from Clashes into the Enemy's deck**. When this Does Damage: Shuffle 2 Ashes from Clashes into the Enemy's deck."
-- **Ashes from Clashes** [REWORK] : "Deal 1 Damage to a Friendly Unit or Friendly Hero." -> "Deal damage to a Friendly Unit or Friendly Hero **equal to the number of Ashes from Clashes You have played this game**." Only Ashes played by the player who received them count. The first one deals 1, the second 2, the third 3 and so on.
+- {{107}} [RENAME] : **The Lighter** renamed to **Cinderwright**.
+- {{914}} [RENAME] : **Ashes from Clashes** renamed to **Cinder Ash**.
+- **Cinderwright** [REWORK] : "When Played: The Enemy Hero gains 2 Cinder Ash. When this Does Damage: Shuffle 2 Cinder Ash to the Enemy's deck." -> "When Played: The Enemy Hero gains **a copy of Cinder Ash**, and You shuffle **a copy of Cinder Ash** into the Enemy's deck. When this deals Damage: Shuffle 2 copies of Cinder Ash into the Enemy's deck."
+- **Cinder Ash** [REWORK] : "Deal 1 Damage to a Friendly Unit or Friendly Hero." -> "Deal damage to a Friendly Unit or Friendly Hero **equal to the number of Cinder Ash You have played this game**." Only Cinder Ash played by the player who received them count. The first one deals 1, the second 2, the third 3 and so on.
+- **The Tempting Goblet** [NERF] : A Friendly Unit sacrificed to The Tempting Goblet now costs **1 more each time it returns to Your Hand from being Destroyed** (previously each Return cost the same as the first).
 - **Bone Baronet** [REWORK] : Health 1 -> **3**, "When Destroyed: Gain The Tempting Goblet." -> "When Destroyed: **Shuffle** The Tempting Goblet **into Your Deck**."
 - **Black Cat** [BUFF] : Cost 1 -> **0**, Attack 1 -> **0**, "When Sacrificed: Return to Your Hand instead. It costs 1 more this turn." -> "When Sacrificed: Return to Your Hand instead. It costs **1 more** this turn."
 ### Fixes

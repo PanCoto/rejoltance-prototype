@@ -237,7 +237,7 @@ function fireHand(G,trig,p,ctx){
     if(a.Filter||id==null){const pp=poolOf(a.Filter);if(!pp.length)return;id=pp[R(pp.length)].Id}
     if(p.hand.length<HAND_MAX){p.hand.push({uid:UID++,id,tok:1,...(a.FreeThisTurn?{z:G.turn}:{}),...(a.CostChange?{red:-(a.CostChange)}:{})});gained(G,p,'add')}}
    else if(a.Type=='SummonUnit'&&zone=='Hand'&&ctx.lane!=null&&!p.ln[ctx.lane]&&!G.over){c.used=1;p.hand=p.hand.filter(x=>x!==c);
-    const u=mk(c.id,p.i);u.atk+=c.ba||0;if(c.unk)u.kw.add('Unkillable');place(G,p,u,ctx.lane);L(G,CD[c.id].Name+' rises');fire(G,'OnPlayed',u,{ask:1});
+    const u=mk(c.id,p.i);u.atk+=c.ba||0;u.cr=c.red||0;u.cba=c.ba||0;u.gb=c.gb||0;if(c.unk)u.kw.add('Unkillable');place(G,p,u,ctx.lane);L(G,CD[c.id].Name+' rises');fire(G,'OnPlayed',u,{ask:1});
     if(RULES.summonTriggers&&!G.over)announce(G,u,1)}})})};
  p.hand.slice().forEach(c=>run(c,'Hand'));
  p.deck.slice().forEach(c=>run(c,'Deck'));
@@ -389,7 +389,7 @@ function act(G,a,s,c){
  case'DestroyUnit':unitsOnly.forEach(t=>{t.hp=0});break;
  case'Silence':if(unitsOnly.length)EV(G,{k:'snd',n:'silence'});unitsOnly.forEach(t=>{t.sil=1;t.rg=0;t.sgn=0;t.agn=0;t.aurA=0;t.ag={};t.bn=0;t.kw=new Set();t.atk=t.d.Attack||0;t.mx=t.d.Health||0;t.hp=Math.min(t.hp,t.mx||1)});break;
  case'SacrificeUnit':{const cand=units(me).filter(u=>u!=s);const v=c.sac||(a.Target=='SelectedTarget'&&c.t&&!c.t.h&&c.t)||cand.sort((x,y)=>(x.atk+x.hp+CD[x.id].Cost)-(y.atk+y.hp+CD[y.id].Cost))[0];
-  if(v&&!v.gone&&!c.nosac){c.last=v;c.sacd=1;sacrifice(G,v,s.uid?s:null)}break}
+  if(v&&!v.gone&&!c.nosac){if(a.EscalateCost&&v.kw.has('Unkillable')&&!v.sil){if(v.gb)v.cr=(v.cr||0)-a.EscalateCost;v.gb=a.EscalateCost;v.gbNow=1}c.last=v;c.sacd=1;sacrifice(G,v,s.uid?s:null)}break}
  case'AbsorbStats':{const v=c.sac||c.last;if(v){s.atk+=v.atk;s.hp+=v.hp;s.mx+=v.hp}break}
  case'GiveToOpponent':s.give=1;s.giveA=a;break;
  case'MakeAUnit':case'SummonUnit':{if(T=='SummonUnit')break;
@@ -448,6 +448,7 @@ case'ReturnToHand':
           unk:t.kw.has('Unkillable')?1:0,
           ...((t.cr||a.CostChange)?{red:(t.cr||0)-(a.CostChange||0)}:{}),
           ...(t.cba?{ba:t.cba}:{}),
+          ...(t.gb?{gb:t.gb}:{}),
           ...(a.FreeThisTurn?{z:G.turn}:{}),
           ...(a.ExpensiveThisTurn?{exp:G.turn}:{})
         });
@@ -577,7 +578,7 @@ function killUnit(G,u,lane){const p=G.p[u.o],unk=u.kw.has('Unkillable')&&!u.sil;
  if(!unk&&u.id<900)p.disc.push({uid:UID++,id:u.id,nf:u.uid,dt:G.turn,unk:u.kw.has('Unkillable')?1:0,...(u.cr?{red:u.cr}:{}),...(u.cba?{ba:u.cba}:{})});
  fire(G,'OnDeath',u,{u});flushHurt(G,u);units(p).forEach(o=>fire(G,'OnFriendlyUnitDied',o,{u}));fireHand(G,'OnFriendlyUnitDied',p,{u,lane});
  if(unk){L(G,u.d.Name+' is Unkillable - back to hand');
-  if(u.id<900||RULES.tokensReturnToHand){const card={uid:UID++,id:u.id,nf:u.uid,unk:1,...(u.cr?{red:u.cr}:{}),...(u.cba?{ba:u.cba}:{})};if(p.hand.length<HAND_MAX||RULES.fullHandRework){p.hand.push(card);gained(G,p,'unkillable');acn(G,p,'unk',1,3,'deathsticks')}else if(u.id<900)p.disc.push(card)}}}
+  if(u.id<900||RULES.tokensReturnToHand){const rr=(u.cr||0)-((u.gb&&!u.gbNow)?u.gb:0);const card={uid:UID++,id:u.id,nf:u.uid,unk:1,...(rr?{red:rr}:{}),...(u.cba?{ba:u.cba}:{}),...(u.gb?{gb:u.gb}:{})};if(p.hand.length<HAND_MAX||RULES.fullHandRework){p.hand.push(card);gained(G,p,'unkillable');acn(G,p,'unk',1,3,'deathsticks')}else if(u.id<900)p.disc.push(card)}}}
 function sacrifice(G,u,by){const p=G.p[u.o];p.sc++;u.sacF=1;acn(G,p,'sac',1,5,'feast');L(G,u.d.Name+' sacrificed');
  fire(G,'OnSacrificed',u,{by:by||null});
  if(!u.gone)killUnit(G,u,u.lane);
@@ -689,7 +690,7 @@ function play(G,p,ci,ln,pk){if(!canPlay(G,p,ci,ln))return false;
  const he={p:p.i,t:G.turn,id:c.id,tg:ctx.t?(ctx.t.h?'Hero':ctx.t.d.Name):ctx.sac?ctx.sac.d.Name:''};G.hist.push(he);
  if(!G.sim)costMods(G,p,c).forEach(m=>{if(m.amt>0||d.Cost-(c.red||0)>0)EV(G,{k:'trig',u:m.src.uid})});
  p.fr=Object.assign({},p.fr,{[d.Type]:G.turn,Any:G.turn});
- if(d.Type=='Unit'){const u=mk(c.id,p.i);u.atk+=c.ba||0;u.paid=paid;u.cr=c.red||0;u.cba=c.ba||0;if(c.unk)u.kw.add('Unkillable');he.uid=u.uid;place(G,p,u,ln);L(G,(p.i?'Enemy':'You')+' play '+d.Name);
+ if(d.Type=='Unit'){const u=mk(c.id,p.i);u.atk+=c.ba||0;u.paid=paid;u.cr=c.red||0;u.cba=c.ba||0;u.gb=c.gb||0;if(c.unk)u.kw.add('Unkillable');he.uid=u.uid;place(G,p,u,ln);L(G,(p.i?'Enemy':'You')+' play '+d.Name);
   fire(G,'OnPlayed',u,ctx);announce(G,u);
   resolve(G);if(!G.over)fireHand(G,'OnFriendlyCardPlayed',p,{pc:d})}
  else{L(G,(p.i?'Enemy':'You')+' cast '+d.Name);const s={d,o:p.i,sp:1,lane:-1,uid:0};

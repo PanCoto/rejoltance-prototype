@@ -152,7 +152,7 @@ const CARDS = [
     Cost: 3,
     Attack: 2,
     Health: 3,
-    Description: "Sacrifice: Absorb the Stats of the Unit Sacrificed.",
+    Description: "Sacrifice: Absorb the Stats of the sacrificed Unit.",
     Effects: [
       { Trigger: "OnPlayed",
         Targeting: "OtherFriendlyUnits",
@@ -236,7 +236,7 @@ const CARDS = [
     Name: "Expectancy",
     Type: "Spell",
     Cost: 3,
-    Description: "Draw a Card from Your Deck or Your Discard pile now and at the start of the next round.",
+    Description: "Draw a Card from Your Deck or Your Discard pile now and at the start of the next Round.",
     Effects: [
       { Trigger: "OnPlayed",
         Targeting: "Choice",
@@ -253,7 +253,7 @@ const CARDS = [
     Name: "HellFire",
     Type: "Spell",
     Cost: 5,
-    Description: "Deal 3 Damage and Apply Burning to all Units on Board.",
+    Description: "Deal 3 Damage and apply Burning to all Units on the Board.",
     Effects: [
       { Trigger: "OnPlayed",
         Actions: [
@@ -273,7 +273,7 @@ const CARDS = [
     Health: 3,
     Keywords: ["SplashDamage", "BurnSource"],
     KeywordParams: { SplashDamage: 3 },
-    Description: "When this Does Damage to the Enemy Unit: Apply Burning to it.",
+    Description: "When this deals Damage to an Enemy Unit: Apply Burning to it.",
   },
 
   {
@@ -362,7 +362,7 @@ const CARDS = [
     Attack: 5,
     Health: 5,
     Keywords: ["SilenceImmune"],
-    Description: "On Kill: Heal to Full, gain +2 HP.",
+    Description: "On Kill: Heal to full and gain +2 HP.",
     Effects: [
       { Trigger: "OnKill",
         Actions: [
@@ -438,7 +438,7 @@ const CARDS = [
     Cost: 4,
     Attack: 2,
     Health: 4,
-    Description: "While in Play: When You draw a Card, gain +1 ATK. When this Hurt an Enemy Hero, Draw a Card.",
+    Description: "While in Play: When You draw a Card, gain +1 ATK. When this hurts an Enemy Hero, Draw a Card.",
     Effects: [
       { Trigger: "OnDamagedEnemyHero",
         Condition: { Condition: "IsSelf" },
@@ -453,7 +453,7 @@ const CARDS = [
     Name: "Exploding Present",
     Type: "Spell",
     Cost: 4,
-    Description: "Deal 7 Damage to the Enemy Unit. The Enemy Hero gains a copy of this card that costs 2 more.",
+    Description: "Deal 7 Damage to an Enemy Unit. The Enemy Hero gains a copy of this card that costs 2 more.",
     Effects: [
       { Trigger: "OnPlayed",
         Actions: [
@@ -529,7 +529,7 @@ const CARDS = [
     Attack: 5,
     Health: 12,
     Keywords: ["Stunned"],
-    Description: "When this Does Damage: Stun It.",
+    Description: "When this deals Damage: Stun itself.",
     Effects: [
       { Trigger: "OnDamagedEnemyUnit",
         Actions: [{ Type: "ApplyStatus", Target: "Self", StatusKeyword: "Stunned" }] },
@@ -579,7 +579,7 @@ const CARDS = [
     Health: 3,
     Keywords: ["SoulGuard"],
     Rule: "hpOneTrigger",
-    Description: "Whenever a Friendly Unit is Destroyed or Drops to 1 HP: Deal 2 Damage to the Enemy Hero.",
+    Description: "Whenever a Friendly Unit is Destroyed or drops to 1 HP: Deal 2 Damage to the Enemy Hero.",
     DescriptionClassic: "Whenever a Friendly Unit is Destroyed: Deal 2 Damage to the Enemy Hero.",
     Effects: [
       { Trigger: "OnFriendlyUnitDied",
@@ -693,7 +693,7 @@ const CARDS = [
     Cost: 4,
     Attack: 3,
     Health: 3,
-    Description: "When this Does Damage: Summon Souldiers in Adjacent Lanes.",
+    Description: "When this deals Damage: Summon Royal Soldiers in Adjacent Lanes.",
     Effects: [
       { Trigger: "OnAttackDone",
         Actions: [{ Type: "MakeAUnit", ValueParam: 901, StringParam: "AdjacentLanes" }] },
@@ -733,7 +733,7 @@ const CARDS = [
     Cost: 4,
     Attack: 1,
     Health: 4,
-    Description: "While in Play: The First Action You play each Round costs 3 less.",
+    Description: "While in Play: The first Action you play each Round costs 3 less.",
     Effects: [
       { Trigger: "Passive",
         Zone: "Board",
@@ -750,7 +750,7 @@ const CARDS = [
     Attack: 6,
     Health: 6,
     Rule: "persistentGrowth",
-    Description: "While in Deck, Hand or Discard: Costs 1 Less for each Action You played. When Played: Do a Bonus Attack.",
+    Description: "While in Deck, Hand or Discard: Costs 1 less for each Action You played. When Played: Do a Bonus Attack.",
     DescriptionClassic: "While in Hand: Costs 1 Less for each Action You played. When Played: Do a Bonus Attack.",
     Effects: [
       { Trigger: "OnPlayed",
@@ -770,7 +770,7 @@ const CARDS = [
     Cost: 3,
     Attack: 1,
     Health: 3,
-    Description: "While in Play: Each time You Sacrifice a Unit, gain +1/+1 or +2/+2 if it was a Human instead.",
+    Description: "While in Play: Each time You Sacrifice a Unit, gain +1/+1, or +2/+2 instead if it was a Human.",
     Effects: [
       { Trigger: "OnOtherUnitSacrificed",
         Actions: [{ Type: "BuffStats", Target: "Self", BuffAtk: 1, BuffHp: 1 }] },
@@ -828,7 +828,7 @@ const CARDS = [
     Cost: 2,
     Attack: 1,
     Health: 2,
-    Description: "While in Play: Each time You play another Machine gain +1/+1.",
+    Description: "While in Play: Each time you play another Machine, gain +1/+1.",
     Effects: [
       { Trigger: "OnPlayed",
         Condition: {
@@ -848,7 +848,7 @@ const CARDS = [
     Name: "The Curtain Call",
     Type: "Spell",
     Cost: 7,
-    Description: "For the Rest of The Game, Marking a Marked Unit Destroys it. Mark all Enemy Units, then Deal 1 Damage to Them.",
+    Description: "For the rest of the game, marking a Marked Unit destroys it. Mark all Enemy Units, then deal 1 Damage to them.",
     Effects: [
       { Trigger: "OnPlayed",
         Actions: [
@@ -923,7 +923,7 @@ const CARDS = [
     Name: "Pale Mirror",
     Type: "Spell",
     Cost: 4,
-    Description: "Summon an Exact copy of a Friendly Unit that costs 4 or less in an empty lane of Your choice.",
+    Description: "Summon an exact copy of a Friendly Unit that costs 4 or less in an empty lane of Your choice.",
     Effects: [
       { Trigger: "OnPlayed",
         Targeting: "TargetFriendlyUnit",
@@ -1110,7 +1110,7 @@ const CARDS = [
     Attack: 4,
     Health: 4,
     Keywords: ["Flying"],
-    Description: "Sacrifice: You may Choose as Many Friendly Units as You want and absorb their stats.",
+    Description: "Sacrifice: You may choose as many Friendly Units as You want and absorb their stats.",
     Effects: [
       { Trigger: "OnPlayed",
         Actions: [{ Type: "SacrificeUnits", Target: "OtherFriendlyUnits", Absorb: true }] },
@@ -1215,7 +1215,7 @@ const CARDS = [
     Cost: 3,
     Attack: 1,
     Health: 5,
-    Description: "While in Play: Whenever the Enemy Hero gains a Card, deal 1 Damage to Them.",
+    Description: "While in Play: Whenever the Enemy Hero gains a Card, deal 1 Damage to that Hero.",
     Effects: [
       { Trigger: "OnOpponentCardGained",
         Actions: [{ Type: "DealDamage", Target: "EnemyHero", Amount: 1 }] },
@@ -1261,7 +1261,7 @@ const CARDS = [
     Cost: 1,
     Attack: 1,
     Health: 1,
-    Description: "When Sacrificed: Draw a Card from Your deck that costs 5 or more.",
+    Description: "When Sacrificed: Draw a Card from Your Deck that costs 5 or more.",
     Effects: [
       { Trigger: "OnSacrificed",
         Actions: [{ Type: "DrawCard", Target: "FriendlyHero", Amount: 1, Filter: { MinCost: 5 } }] },
@@ -1322,7 +1322,7 @@ const CARDS = [
     Cost: 4,
     Attack: 3,
     Health: 3,
-    Description: "Deals Double the Damage to the Enemy Hero.",
+    Description: "Deals double the Damage to the Enemy Hero.",
     Effects: [
       { Trigger: "Passive",
         Zone: "Board",
@@ -1372,7 +1372,7 @@ const CARDS = [
     Cost: 3,
     Attack: 1,
     Health: 4,
-    Description: "Before Combat Here: Spend all Your Blood. Gain +1/+1 for each Blood Spent.",
+    Description: "Before Combat Here: Spend all Your Blood. Gain +1/+1 for each Blood spent.",
     Effects: [
       { Trigger: "OnPreCombatLine",
         Actions: [
@@ -1429,7 +1429,7 @@ const CARDS = [
     Cost: 5,
     Attack: 2,
     Health: 4,
-    Description: "When Played: Apply Burning to Each Enemy Unit. While in Play: Gain ATK equal to the Number of Burning Units on Board.",
+    Description: "When Played: Apply Burning to each Enemy Unit. While in Play: Gain ATK equal to the number of Burning Units on the Board.",
     Effects: [
       { Trigger: "OnPlayed",
         Actions: [{ Type: "ApplyStatus", Target: "AllEnemyUnits", StatusKeyword: "Burning" }] },
@@ -1446,7 +1446,7 @@ const CARDS = [
     Cost: 1,
     Attack: 1,
     Health: 1,
-    Description: "When Played: Spend all Your Blood. Gain +1/+1 for Each Blood Spent.",
+    Description: "When Played: Spend all Your Blood. Gain +1/+1 for each Blood spent.",
     Effects: [
       { Trigger: "OnPlayed",
         Actions: [
@@ -1492,7 +1492,7 @@ const CARDS = [
     Cost: 5,
     Attack: 3,
     Health: 5,
-    Description: "While in Play: When an Enemy Unit is Move, move it here. If it can't be Moved, deal 2 Damage to it instead.",
+    Description: "While in Play: When an Enemy Unit moves, move it here. If it can't be moved, deal 2 Damage to it instead.",
     Effects: [
       { Trigger: "OnEnemyUnitPlayed",
         Condition: { Condition: "Not", SubConditions: [{ Condition: "SameLane" }] },
@@ -1524,7 +1524,7 @@ const CARDS = [
     Attack: 3,
     Health: 3,
     Keywords: ["Flying"],
-    Description: "When Destroyed: Summon Mecha-Troopers in Adjacent Lanes.",
+    Description: "When Destroyed: Summon Stormtroopers in Adjacent Lanes.",
     Effects: [
       { Trigger: "OnDeath",
         Actions: [{ Type: "MakeAUnit", ValueParam: 912, StringParam: "AdjacentLanes" }] },
@@ -1555,7 +1555,7 @@ const CARDS = [
     Cost: 5,
     Attack: 2,
     Health: 2,
-    Description: "When Played: Do a \"When Played\" Effect of Each Card You played this game.",
+    Description: "When Played: Trigger the \"When Played\" effect of each card You played this game.",
     Effects: [
       { Trigger: "OnPlayed",
         Actions: [{ Type: "ReplayPlayed", Target: "Self" }] },
@@ -1713,13 +1713,13 @@ const CARDS = [
 
   {
     Id: 107,
-    Name: "The Lighter",
+    Name: "Cinderwright",
     Type: "Unit",
     Subtypes: ["Aberration", "Machine"],
     Cost: 5,
     Attack: 2,
     Health: 4,
-    Description: "When Played: The Enemy Hero gains an Ashes from Clashes and You Shuffle an Ashes from Clashes into the Enemy's deck. When this Does Damage: Shuffle 2 Ashes from Clashes into the Enemy's deck.",
+    Description: "When Played: The Enemy Hero gains a copy of Cinder Ash, and You shuffle a copy of Cinder Ash into the Enemy's deck. When this deals Damage: Shuffle 2 copies of Cinder Ash into the Enemy's deck.",
     Effects: [
       { Trigger: "OnPlayed",
         Actions: [
@@ -1741,7 +1741,7 @@ const CARDS = [
     Cost: 8,
     Attack: 3,
     Health: 3,
-    Description: "When Played: For Each 3 Points of Missing Health of Your Hero, Conjure a Random Blessing. They Cost 0 This Round.",
+    Description: "When Played: For each 3 points of missing Health Your Hero has, Conjure a Random Blessing. They cost 0 this Round.",
     Effects: [
       { Trigger: "OnPlayed",
         Actions: [{
@@ -1761,7 +1761,7 @@ const CARDS = [
     Cost: 9,
     Attack: 6,
     Health: 6,
-    Description: "When Hurt: Summon a Random Unit. When Played: Summon a Random Unit. While in Play: When You Summon a Unit, Conjure a random Unit and all Units in Your Hand cost 1 less.",
+    Description: "When this is hurt: Summon a Random Unit. When Played: Summon a Random Unit. While in Play: When You Summon a Unit, Conjure a Random Unit and all Units in Your Hand cost 1 less.",
     Effects: [
       { Trigger: "OnFriendlyUnitDamaged", Condition: { Condition: "IsSelf" },
         Actions: [{ Type: "MakeAUnit", Filter: { Type: "Unit", MaxCost: 5 } }] },
@@ -1828,7 +1828,7 @@ const CARDS = [
     Name: "Soul Harvest",
     Type: "Spell",
     Cost: 5,
-    Description: "Draw the Friendly and Enemy Units that were Destroyed last Round. Deal damage equal to the cards drawn to an Enemy Unit or Hero.",
+    Description: "Draw the Friendly and Enemy Units that were Destroyed last Round. Deal Damage equal to the number of cards drawn to an Enemy Unit or Hero.",
     Effects: [
       { Trigger: "OnPlayed",
         Actions: [
@@ -1860,7 +1860,7 @@ const CARDS = [
     Cost: 4,
     Attack: 3,
     Health: 3,
-    Description: "Before Combat Here: You may move it to a Different Lane.",
+    Description: "Before Combat Here: You may move it to a different Lane.",
     Effects: [
       { Trigger: "OnPreCombatLine",
         Actions: [{ Type: "MoveLane", Target: "Self" }] },
@@ -1956,7 +1956,7 @@ const CARDS = [
     Cost: 3,
     Attack: 1,
     Health: 4,
-    Description: "While in Play: You may play Units during Action phase.",
+    Description: "While in Play: You may play Units during the Action Phase.",
     Effects: [
       { Trigger: "Passive",
         Zone: "Board",
@@ -1971,13 +1971,13 @@ const CARDS = [
     Subtypes: ["Human"],
     Cost: 6,
     Attack: 5,
-    Health: 3,
-    Description: "When Destroyed: Create a copy of this Unit here with -1/-1.",
+    Health: 5,
+    Description: "When Destroyed: Create a copy of this Unit here with -2/-2.",
     // Sprite changes after this many deaths: img/stages/122_1.webp from 1 death, 122_2.webp from 2 deaths.
     Stages: [1, 2],
     Effects: [
       { Trigger: "OnDeath",
-        Actions: [{ Type: "RespawnSelf", Target: "Self", BuffAtk: -1, BuffHp: -1 }] },
+        Actions: [{ Type: "RespawnSelf", Target: "Self", BuffAtk: -2, BuffHp: -2 }] },
     ],
   },
 
@@ -1985,19 +1985,19 @@ const CARDS = [
 
   {
     Id: 900, Name: "The Tempting Goblet", Type: "Spell", Subtypes: ["Token"], Cost: 1,
-    Description: "Give a Friendly Unit Unkillable, then Sacrifice it.",
+    Description: "Give a Friendly Unit Unkillable, then Sacrifice it. Afterward, it costs 1 more each time it returns to Your Hand from being Destroyed.",
     Effects: [{ Trigger: "OnPlayed", Targeting: "TargetFriendlyUnit",
       Actions: [
         { Type: "ApplyStatus", Target: "SelectedTarget", StatusKeyword: "Unkillable" },
-        { Type: "SacrificeUnit", Target: "SelectedTarget" },
+        { Type: "SacrificeUnit", Target: "SelectedTarget", EscalateCost: 1 },
       ] }],
   },
 
-  { Id: 901, Name: "Royal Souldier", Type: "Unit", Subtypes: ["Aberration", "Token"], Cost: 1, Attack: 1, Health: 1, Description: "" },
+  { Id: 901, Name: "Royal Soldier", Type: "Unit", Subtypes: ["Aberration", "Token"], Cost: 1, Attack: 1, Health: 1, Description: "" },
 
   {
     Id: 902, Name: "Sacrificial Dagger", Type: "Spell", Subtypes: ["Token"], Cost: 1,
-    Description: "Sacrifice a Friendly Unit. Draw a Card",
+    Description: "Sacrifice a Friendly Unit. Draw a Card.",
     Effects: [{ Trigger: "OnPlayed", Targeting: "TargetFriendlyUnit",
       Actions: [{ Type: "SacrificeUnit", Target: "SelectedTarget" },    { Type: "DrawCard", Target: "FriendlyHero" },
 ] }],
@@ -2070,9 +2070,9 @@ const CARDS = [
   },
 
   {
-    Id: 914, Name: "Ashes from Clashes", Type: "Spell", Subtypes: ["Token"],
+    Id: 914, Name: "Cinder Ash", Type: "Spell", Subtypes: ["Token"],
     Cost: 0,
-    Description: "Deal damage to a Friendly Unit or Friendly Hero equal to the number of Ashes from Clashes You have played this game. Start of Round: If this is in your Hand, gain Ashes from Clashes.",
+    Description: "Deal Damage to a Friendly Unit or Your Hero equal to the number of Cinder Ash You have played this game. Start of Round: If this is in Your Hand, gain a copy of Cinder Ash.",
     Effects: [
       { Trigger: "OnPlayed", Targeting: "TargetFriendlyUnitOrHero",
         Actions: [{ Type: "DealDamage", Target: "SelectedTarget", Amount: { Count: "AshesPlayed" } }] },

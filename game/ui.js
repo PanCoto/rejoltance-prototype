@@ -59,7 +59,7 @@ const artStage=(id,dc)=>{const n=stageN(id,dc);return n?'img/stages/'+id+'_'+n+'
 const artStageErr=(el,id)=>{el.onerror=()=>artErr(el,id);el.src=artSrc(id)};
 function cardHTML(x,live,cls,data){
  const d=x.d||CD[x.id],unit=d.Type=='Unit';
- const co=x.fc!=null?x.fc:live?(x.paid!=null?x.paid:d.Cost):!G?d.Cost:cost(G,G.p[0],x),cc=!live&&co<d.Cost?' cd':!live&&co>d.Cost?' cu':'';
+ const co=x.fc!=null?x.fc:live?(x.paid!=null?x.paid:Math.max(0,d.Cost-(x.cr||0))):!G?d.Cost:cost(G,G.p[0],x),cc=!live&&co<d.Cost?' cd':!live&&co>d.Cost?' cu':'';
  const atk=live?x.atk:(d.Attack||0)+(x.ba||0),hp=live?x.hp:d.Health;
  const au=atk>(d.Attack||0)?' up':'',hc=live&&hp<x.mx?' dn':(hp>(d.Health||0)?' up':'');
  const ks=shownKw(live?[...x.kw]:[...(d.Keywords||[]),...(x.unk&&!(d.Keywords||[]).includes('Unkillable')?['Unkillable']:[])]);
