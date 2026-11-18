@@ -45,7 +45,7 @@ function snap(G){
   disc:p.disc.map(cp),ln:p.ln.map(uc)});
  return JSON.parse(JSON.stringify({mir:G.mir,turn:G.turn,step:G.step,allow:G.allow,act:G.act==null?null:1-G.act,start:1-G.start,
   over:G.over?{win:G.over.draw?-1:1-G.over.win,draw:G.over.draw,sur:G.over.sur,left:G.over.left}:null,
-  log:G.log.slice(-60).map(flipLog),hist:G.hist.slice(-80).map(h=>({p:1-h.p,t:h.t,id:h.id,tg:h.tg})),
+  log:G.log.slice(-60).map(flipLog),hist:G.hist.slice(-80).map(h=>({p:1-h.p,t:h.t,id:h.id,tg:h.tg,uid:h.uid,tf:h.tf})),
   p:[side(G.p[1],1),side(G.p[0],0)]}))}
 function unsnap(s,ev){s.p.forEach(p=>p.ln.forEach(u=>{if(u){u.kw=new Set(u.kw);u.d=CD[u.id]}}));s.ev=ev||[];s.q=null;return s}
 function netPush(x){if(!NET||!NET.host||!G)return;
@@ -220,6 +220,7 @@ async function guestHandle(m){
   const pk=await askExt({d});netSend({t:'askAns',pk:(pk||[]).map(descr)});say('');render();break}
  case'pre':{busy=true;flash=m.i;render();const u=await choosePre(G.p[0].ln[m.i]);netSend({t:'preAns',u:u?u.uid:-1});say('Combat!');render();break}
  case'rm':if($('ovr').textContent=='Rematch')$('ovr').textContent='Rematch (opponent ready)';break;
+ case'reveal':if(typeof rpReveal=='function')rpReveal(m.v);break;   // game over: the host shows the cards only it knew, so the replay can show its side too (replay.js)
  case'full':case'err':{if(m.t=='full'&&NET.qm){qmAgain();break}const msg=m.t=='full'?'That room already has two players.':m.msg;netLeave(1);lobby('Could not join',{join:1,nodeck:JM,status:msg});break}}}
 
 $('mhost').onclick=()=>{LB='frmenu';startAudio();hostRoom(false)};
