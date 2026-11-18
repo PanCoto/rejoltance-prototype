@@ -50,12 +50,19 @@ const kwLabel=(d,k,u)=>k=='Armor2'?'Armored 2':k=='Stunned'&&u&&(u.stn||0)>1?'St
 const BAD=new Set(['Burning','Marked','Stunned']);
 const hl=t=>(t||'').replace(/\b(Sacrifice[d]?|Mark(?:ed)?|Stunned?|Burning|SoulGuard|Unkillable|Unactionable|Lifesteal|Taunt|Deadly|Evolving|Protected|Dodge|Flying|Merge[sd]?)\b/g,'<span class="k u">$1</span>').replace(/(\d+ )?\bBlood\b/g,'<span class="k">$&</span>');
 const MISSING=new Set(),IMGX=window.RJ_IMG||{};
-const artFile=id=>'img/'+(IMGX[+id]||id+'.webp');
+// Card art. Current game: img/<file> (map RJ_IMG from img-index.js). Classic version: img/classic/<file> (map RJ_IMG_EXP from img-index-exp.js).
+// Both maps are built by tools/make_img_index.py. In Classic, a card with no Classic art yet (not in RJ_IMG_EXP, or its file fails to load) shows its
+// current art while CLFB is true; set CLFB to false to see the missing texture instead (handy to spot which Classic arts are still missing).
+// Tutorial cards (ids 9000+) always use the current art.
+const IMGC=window.RJ_IMG_EXP||{},CLX=!!window.RJ_EXP,CLFB=true,CLDIR='img/classic/',FBMAIN=new Set();
+const isCl=id=>CLX&&+id<9000;
+const mainFile=id=>'img/'+(IMGX[+id]||id+'.webp');
+const artFile=id=>isCl(id)&&!FBMAIN.has(+id)?(IMGC[+id]?CLDIR+IMGC[+id]:CLFB?mainFile(id):CLDIR+id+'.webp'):mainFile(id);
 const artSrc=id=>MISSING.has(+id)?'img/missing_texture.webp':artFile(id);
-const artErr=(el,id)=>{el.onerror=null;MISSING.add(+id);el.src='img/missing_texture.webp'};
-// Sprite stages (e.g. Nesting Doll): card.Stages=[1,2] -> img/stages/<Id>_1.webp from 1 death, <Id>_2.webp from 2 deaths. Missing file -> normal art.
+const artErr=(el,id)=>{id=+id;if(isCl(id)&&CLFB&&!FBMAIN.has(id)&&(el.getAttribute('src')||'').indexOf(CLDIR)==0){FBMAIN.add(id);el.onerror=()=>artErr(el,id);el.src=mainFile(id);return}el.onerror=null;MISSING.add(id);el.src='img/missing_texture.webp'};
+// Sprite stages (e.g. Nesting Doll): card.Stages=[1,2] -> img/stages/<Id>_1.webp from 1 death, <Id>_2.webp from 2 deaths (Classic: img/classic/stages/). Missing file -> normal art.
 const stageN=(id,dc)=>{const s=(CD[id]&&CD[id].Stages)||[];let n=0;s.forEach((t,i)=>{if((dc||0)>=t)n=i+1});return n};
-const artStage=(id,dc)=>{const n=stageN(id,dc);return n?'img/stages/'+id+'_'+n+'.webp':artSrc(id)};
+const artStage=(id,dc)=>{const n=stageN(id,dc);return n?(isCl(id)?CLDIR+'stages/':'img/stages/')+id+'_'+n+'.webp':artSrc(id)};
 const artStageErr=(el,id)=>{el.onerror=()=>artErr(el,id);el.src=artSrc(id)};
 function cardHTML(x,live,cls,data){
  const d=x.d||CD[x.id],unit=d.Type=='Unit';
@@ -975,7 +982,7 @@ addEventListener('resize',refitAll);
 if(document.fonts){document.fonts.ready.then(refitAll);document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',refitAll)}
 setFont();
 const PRELOAD=[];[['img/CardFront.png'],['img/back.webp'],['img/missing_texture.webp'],...CARDS.map(c=>[artFile(c.Id),c.Id])].forEach(([u,id])=>{const i=new Image();i.decoding='async';
- if(id!=null)i.onerror=()=>MISSING.add(+id);i.src=u;PRELOAD.push(i);if(i.decode)i.decode().catch(()=>{})});
+ if(id!=null)i.onerror=()=>{i.onerror=null;if(isCl(id)&&CLFB&&!FBMAIN.has(+id)&&u.indexOf(CLDIR)==0){FBMAIN.add(+id);const j=new Image();j.decoding='async';j.onerror=()=>MISSING.add(+id);j.src=mainFile(id);PRELOAD.push(j)}else MISSING.add(+id)};i.src=u;PRELOAD.push(i);if(i.decode)i.decode().catch(()=>{})});
 show('menu');
 
 {const _rd=render;render=function(){_rd.apply(this,arguments);holdUnits()}}

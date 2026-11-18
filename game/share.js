@@ -7,13 +7,20 @@
   const CW = 260, CH = 368, GAP = 22, COLS = 6, PAD = 64, HEAD = 250, FOOT = 340;
   const RED = '#c4161c', BG = '#050505', LN = '#2a2a2a';
   let artP = null;
+  const loadScript = src => new Promise(res => { const s = document.createElement('script'); s.src = src; s.onload = s.onerror = () => res(); document.head.appendChild(s); });
+  // Classic version: deck-art.js (frame, missing texture, current art as fallback) first, then deck-art-exp.js (RJ_ART_EXP = Classic art).
   const ensureArt = () => {
-    if (location.protocol !== 'file:' || window.RJ_ART) return Promise.resolve();
-    return artP || (artP = new Promise(res => { const s = document.createElement('script'); s.src = 'deck-art.js'; s.onload = s.onerror = () => res(); document.head.appendChild(s); }));
+    if (location.protocol !== 'file:' || (window.RJ_ART && !window.RJ_EXP)) return Promise.resolve();
+    return artP || (artP = loadScript('deck-art.js').then(() => window.RJ_EXP ? loadScript('deck-art-exp.js') : null));
   };
   const cache = {};
   const loadImg = src => cache[src] || (cache[src] = new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; }));
-  const artOf = id => loadImg((window.RJ_ART && window.RJ_ART[id]) || artSrc(id)).then(i => i || loadImg((window.RJ_ART && window.RJ_ART.missing) || 'img/missing_texture.webp'));
+  // Art as a data URI (file:// only): Classic art first in the Classic version, then the current art (the same fallback artSrc uses).
+  const artData = id => {
+    if (window.RJ_EXP && +id < 9000) { const c = window.RJ_ART_EXP && window.RJ_ART_EXP[id]; if (c) return c; if (!CLFB) return null; }
+    return window.RJ_ART && window.RJ_ART[id];
+  };
+  const artOf = id => loadImg(artData(id) || artSrc(id)).then(i => i || loadImg((window.RJ_ART && window.RJ_ART.missing) || 'img/missing_texture.webp'));
   const frameImg = () => loadImg((window.RJ_ART && window.RJ_ART.frame) || 'img/CardFront.png');
 
   // ---- text with the game's keyword highlighting (same words as hl() in ui.js) ----
