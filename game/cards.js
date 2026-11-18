@@ -2082,9 +2082,9 @@ const CARDS = [
     Name: "Toll Keeper",
     Type: "Unit",
     Subtypes: ["Aberration"],
-    Cost: 4,
+    Cost: 2,
     Attack: 2,
-    Health: 3,
+    Health: 1,
     Description: "While in Play: Enemy Actions cost 1 more.",
     Effects: [
       { Trigger: "Passive",
@@ -2093,12 +2093,13 @@ const CARDS = [
   },
   {
     Id: 130,
-    Name: "Mute Warden",
+    Name: "Parasol Couple",
     Type: "Unit",
     Subtypes: ["Aberration"],
     Cost: 4,
-    Attack: 2,
-    Health: 3,
+    Attack: 1,
+    Health: 6,
+	Keywords: ["Unactionable"],
     Description: "While in Play: Adjacent Friendly Units have Unactionable.",
     Effects: [
       { Trigger: "Passive",
