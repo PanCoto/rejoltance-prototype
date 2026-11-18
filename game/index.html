@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#000000"><meta name="apple-mobile-web-app-capable" content="yes">
 <title>RE:Joltance</title>
-<link rel="stylesheet" href="style.css?v=20261205">
+<link rel="stylesheet" href="style.css?v=20261208">
 </head><body>
 <div id="stage">
  <div class="scr" id="menu">
@@ -38,6 +38,7 @@
    </div>
    <div class="msec" data-sec="5">
     <button class="mc" id="achopen"><span class="mci"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M3 1h10v5h-1v2h-1v1H9v2h3v3H4v-3h3V9H5V8H4V6H3z"/></svg></span><span class="mcl">Achievements <b id="achcnt"></b></span></button>
+    <button class="mc" id="ropen"><span class="mci"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M1 2h14v12H1z"/><path fill="#050505" d="M6 4h2v8H6zM8 5h2v6H8zM10 6h1v4h-1z"/></svg></span><span class="mcl">Replays <b id="rplcnt"></b></span></button>
    </div>
    <div class="msec" data-sec="6">
     <button class="mc" id="clopen"><span class="mci"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="currentColor" d="M2 1h12v14H2z"/><path fill="#050505" d="M4 3h8v2H4zM4 7h8v1H4zM4 10h8v1H4zM4 12h5v1H4z"/></svg></span><span class="mcl">Patch Notes</span></button>
@@ -109,6 +110,10 @@
   <div class="pkhint">Use Preview to see every card in a deck. Set a default deck to have it pre-selected everywhere.</div>
   <div class="btns"><button id="go">Start</button><button id="botback">Back</button></div></div></div>
  <div class="ovl bk" id="achmenu"><div class="panel wide"><h2>Achievements</h2><div class="sub" id="achsum"></div><div id="achbar"><i></i></div><div id="achlist"></div><div class="btns"><button id="achback">Back</button></div></div></div>
+ <div class="ovl bk" id="rplmenu"><div class="panel wide rplp"><h2>Replays</h2><div class="sub" id="rplsub"></div>
+  <div id="rplbar0"><button type="button" id="rplimp">Import file</button><input type="file" id="rplfile" accept=".rjreplay,application/json" hidden></div>
+  <div id="rpllist"></div>
+  <div class="btns"><button id="rplback">Back</button></div></div></div>
  <div class="ovl bk" id="rkmenu"><div class="panel wide rkp"><h2>Ranked</h2>
   <div class="rkgrid">
    <aside class="rkl">
@@ -164,7 +169,7 @@
  <div class="ovl" id="mul"><h2 id="mt">Mulligan - click cards to replace</h2><div id="mh"></div><button id="mok">Confirm</button><div id="mpr" style="display:none;gap:40px"><button id="mfirst">Go first</button><button id="msecond">Go second</button></div></div>
  <div class="ovl" id="hist"></div>
  <div class="ovl" id="modal"><h2>Surrender?</h2><div style="display:flex;gap:30px"><button id="myes">Yes</button><button id="mno">No</button></div></div>
- <div class="ovl" id="ov"><div id="ovt"></div><div id="ovdk"></div><div id="ovmm"></div><div style="display:flex;gap:30px"><button id="ovr">Rematch</button><button id="ovd">Change deck</button><button id="ovb">Menu</button></div></div>
+ <div class="ovl" id="ov"><div id="ovt"></div><div id="ovdk"></div><div id="ovmm"></div><div style="display:flex;gap:30px"><button id="ovr">Rematch</button><button id="ovw" style="display:none">Watch replay</button><button id="ovd">Change deck</button><button id="ovb">Menu</button></div></div>
  <div class="ovl bk" id="dkpick"><div class="panel wide"><h2>Choose your deck</h2><div class="sub">Used for the next game</div>
   <div class="pkx" id="pk2"></div>
   <div class="btns"><button id="dkok">Use this deck</button><button id="dkcancel">Back</button></div></div></div>
@@ -176,5 +181,5 @@
 </div>
 <div id="rot">Please rotate your device to landscape (this game is designed for a wide screen).</div>
 <audio id="au" loop></audio>
-<script src="cards.js?v=20261203"></script><script src="decks.js?v=20261117"></script><script src="live-config.js"></script><script src="cards-live.js"></script><script src="cards-exp.js?v=20261203"></script><script src="decks-exp.js?v=20261119"></script><script src="img-index.js"></script><script src="engine.js?v=20261204"></script><script src="bot.js"></script><script src="sfx.js?v=20261124"></script><script src="music.js?v=20261124"></script><script src="share.js"></script><script src="ui.js?v=20261202"></script><script src="peerjs.min.js"></script><script src="net-config.js"></script><script src="turn-secret.js" onerror="void 0"></script><script src="net.js?v=20261118"></script><script src="changelog.js?v=20261205"></script><script src="menu.js?v=20261205"></script><script src="tutorial-data.js?v=20261201"></script><script src="tutorial.js?v=20261201"></script><script src="menumusic.js?v=20261127"></script><script src="mm.js?v=20261205"></script><script src="ach.js"></script>
+<script src="cards.js?v=20261203"></script><script src="decks.js?v=20261117"></script><script src="live-config.js"></script><script src="cards-live.js"></script><script src="cards-exp.js?v=20261203"></script><script src="decks-exp.js?v=20261119"></script><script src="img-index.js"></script><script src="engine.js?v=20261204"></script><script src="bot.js"></script><script src="sfx.js?v=20261124"></script><script src="music.js?v=20261124"></script><script src="share.js"></script><script src="ui.js?v=20261202"></script><script src="peerjs.min.js"></script><script src="net-config.js"></script><script src="turn-secret.js" onerror="void 0"></script><script src="net.js?v=20261118"></script><script src="changelog.js?v=20261205"></script><script src="menu.js?v=20261205"></script><script src="tutorial-data.js?v=20261201"></script><script src="tutorial.js?v=20261201"></script><script src="menumusic.js?v=20261127"></script><script src="mm.js?v=20261205"></script><script src="ach.js"></script><script src="replay.js?v=20261208"></script>
 </body></html>

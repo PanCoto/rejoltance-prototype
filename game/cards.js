@@ -1491,7 +1491,7 @@ const CARDS = [
     Subtypes: ["Human"],
     Cost: 4,
     Attack: 2,
-    Health: 4,
+    Health: 5,
     Keywords: ["AntiAirborne"],
     Description: "While in Play: When an Enemy Unit moves, move it here. If it can't be moved, deal 2 Damage to it instead.",
     Effects: [

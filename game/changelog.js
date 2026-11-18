@@ -45,7 +45,7 @@ const CHANGELOG=`
 ## Balance Patch 5 - 2026-11-17
 ### Balance Changes
 - **Archer** [NERF] : Health 4 -> **3**.
-- **Unitslinger** [REWORK] : Cost 5 -> **4**, Attack 3 -> **2**, Health 5 -> **4**, gained **AntiAirborne**.
+- **Unitslinger** [BUFF] : Cost 5 -> **4**, Attack 3 -> **2**, gained **AntiAirborne**.
 ## v0.0.3 - 2026-11-16
 ### UI Overhaul
 - The game uses now the **new** main menu on both the standard and experimental branches of the game.

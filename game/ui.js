@@ -7,7 +7,7 @@ var DEMO=false;
 function demoPlan(o){if(!DEMO)return botPlan(G,G.p[1]);const w=BW.worlds;BW.worlds=1;try{return botPlan(G,G.p[o])}finally{BW.worlds=w}}   // true while the menu background plays a bot-vs-bot game (menu.js demoStart)
 function demoOff(){window.WATCH=false;if(!DEMO)return;DEMO=false;gid++;$('game').classList.remove('bgdemo')}
 const show=id=>{if(id!='menu')demoOff();else setTimeout(()=>{if(typeof demoStart=='function')demoStart()},250);['menu','bld','game'].forEach(k=>$(k).style.display=k==id?(k=='menu'?'flex':'block'):'none');
- ['frmenu','mirmenu','rkmenu','botmenu','achmenu','acctmenu','avpick','fdmenu','clmenu','lobby','dkpick','dkprev'].forEach(k=>{const e=$(k);if(e)e.style.display='none'});
+ ['frmenu','mirmenu','rkmenu','botmenu','achmenu','acctmenu','avpick','fdmenu','clmenu','rplmenu','lobby','dkpick','dkprev'].forEach(k=>{const e=$(k);if(e)e.style.display='none'});
  if(id!='game'){const e=$('setmenu');if(e)e.style.display='none'}};
 document.querySelectorAll('.ring').forEach(c=>{const x=c.getContext('2d');for(let i=0;i<60;i++)for(let j=0;j<60;j++){const r=Math.hypot(i-29.5,j-29.5);
  if(r<=29.6&&r>=25.6){x.fillStyle=r>=27.4?'#2c2c2c':'#222';x.fillRect(i,j,1,1)}}});

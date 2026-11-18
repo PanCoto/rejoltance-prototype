@@ -1,4 +1,4 @@
-const PANELS=['tutmenu','frmenu','botmenu','setmenu','mirmenu','achmenu','rkmenu','acctmenu','avpick','fdmenu','clmenu'];
+const PANELS=['tutmenu','frmenu','botmenu','setmenu','mirmenu','achmenu','rkmenu','acctmenu','avpick','fdmenu','clmenu','rplmenu'];
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}},lsSet=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
 const openPanel=id=>{PANELS.forEach(k=>$(k).style.display=k==id?'flex':'none')},closePanels=()=>openPanel('');
 const botPanel=m=>{MODE=m;const en=m=='endless';$('botmenu').classList.toggle('endless',en);$('ebest').textContent=en?'Best score: '+(+lsGet('rj_endless_best')||0):'';$('bott').textContent=en?'Endless Mode':'Play with the bot';$('pk1').closest('.pkcol').style.display=en?'none':'';document.querySelector('#botmenu .pkcols').style.gridTemplateColumns=en?'1fr':'';
@@ -13,7 +13,7 @@ $('mirhost').onclick=()=>{LB='mirmenu';startAudio();hostRoom(true)};$('mirjoin')
 const openSet=()=>{$('setmenu').classList.toggle('ig',$('game').style.display=='block');
  openPanel('setmenu')};
 $('sopen').onclick=openSet;$('mu').onclick=openSet;
-['tutback','frback','botback','setclose','mirback','achback','pfback','fdback','clback'].forEach(i=>$(i).onclick=closePanels);
+['tutback','frback','botback','setclose','mirback','achback','pfback','fdback','clback','rplback'].forEach(i=>$(i).onclick=closePanels);
 addEventListener('keydown',e=>{if(e.key!='Escape')return;if($('game').style.display=='block'){if($('setmenu').style.display=='flex')closePanels();return}
  if($('lobby').style.display=='flex')$('lcancel').click();else closePanels()});
 $('rndprem').checked=lsGet('rj_rndpool')!=='mine';
@@ -159,7 +159,7 @@ demoStart();
 
 
 /* ---- full-screen views: every menu pop-up becomes its own screen like the Card Collection (Back top-left, title in the header bar) ---- */
-{const VW={tutmenu:'tutback',frmenu:'frback',mirmenu:'mirback',botmenu:'botback',achmenu:'achback',rkmenu:'rkback',acctmenu:'pfback',fdmenu:'fdback',avpick:'avback',clmenu:'clback',setmenu:'setclose',lobby:'lcancel'};
+{const VW={tutmenu:'tutback',frmenu:'frback',mirmenu:'mirback',botmenu:'botback',achmenu:'achback',rkmenu:'rkback',acctmenu:'pfback',fdmenu:'fdback',avpick:'avback',clmenu:'clback',rplmenu:'rplback',setmenu:'setclose',lobby:'lcancel'};
  Object.keys(VW).forEach(id=>{const o=$(id),orig=$(VW[id]),h2=o.querySelector('.panel>h2');o.classList.add('vw');
   const hd=document.createElement('div');hd.className='vhead';
   const b=document.createElement('button');b.className='ghost vback';b.innerHTML='&lsaquo; Back';b.onclick=()=>orig.click();hd.appendChild(b);

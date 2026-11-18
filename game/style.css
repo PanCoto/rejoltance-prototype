@@ -940,3 +940,81 @@ body.tut #sur{visibility:hidden}
 #cllist .cle.open .cli{padding:2px 26px 22px;border-top-color:#1c1c1c}
 #cllist .cle .cli h4:first-child{margin-top:12px}
 @media (prefers-reduced-motion:reduce){#cllist .clb,#cllist .clv{transition:none}}
+
+
+/* ===== REPLAYS: list screen ===== */
+#stage #rplmenu .panel{width:1500px;min-width:1500px;max-width:1500px;padding-top:22px;gap:12px;justify-content:flex-start;overflow:hidden}
+#rplbar0{align-self:stretch;display:flex;justify-content:flex-end;margin-top:0;padding-right:18px}
+#stage #rplbar0 button{height:44px;font-size:22px;padding:0 22px;border-width:3px;border-radius:22px;letter-spacing:1px;border-color:#2e2e2e;color:#999}
+#stage #rplbar0 button:hover{border-color:#fff;color:#fff}
+#rpllist{align-self:stretch;flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:4px 12px 18px 4px;text-align:left}
+#rpllist::-webkit-scrollbar{width:8px}#rpllist::-webkit-scrollbar-track{background:transparent}
+#rpllist::-webkit-scrollbar-thumb{background:#3a3a3a;border-radius:8px}#rpllist::-webkit-scrollbar-thumb:hover{background:#6a6a6a}
+@supports (-moz-appearance:none){#rpllist{scrollbar-width:thin;scrollbar-color:#444 transparent}}
+.rple{padding:60px 20px;text-align:center;font-size:30px;color:#777}
+.rpr{flex:none;display:flex;align-items:center;gap:26px;min-height:98px;padding:10px 20px 10px 14px;border:3px solid #232323;border-radius:18px;background:#0a0a0a;transition:border-color .12s,background .12s}
+.rpr:hover{border-color:#555;background:#111}
+.rpres{flex:none;width:170px;text-align:center;font-size:32px;letter-spacing:3px;padding:8px 0;border:3px solid #3a3a3a;border-radius:12px;color:#aaa;font-family:var(--fd)}
+.rpr.win .rpres{border-color:#fff;color:#fff}.rpr.loss .rpres{border-color:#5a1a1d;color:#ff4a50}
+.rpi{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.rpi b{font-size:34px;color:#eee;font-family:var(--fd);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rpi small{font-size:20px;color:#777;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rpa{flex:none;display:flex;gap:10px}
+#stage #rpllist .rpa button{height:50px;font-size:22px;padding:0 20px;border-width:3px;border-radius:25px;letter-spacing:0;border-color:#3a3a3a;color:#bbb}
+#stage #rpllist .rpa button:hover{border-color:#fff;color:#fff}
+#stage #rpllist .rpa button.rpw{background:var(--red);border-color:var(--red);color:#fff;padding:0 30px}
+#stage #rpllist .rpa button.on{border-color:#fff;color:#fff}
+#stage #rpllist .rpa button.cf{border-color:var(--red);color:#ff4a50}
+
+/* ===== REPLAYS: player (bottom-left corner of the board, over the free area under the deck pile) ===== */
+#rplbar{display:none;position:absolute;left:22px;bottom:18px;width:360px;box-sizing:border-box;padding:12px 14px 12px;background:#0b0b0bee;border:3px solid #3a3a3a;border-radius:20px;z-index:60;flex-direction:column;gap:10px;font-family:var(--fd)}
+body.rpl #rplbar{display:flex}
+#rplbar .rpt{display:flex;justify-content:space-between;align-items:baseline;gap:10px;color:#ff4a50;letter-spacing:4px;font-size:22px}
+#rplbar .rpt span{color:#777;letter-spacing:1px;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#rplbar .rpb{display:flex;gap:8px;justify-content:space-between}
+#rplbar button{height:52px;width:60px;padding:0;border-width:3px;border-radius:14px;color:#ccc;border-color:#3a3a3a;display:flex;align-items:center;justify-content:center}
+#rplbar button svg{width:26px;height:26px}
+#rplbar button:hover:not(:disabled){border-color:#fff;color:#fff}
+#rplbar button.rppp{width:76px;background:var(--red);border-color:var(--red);color:#fff}
+#rplbar button.rppp:hover{border-color:#fff}
+#rplbar .rps{display:flex;gap:10px;align-items:center}
+#rplbar #rplspd{width:70px;height:40px;font-size:22px;flex:none}
+#rplbar input[type=range]{flex:1;min-width:0;padding:0;border:0;background:transparent;accent-color:#c4161c;height:30px}
+#rplbar .rpl{font-size:20px;color:#aaa;text-align:center;letter-spacing:1px}
+body.rpl #hs,body.rpl #mu{display:block}
+body.rpl #sur{color:#ddd;border-color:#555}
+
+#rpltoast{position:absolute;left:50%;bottom:34px;transform:translate(-50%,20px);background:#111;border:3px solid #444;border-radius:30px;padding:12px 34px;font-size:26px;color:#eee;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:120;white-space:nowrap}
+#rpltoast.on{opacity:1;transform:translate(-50%,0)}#rpltoast.bad{border-color:var(--red)}
+
+
+/* ===== REPLAY BOARD: the board is zoomed out so both hands fit; hand arcs are only peeking in from the screen edges, like in the normal UI =====
+   --rs = zoom, --rx/--ry = where the zoomed board starts. The header is counter-scaled so it keeps its normal size at the very top. */
+body.rpl{--rs:.84;--rx:153.6px;--ry:176px}
+body.rpl #stage{background:linear-gradient(#000,#0d0d0d 50%,#000)}
+body.rpl #game{background:none;transform-origin:0 0;transform:translate(var(--rx),var(--ry)) scale(var(--rs))}
+body.rpl #hdr{transform-origin:0 0;transform:translate(calc(-1*var(--rx)/var(--rs)),calc(-1*var(--ry)/var(--rs))) scale(calc(1/var(--rs)));background:#050505;z-index:40}
+body.rpl #hand,body.rpl #arc,body.rpl #pile,body.rpl #deckb,body.rpl #pc,body.rpl #dc,body.rpl #strip,body.rpl #end,body.rpl #msg{display:none!important}
+/* lane dividers run the full height of the screen (below the header), under everything */
+body.rpl .vl{top:-112px;height:1190px}
+#rplx{display:none}
+body.rpl #rplx{display:block}
+.rpband{position:absolute;left:0;width:1920px;height:232px;overflow:hidden;pointer-events:none;z-index:25}
+#rpeb{top:82px}#rppb{top:848px}
+.rpell{position:absolute;left:230px;width:1460px;height:300px;border-radius:50%;border:5px solid #1c1c1c;background:rgba(7,7,7,.82);box-sizing:border-box}
+#rpeb .rpell{top:-240px}#rppb .rpell{top:152px}
+.rph{position:absolute;left:0;top:0;width:1920px;height:232px}
+.rpc{position:absolute;aspect-ratio:260/368;pointer-events:auto}
+.rpc .card{cursor:default}
+.rpback{background:#fff url(img/back.webp) center/cover;border:3px solid #000;box-shadow:0 0 0 2px #2a2a2a;filter:grayscale(1) brightness(.62);box-sizing:border-box}
+.rpemp{border:3px dashed #2a2a2a;box-sizing:border-box;background:none}
+.rpiles{position:absolute;left:26px;width:292px;height:206px;display:flex;justify-content:center;gap:22px;padding-top:10px;box-sizing:border-box;border:3px solid #1c1c1c;border-radius:16px;background:rgba(8,8,8,.88);pointer-events:auto}
+#rpep{top:12px}#rpmp{top:12px}
+.rpp{position:relative;width:104px;height:178px;cursor:pointer;border-radius:6px}
+.rpp .rpc{position:relative;width:104px}
+.rpp:hover .rpc{box-shadow:0 0 0 3px #bbb}
+.rpp b{position:absolute;left:-10px;right:-10px;top:150px;white-space:nowrap;text-align:center;font-size:22px;color:#d0d0d0;font-family:var(--fd);font-weight:700;line-height:1}
+.rpp small{position:absolute;left:0;right:0;top:-0px;display:none}
+.rpn{position:absolute;left:26px;width:292px;text-align:center;font-size:16px;color:#555;font-family:var(--fd);letter-spacing:2px;text-transform:uppercase;pointer-events:none}
+/* controls: top right, under the header (the left side is used by the card zoom) */
+#stage #rplbar{left:1556px;top:80px;bottom:auto;width:352px;padding:5px 14px 5px;gap:4px}
