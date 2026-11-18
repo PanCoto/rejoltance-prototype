@@ -20,9 +20,10 @@ $('rndprem').checked=lsGet('rj_rndpool')!=='mine';
 $('rndprem').onchange=()=>lsSet('rj_rndpool',$('rndprem').checked?'all':'mine');
 $('hideprem').checked=lsGet('rj_hideprem')==='1';
 $('hideprem').onchange=()=>{lsSet('rj_hideprem',$('hideprem').checked?'1':'0');renderPickers()};
-$('expchg').checked=!!window.RJ_EXP;
-$('expchg').onchange=()=>{const on=$('expchg').checked;
- if($('game').style.display=='block'&&!confirm('Changing this reloads the page and ends the current game. Continue?')){$('expchg').checked=!on;return}
+// "Classic" (formerly the Experimental changes setting): Extras -> Classic switches to the classic version and reloads; inside Classic the same button goes back.
+$('classiclbl').textContent=window.RJ_EXP?'Back to current':'Classic';
+$('classicopen').onclick=()=>{const on=!window.RJ_EXP;
+ if($('game').style.display=='block'&&!confirm('Switching version reloads the page and ends the current game. Continue?'))return;
  lsSet('rj_exp',on?'1':'0');location.reload()};
 $('max2row').style.display=window.RJ_EXP&&window.RJ_MAX2_TOGGLE?'':'none';$('max2').checked=window.RJ_MAXC<3;
 $('max2').onchange=()=>{const on=$('max2').checked;
@@ -37,7 +38,7 @@ const pct=(id,key,def,apply)=>{const el=$(id),n=$(id.replace('v','n'));let v=lsG
 pct('musv','rj_mus',100,musicSetVol);
 
 /* ---- build version label + changelog (data lives in changelog.js) ---- */
-$('mver').textContent=GAME_STAGE+' Build v. '+(window.RJ_EXP?GAME_VERSION_EXP:GAME_VERSION)+(window.RJ_EXP?' [EXPERIMENTAL]':'');
+$('mver').textContent=(window.RJ_EXP?GAME_STAGE+' '+GAME_VERSION_EXP:GAME_STAGE+' Build v. '+GAME_VERSION);
 // The grey version line under the title is scaled so it is exactly as wide as the title itself (re-fitted when fonts load / the text changes).
 const fitVer=()=>{const t=document.querySelector('#menu .mlogo h1'),v=$('mver');if(!t||!v||!v.textContent)return;
  v.style.fontSize='100px';const w=v.offsetWidth,tw=t.offsetWidth;if(w>0&&tw>0)v.style.fontSize=(100*tw/w)+'px'};   // offsetWidth ignores the stage's scale transform
@@ -78,7 +79,7 @@ const clBalNums=ents=>{const nums=new Map();let c=0;
 const clSetOpen=(sec,on)=>{sec.classList.toggle('open',on);const h=sec.querySelector('.clh');if(h)h.setAttribute('aria-expanded',on?'true':'false')};
 const renderChangelog=kind=>{CLK=kind||CLK;const bal=CLK=='bal',box=$('cllist'),exp=!!window.RJ_EXP,src=exp?CHANGELOG_EXP:CHANGELOG;box.textContent='';
  const ents=clParse(src),nums=bal?clBalNums(ents):null;let n=0;
- $('cltitle').textContent=(exp?'Experimental ':'')+(bal?'Balance Changes':'Patch Notes');
+ $('cltitle').textContent=(exp?'Classic ':'')+(bal?'Balance Changes':'Patch Notes');
  for(const e of ents){
   const body=document.createElement('div');body.className='cli';let ul=null,items=0;const names=[];
   for(const sc of e.secs){if(isBal(sc.title)!=bal)continue;if(!sc.lines.length)continue;ul=null;
@@ -100,7 +101,7 @@ const renderChangelog=kind=>{CLK=kind||CLK;const bal=CLK=='bal',box=$('cllist'),
   hd.onclick=()=>clSetOpen(ent,!ent.classList.contains('open'));
   clSetOpen(ent,n==0);   // the newest entry starts open, the rest are folded
   box.appendChild(ent);n++}
- $('clsub').textContent=!n?(bal?'No balance changes yet':'No entries yet'):bal?(exp?'Card balance changes in the experimental build, newest first':'Card balance changes, newest first'):(exp?'Changes in the experimental build, newest first':'New content, changes and fixes, newest first');
+ $('clsub').textContent=!n?(bal?'No balance changes yet':'No entries yet'):bal?(exp?'Card balance changes in the Classic version, newest first':'Card balance changes, newest first'):(exp?'Changes in the Classic version, newest first':'New content, changes and fixes, newest first');
  $('clbar').style.visibility=n>1?'':'hidden';box.scrollTop=0};
 $('clexp').onclick=()=>$('cllist').querySelectorAll('.cle').forEach(x=>clSetOpen(x,true));
 $('clcol').onclick=()=>{$('cllist').querySelectorAll('.cle').forEach(x=>clSetOpen(x,false));$('cllist').scrollTop=0};

@@ -73,7 +73,7 @@ function mk(id,o){const d=CD[id];return{uid:UID++,id,d,o,atk:d.Attack||0,hp:d.He
 /* ===== GAME-START SETTINGS - edit these numbers =====
    START_MANA : mana you have in round 1 (it still goes up by 1 every round, max 10).
    FAIR_MAXCOST: the opening hand is guaranteed to hold a card costing this much or less (1 = a 1-drop, 2 = a 1- or 2-drop).
-   'normal' is the regular game, 'exp' is used when "Experimental changes" is on in Settings. */
+   'normal' is the regular game, 'exp' is the Classic version (Extras -> Classic). */
 const START_MANA={normal:1,exp:1},FAIR_MAX={normal:1,exp:1};
 const FAIR_HAND=true;
 const RJ_MODE=(typeof window!=='undefined'&&window.RJ_EXP)?'exp':'normal';
@@ -278,7 +278,13 @@ function tg(G,a,s,c){c=c||{};let r=tg0(G,a,s,c);
  if(a.Type=='ReturnToHand')r=r.filter(x=>x.h||!x.kw.has('BounceImmune'));
  return a.Where?r.filter(x=>x.h||unitOK(x,a.Where)):r}
 function tg0(G,a,s,c){const me=G.p[s.o],op=G.p[1-s.o];
- switch(a.Target){
+  switch(a.Target){
+    case'SelfLaneEnemyAndAdjacentAny':{
+    const here=units(op).filter(x=>x.lane===s.lane);
+    const adj=[...units(me),...units(op)].filter(x=>Math.abs(x.lane-s.lane)===1);
+    return [...here,...adj].filter(x=>aoeOK(x,s));
+  }
+ case'EnemyUnitsInSelfLaneAndAdjacent':return units(op).filter(x=>Math.abs(x.lane-s.lane)<=1&&aoeOK(x,s));
  case'AllFriendlyUnits':return units(me).filter(x=>aoeOK(x,s));
  case'EventUnit':return c.u&&!c.u.gone&&!c.u.h&&!shield(c.u,s)?[c.u]:[];
  case'EventUnitAndAdjacent':{if(!c.t||c.t.gone||c.t.h)return[];const o=G.p[c.t.o];return o.ln.filter((w,i)=>w&&Math.abs(i-c.t.lane)<=1&&aoeOK(w,s))}
@@ -336,7 +342,8 @@ function act(G,a,s,c){
  if(a.OnlyIfDrawnSubtype){const ld=G.p[s.o].lastDrawn;if(!ld||!hasSub(CD[ld.id],a.OnlyIfDrawnSubtype))return}
  const T=a.Type,me=G.p[s.o],ts=tg(G,a,s,c);
  const unitsOnly=ts.filter(x=>!x.h);
- const area=['AllEnemyUnits','AllUnitsOnBoard','AllOtherUnitsOnBoard','OtherFriendlyUnits'].includes(a.Target);
+  const area=['AllEnemyUnits','AllUnitsOnBoard','AllOtherUnitsOnBoard','OtherFriendlyUnits',
+            'SelfLaneEnemyAndAdjacentAny'].includes(a.Target);
  if(!G.sim&&unitsOnly.length&&area&&['DealDamage','DestroyUnit','Heal','HealToFull','BuffStats','Silence'].includes(T))
   EV(G,{k:'aoe',T,st:'',pos:T=='BuffStats'?((a.BuffAtk||0)<0||(a.BuffHp||0)<0?0:1):1,o:s.o,us:unitsOnly.map(x=>({u:x.uid,o:x.o,l:x.lane}))});
  if(!G.sim&&!area)ts.forEach(t=>{const b=t.h?{h:t.p}:{u:t.uid};

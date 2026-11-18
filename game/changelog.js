@@ -1,7 +1,7 @@
 /* ============================================================
    Version + changelogs. Edit only this file to publish updates.
    There are TWO separate changelogs: CHANGELOG (normal build) and CHANGELOG_EXP
-   (shown instead when "Experimental changes" is on in Settings).
+   (shown instead when the Classic version is on - Extras -> Classic).
 
    Format (newest entry FIRST):
      ## v1.0.1 - 2026-11-12        <- version - date (date optional)
@@ -33,7 +33,7 @@
 
    Also update GAME_VERSION / GAME_VERSION_EXP below so the main menu label matches.
    ============================================================ */
-const GAME_STAGE='Pre-alpha',GAME_VERSION='0.0.4',GAME_VERSION_EXP='PTB 0.0.2';
+const GAME_STAGE='Pre-alpha',GAME_VERSION='0.0.4',GAME_VERSION_EXP='Classic 0.0.2';
 const CHANGELOG=`
 ## v0.0.4 - 2026-11-17
 ### New Keyword
@@ -156,9 +156,9 @@ const CHANGELOG_EXP=`
 [[cards: 121, 122]]
 - **Con Artist** (Aberration, 3 cost, 1/4): While in Play: You may play Units during Action phase.
 - **Nesting Doll** (Human, 6 cost, 5/3): When Destroyed: Create a copy of this Unit here with -1/-1. It keeps coming back until its max Health would drop below 1, so a 3 Health Doll has to be destroyed 3 times (Silence stops the chain). The artwork changes after each death.
-## PTB - Max copies test
+## Classic - Max copies option
 ### Deck Building
-- New setting **Max 2 copies per card** (Settings, only shown while Experimental changes are on). When it is on, player-built decks can have at most 2 copies of the same card.
+- New setting **Max 2 copies per card** (Settings, only shown while the Classic version is on). When it is on, player-built decks can have at most 2 copies of the same card.
 - Premade decks are exempt. Your saved decks with 3 copies stay in your list marked **Over limit**, but cannot be played until you edit them.
 - Online: both players must have the setting on or off.
 `;

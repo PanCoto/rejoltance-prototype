@@ -1,5 +1,6 @@
 /* ============================================================
-   CARDS - the main card list (v1.0.2: the former experimental set, promoted).
+   CARDS - the CURRENT game card list (Classic lives in cards-exp.js)
+   - was: the main card list (v1.0.2: the former experimental set, promoted).
    - IDs 1-100: original cards. New cards: 101-120.
    - Tokens (cannot be put in decks): 900-938.
    - [KEYWORD] is not written in descriptions (the engine renders keywords).
@@ -8,8 +9,6 @@
      mandatory; Units are optional.
    ============================================================ */
 const CARDS = [
-
-  // ==================== COST 1 ====================
   {
     Id: 1,
     Name: "Black Rabbitlings",
@@ -132,7 +131,7 @@ const CARDS = [
     Id: 9,
     Name: "Corpse Eater",
     Type: "Unit",
-    Subtypes: ["Aberration"],
+    Subtypes: ["Aberration", "Animal"],
     Cost: 4,
     Attack: 3,
     Health: 1,
@@ -542,7 +541,7 @@ const CARDS = [
     Id: 34,
     Name: "Maid Mask",
     Type: "Unit",
-    Subtypes: ["Human", "Aberration"],
+    Subtypes: ["Human"],
     Cost: 3,
     Attack: 3,
     Health: 1,
@@ -809,7 +808,7 @@ const CARDS = [
     Id: 51,
     Name: "Trapper",
     Type: "Unit",
-    Subtypes: ["Human"],
+    Subtypes: ["Human", "Aberration"],
     Cost: 2,
     Attack: 2,
     Health: 2,
@@ -1105,7 +1104,7 @@ const CARDS = [
     Id: 68,
     Name: "Angel Bird",
     Type: "Unit",
-    Subtypes: ["Animal"],
+    Subtypes: ["Animal", "Human"],
     Cost: 6,
     Attack: 4,
     Health: 4,
@@ -1488,7 +1487,7 @@ const CARDS = [
     Id: 92,
     Name: "Unitslinger",
     Type: "Unit",
-    Subtypes: ["Human"],
+    Subtypes: ["Human", "Machine"],
     Cost: 4,
     Attack: 2,
     Health: 5,
@@ -1918,7 +1917,7 @@ const CARDS = [
     Id: 119,
     Name: "Tambourine",
     Type: "Unit",
-    Subtypes: ["Aberration"],
+    Subtypes: ["Aberration", "Animal"],
     Cost: 3,
     Attack: 2,
     Health: 1,
@@ -1938,10 +1937,10 @@ const CARDS = [
     Cost: 5,
     Attack: 2,
     Health: 5,
-    Description: "While in Play: Whenever a Friendly Aberration is Summoned, it and this Unit gain +1/+1.",
+    Description: "While in Play: Whenever a Friendly Unit is Summoned, it and this Unit gain +1/+1.",
     Effects: [
       { Trigger: "OnFriendlyUnitSummoned",
-        Condition: { Condition: "IsSubtype", TargetParam: "Aberration" },
+        // Condition: { Condition: "IsSubtype", TargetParam: "Aberration" },
         Actions: [
           { Type: "BuffStats", Target: "Self", BuffAtk: 1, BuffHp: 1 },
           { Type: "BuffStats", Target: "SelectedTarget", BuffAtk: 1, BuffHp: 1 },
@@ -2012,6 +2011,24 @@ const CARDS = [
         Actions: [{ Type: "GrantActionPlay" }] },
     ],
   },
+  {
+  Id: 125,                         
+  Name: "Grandfather Bomb",                     
+  Type: "Unit",
+  Subtypes: ["Machine"],              
+  Cost: 8,                     
+  Attack: 6,                 
+  Health: 6,                
+  Description: "When Destroyed: Destroy all Enemy Units in this lane and adjacent lanes.",
+  Effects: [
+    {
+      Trigger: "OnDeath",
+      Actions: [
+        { Type: "DestroyUnit", Target: "SelfLaneEnemyAndAdjacentAny" }
+      ]
+    }
+  ]
+},
 
   // ==================== ORIGINAL TOKENS (unchanged) ====================
 
