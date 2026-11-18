@@ -10,8 +10,11 @@ $('tmirroron').onclick=()=>{MODE='mirror';openPanel('mirmenu')};$('mirbot').styl
 $('tquick').onclick=()=>{MODE='online';$('mquick').click()};
 $('mirbot').onclick=()=>{MODE='mirror';closePanels();start();musicStart()};
 $('mirhost').onclick=()=>{LB='mirmenu';startAudio();hostRoom(true)};$('mirjoin').onclick=()=>{LB='mirmenu';joinLobby('',true)};
+const setTab=t=>{document.querySelectorAll('#setmenu .stabs button').forEach(b=>b.classList.toggle('on',b.dataset.st==t));
+ $('set-gen').hidden=t!='gen';$('set-rpl').hidden=t!='rpl';if(t=='rpl'&&window.rpsRefresh)rpsRefresh()};
+document.querySelectorAll('#setmenu .stabs button').forEach(b=>b.onclick=()=>setTab(b.dataset.st));
 const openSet=()=>{$('setmenu').classList.toggle('ig',$('game').style.display=='block');
- openPanel('setmenu')};
+ setTab('gen');openPanel('setmenu')};
 $('sopen').onclick=openSet;$('mu').onclick=openSet;
 ['tutback','frback','botback','setclose','mirback','achback','pfback','fdback','clback','rplback'].forEach(i=>$(i).onclick=closePanels);
 addEventListener('keydown',e=>{if(e.key!='Escape')return;if($('game').style.display=='block'){if($('setmenu').style.display=='flex')closePanels();return}

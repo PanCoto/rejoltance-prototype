@@ -778,9 +778,10 @@ const CARDS_EXP = [
     Cost: 3,
     Attack: 2,
     Health: 4,
-    Description: "While in Play: When a Friendly Unit is Destroyed, Draw a Card.",
+    Description: "While in Play: When any Unit is Destroyed, Draw a Card.",
     Effects: [
       { Trigger: "OnFriendlyUnitDied", Actions: [{ Type: "DrawCard", Target: "FriendlyHero" }] },
+      { Trigger: "OnEnemyUnitDied", Actions: [{ Type: "DrawCard", Target: "FriendlyHero" }] },
     ],
   },
 

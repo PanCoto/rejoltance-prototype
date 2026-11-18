@@ -5,10 +5,10 @@
    frames to the normal board drawing (render / anim), exactly like an online guest receives them - so it needs no game logic and it can never
    desync. Tutorial and Endless Mode are not recorded.
 
-   Storage: the last REPLAY_KEEP games are kept in this browser (localStorage, gzip-compressed). A starred replay is never removed automatically.
+   Storage: the last N games (Settings > Replays, default REPLAY_KEEP_DEF) are kept in this browser (localStorage, gzip-compressed). A starred replay is never removed automatically.
    A replay can be saved to a .rjreplay file and imported again (to share it).
    ============================================================ */
-const REPLAY_KEEP=20,REPLAY_VER=1;
+const REPLAY_KEEP_DEF=20,REPLAY_VER=1;
 const RP={on:false,tok:0,fr:[],i:-1,playing:true,speed:1,d:null,meta:null,an:false,pl:false};
 let REC=null;
 
@@ -33,6 +33,16 @@ const rpVer=()=>window.RJ_EXP?GAME_VERSION_EXP:'v'+GAME_VERSION;
 const rpFmt=t=>{const d=new Date(t);return d.toLocaleDateString()+' '+d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})};
 const RP_MODES={ranked:'Ranked',quick:'Quick Match',friend:'Friend',bot:'Bot',mirror:'Mirror Match',online:'Room'};
 
+/* ---------- settings (Settings > Replays) ---------- */
+const RPS_KEYS={on:'rj_rp_on',keep:'rj_rp_keep',m:g=>'rj_rp_m_'+g},RP_KEEP_OPTS=[5,10,20,30,50];
+const RP_GRP={bot:'bot',mirror:'mirror',ranked:'ranked',quick:'quick',friend:'friend',online:'friend'};   // game mode -> the checkbox that controls it
+const rpsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}},rpsSet=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+const rpOn=()=>rpsGet(RPS_KEYS.on)!=='0';
+const rpModeOn=m=>rpsGet(RPS_KEYS.m(RP_GRP[m]||m))!=='0';
+const rpKeep=()=>{const v=+rpsGet(RPS_KEYS.keep);return RP_KEEP_OPTS.includes(v)?v:REPLAY_KEEP_DEF};
+// the online host records even with recording off, only to send its hidden cards to the guest when the game ends (see "revealing the opponent's side")
+const rpWantFrames=()=>rpOn()||!!(NET&&NET.host);
+
 /* ---------- storage ---------- */
 const RPX='rj_rpx',RPK=id=>'rj_rp_'+id;
 const idxGet=()=>{try{const a=JSON.parse(localStorage.getItem(RPX)||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}};
@@ -46,8 +56,12 @@ async function rpSave(meta,payload){
   catch(e){const old=a.slice().reverse().find(x=>!x.star);if(!old)return false;rpDrop(old.id);a=a.filter(x=>x!==old)}}
  if(!ok)return false;
  a.unshift(meta);a.sort((x,y)=>y.t-x.t);
- while(a.filter(x=>!x.star).length>REPLAY_KEEP){const old=a.slice().reverse().find(x=>!x.star);rpDrop(old.id);a=a.filter(x=>x!==old)}
+ while(a.filter(x=>!x.star).length>rpKeep()){const old=a.slice().reverse().find(x=>!x.star);rpDrop(old.id);a=a.filter(x=>x!==old)}
  return idxPut(a)}
+// removes the oldest un-starred replays above the limit; returns how many it removed
+function rpTrim(){let a=idxGet(),n=0;
+ while(a.filter(x=>!x.star).length>rpKeep()){const old=a.slice().reverse().find(x=>!x.star);rpDrop(old.id);a=a.filter(x=>x!==old);n++}
+ if(n)idxPut(a);return n}
 async function rpLoad(id){const p=localStorage.getItem(RPK(id));if(!p)throw new Error('This replay is no longer stored in this browser');return JSON.parse(await rpUnzip(p))}
 
 /* ---------- recording ---------- */
@@ -67,9 +81,9 @@ function rpCap(ev){
  if(RP.on||typeof DEMO!='undefined'&&DEMO||!G||!G.p||G.tut||G.en||$('game').style.display!='block'||G.turn<1)return;
  if(!REC||REC.gid!==gid){
   REC={gid,t:Date.now(),fr:[],last:'',st:null,done:false,
-   meta:{me:myName()||'Playerzacy',opp:NET?(OPN||'Opponent'):'Botzacy',mode:rpMode(),ver:rpVer(),full:!NET||!!NET.host}};
-  const b=$('ovw');if(b)b.style.display='none'}
- if(REC.done)return;
+   nosave:!rpOn(),   // recording was off when the game started: a replay that begins half-way is never stored
+   meta:{me:myName()||'Playerzacy',opp:NET?(OPN||'Opponent'):'Botzacy',mode:rpMode(),ver:rpVer(),full:!NET||!!NET.host}};}
+ if(REC.done||!rpWantFrames())return;
  if(window.MM&&MM.cur&&MM.cur.mode&&REC.meta.mode!='ranked')REC.meta.mode=MM.cur.mode;
  const s=rpSnap(G),k=JSON.stringify(s),evs=(ev||[]).length?rpClone(ev):[];
  if(!evs.length&&k===REC.last)return;   // nothing changed
@@ -78,6 +92,7 @@ function rpCap(ev){
 async function rpFinish(r){
  if(!r||r.done&&r.saved)return;r.done=true;r.saved=true;
  if(r.fr.length<3)return;
+ if(r.nosave||!rpOn()||!rpModeOn(r.meta.mode))return;   // recording or this kind of game is switched off in Settings > Replays
  const last=r.fr[r.fr.length-1].s,o=last.over;if(!o)return;
  const res=o.draw?'draw':o.left?'win':o.win==0?'win':'loss';
  r.id='r'+r.t.toString(36)+Math.floor(Math.random()*1296).toString(36);
@@ -94,7 +109,7 @@ async function rpPersist(r){
   r.mt.size=payload.length;
   const m=Object.assign({},r.mt),old=idxGet().find(x=>x.id===r.id);if(old&&old.star)m.star=old.star;   // keep a star the player gave in the meantime
   if(await rpSave(m,payload)){
-   window.RPL_LAST=r.id;const b=$('ovw');if(b&&G&&G.over&&$('ov').style.display=='flex')b.style.display='';
+   window.RPL_LAST=r.id;
    if(typeof rplRender=='function'&&$('rplmenu').style.display=='flex')rplRender()}
  }while(r.again)}
  catch(e){console.warn('replay not saved',e)}
@@ -331,8 +346,8 @@ addEventListener('keydown',e=>{
 let rpConfirm=null;
 function rplRender(){
  const a=idxGet(),box=$('rpllist');
- $('rplsub').textContent=a.length?a.length+(a.length==1?' replay':' replays')+' saved in this browser - the latest '+REPLAY_KEEP+' are kept, a starred one is never removed':'Every game you finish is saved here automatically';
- if(!a.length){box.innerHTML='<div class="rple">No replays yet. Play a game (vs the bot, Quick Match or Ranked) and it will show up here.</div>';return}
+ $('rplsub').textContent=(a.length?a.length+(a.length==1?' replay':' replays')+' saved in this browser - the latest '+rpKeep()+' are kept, a starred one is never removed':'Every game you finish is saved here automatically')+(rpOn()?'':'  -  Recording is OFF (Settings > Replays)');
+ if(!a.length){box.innerHTML='<div class="rple">No replays yet. Play a game (vs the bot, Quick Match or Ranked) and it will show up here. You can choose which games are recorded in Settings > Replays.</div>';return}
  box.innerHTML=a.map(m=>{
   const r=m.res=='win'?'VICTORY':m.res=='draw'?'DRAW':'DEFEAT';
   return`<div class="rpr ${m.res}" data-id="${rpEsc(m.id)}">
@@ -371,4 +386,26 @@ $('rpllist').onclick=e=>{
 $('rplimp').onclick=()=>$('rplfile').click();
 $('rplfile').onchange=()=>{const f=$('rplfile').files[0];$('rplfile').value='';if(f)rpImport(f)};
 $('ropen').onclick=rplOpen;
-$('ovw').onclick=()=>{if(window.RPL_LAST)rpWatch(window.RPL_LAST)};
+
+/* ---------- Settings > Replays tab ---------- */
+let rpsConfirm=0;
+const rpsGroups={rpm_bot:'bot',rpm_mirror:'mirror',rpm_ranked:'ranked',rpm_quick:'quick',rpm_friend:'friend'};
+function rpsRefresh(){
+ if(!$('rpon'))return;
+ $('rpon').checked=rpOn();$('rpkeep').value=String(rpKeep());
+ for(const id in rpsGroups)$(id).checked=rpModeOn(rpsGroups[id]);
+ $('set-rpl').classList.toggle('off',!rpOn());
+ const a=idxGet(),un=a.filter(x=>!x.star).length,kb=Math.round(a.reduce((t,x)=>t+(x.size||0),0)/1024);
+ $('rpinfo').textContent=a.length?a.length+(a.length==1?' replay':' replays')+' ('+(kb>=1024?(kb/1024).toFixed(1)+' MB':kb+' KB')+'), '+(a.length-un)+' kept':'none';
+ $('rpclear').disabled=!un;$('rpclear').textContent=rpsConfirm?'Sure?':'Delete unkept';$('rpclear').classList.toggle('cf',!!rpsConfirm)}
+$('rpon').onchange=()=>{rpsSet(RPS_KEYS.on,$('rpon').checked?'1':'0');rpsRefresh()};
+for(const id in rpsGroups)$(id).onchange=()=>rpsSet(RPS_KEYS.m(rpsGroups[id]),$(id).checked?'1':'0');
+$('rpkeep').onchange=()=>{
+ const old=rpKeep(),n=+$('rpkeep').value,over=idxGet().filter(x=>!x.star).length-n;
+ if(over>0&&!confirm('This removes the '+over+' oldest replay'+(over==1?'':'s')+' that '+(over==1?'is':'are')+' not marked as Kept. Continue?')){$('rpkeep').value=String(old);return}
+ rpsSet(RPS_KEYS.keep,String(n));rpTrim();rpsRefresh()};
+$('rpclear').onclick=()=>{
+ if(!rpsConfirm){rpsConfirm=1;rpsRefresh();setTimeout(()=>{if(rpsConfirm){rpsConfirm=0;rpsRefresh()}},3000);return}
+ rpsConfirm=0;const a=idxGet();a.filter(x=>!x.star).forEach(x=>rpDrop(x.id));idxPut(a.filter(x=>x.star));rpsRefresh();
+ if($('rplmenu').style.display=='flex')rplRender()};
+rpsRefresh();

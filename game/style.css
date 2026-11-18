@@ -1025,3 +1025,19 @@ body.rpl #rplx{display:block}
 .rpn{position:absolute;left:26px;width:292px;text-align:center;font-size:16px;color:#555;font-family:var(--fd);letter-spacing:2px;text-transform:uppercase;pointer-events:none}
 /* controls: top right, under the header (the left side is used by the card zoom) */
 #stage #rplbar{left:1556px;top:80px;bottom:auto;width:352px;padding:5px 14px 5px;gap:4px}
+
+/* ===== SETTINGS: tabs (General / Replays) ===== */
+#stage #setmenu .panel{justify-content:flex-start;padding-top:34px;gap:16px}
+.stabs{display:flex;gap:12px;justify-content:center;flex:none}
+#stage .stabs button{height:56px;font-size:28px;padding:0 38px;border-width:3px;border-radius:28px;letter-spacing:1px;border-color:#2e2e2e;color:#999}
+#stage .stabs button:hover:not(.on){border-color:#fff;color:#fff}
+#stage .stabs button.on{background:var(--red);border-color:var(--red);color:#fff}
+#setbody{flex:1;min-height:0;width:100%;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;padding-top:36px}
+.stab{display:flex;flex-direction:column;gap:18px;width:100%}.stab[hidden]{display:none}
+.ssub{font-size:26px;color:#777;text-align:left;margin-top:6px}
+.snote{font-size:21px;color:#666;text-align:left;line-height:1.4;margin-top:4px}
+#set-rpl .srow>span{font-size:26px;color:#aaa;text-align:left}
+#stage #set-rpl .srow button{height:50px;font-size:22px;padding:0 22px;border-width:3px;border-radius:25px;letter-spacing:0;border-color:#3a3a3a;color:#bbb}
+#stage #set-rpl .srow button:hover{border-color:#fff;color:#fff}
+#stage #set-rpl .srow button.cf{border-color:var(--red);color:#ff4a50}
+#set-rpl.off .rpopt{opacity:.38;pointer-events:none}

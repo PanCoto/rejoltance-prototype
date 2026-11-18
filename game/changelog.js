@@ -42,6 +42,24 @@ const CHANGELOG=`
 [[cards: 123, 124, 125, 126, 127, 128, 129, 130]]
 - **Skeleton Dancer** (Aberration, 7 cost, 2/2): After Combat Here: Deal 4 Damage to an Enemy Unit in this lane. Start of Turn and when Played: Gain +1 Dodge.
 - **Last Call** (Action, 1 cost): This Round, You may play a Unit during the Action Phase. It can only be played in the Action Phase and expires at the end of the round. Con Artist and Bug Knight are used first, so they never waste it.
+- **Grandfather Bomb** (Machine, 8 cost, 6/6): When Destroyed: Destroy all Enemy Units in this lane and adjacent lanes.
+- **Bandit** (Human, 2 cost, 1/3): When this deals Damage to an Enemy Unit: Stun it.
+- **Samurai** (Human, 5 cost, 2/3): While in Play: When You draw a Card, gain +1/+1. After Combat Here: Do a Bonus Attack.
+- **Ember Drake** (Machine / Animal, 1 cost, 1/1): When this deals Damage to an Enemy Unit: Apply Burning to it.
+- **Toll Keeper** (Aberration, 2 cost, 2/1): While in Play: Enemy Actions cost 1 more.
+- **Parasol Couple** (Aberration, 4 cost, 1/6): Unactionable. While in Play: Adjacent Friendly Units have Unactionable.
+### Replays
+- Every finished game is now saved automatically as a **replay** (Extras -> Replays): vs the bot, Mirror Match, Quick Match, Ranked and friend / room games. Tutorial and Endless Mode are not recorded.
+- The Replays screen lists your saved games with the result, opponent, mode, date, number of rounds and game version. **Watch** plays a replay on the board with a hand band for each player and their draw and discard piles (click a pile to see its cards), cards flying from the hand to the board, and the opponent's hand and deck revealed after the game.
+- Replay player controls: play / pause (Space), step back / forward (Left / Right arrows), previous / next round, a seek slider and playback speed 0.5x - 4x. Esc or Exit replay leaves it.
+- **Keep** marks a replay so it is never removed automatically, **Save file** exports it as a .rjreplay file to share, **Import file** loads one, **Delete** removes it.
+- Replays are stored in your browser (compressed). By default the latest 20 are kept; when the browser storage is full the oldest ones that are not marked Kept are removed first.
+### Settings
+- Settings now has two tabs: **General** (decks, card numbers, volume) and **Replays**.
+- **Replays** tab: turn recording on / off, choose how many of the latest replays to keep (5, 10, 20, 30 or 50), choose which games are recorded (against the bot, Mirror Match, Ranked, Quick Match, friend and room games), see how many replays are stored and how much space they take, and delete all replays that are not marked as Kept.
+- Lowering the limit removes the oldest replays that are not marked as Kept (it asks first). Turning recording on in the middle of a game does not record that game, because the replay would start half-way.
+- **Show card numbers (hotkeys 1-8)**: shows a small number above each card in your hand; press that number to select the card.
+- **Hide premade decks in my deck lists** and **Random includes Premade decks** control which decks the deck pickers and the Random button use.
 ## Balance Patch 5 - 2026-11-17
 ### Balance Changes
 - **Archer** [NERF] : Health 4 -> **3**.
@@ -156,6 +174,9 @@ const CHANGELOG_EXP=`
   // [[cards: 121, 122]]
   // - **Con Artist** (Aberration, 3 cost, 1/4): While in Play: You may play Units during Action phase.
   // - **Nesting Doll** (Human, 6 cost, 5/3): When Destroyed: Create a copy of this Unit here with -1/-1. It keeps coming back until its max Health would drop below 1, so a 3 Health Doll has to be destroyed 3 times (Silence stops the chain). The artwork changes after each death.
+  // ## v0.0.4 - 2026-11-17
+  // ### Replays
+  // - Finished games are now saved as replays (Extras -> Replays) on the experimental branch as well, and Settings has a new **Replays** tab (recording on / off, how many replays to keep, which game types to record). See the standard changelog for details.
   // ## Classic - Max copies option
   // ### Deck Building
   // - New setting **Max 2 copies per card** (Settings, only shown while the Classic version is on). When it is on, player-built decks can have at most 2 copies of the same card.

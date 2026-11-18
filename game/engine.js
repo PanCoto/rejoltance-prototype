@@ -2157,6 +2157,8 @@ function killUnit(G, u, lane) {
   fire(G, "OnDeath", u, { u });
   flushHurt(G, u);
   units(p).forEach((o) => fire(G, "OnFriendlyUnitDied", o, { u }));
+  // the opponent's units hear about it too ("When an Enemy Unit is Destroyed")
+  units(G.p[1 - u.o]).forEach((o) => fire(G, "OnEnemyUnitDied", o, { u }));
   fireHand(G, "OnFriendlyUnitDied", p, { u, lane });
   if (unk) {
     L(G, u.d.Name + " is Unkillable - back to hand");

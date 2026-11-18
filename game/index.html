@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#000000"><meta name="apple-mobile-web-app-capable" content="yes">
 <title>RE:Joltance</title>
-<link rel="stylesheet" href="style.css?v=20261209">
+<link rel="stylesheet" href="style.css?v=20261218">
 </head><body>
 <div id="stage">
  <div class="scr" id="menu">
@@ -152,12 +152,30 @@
   <div id="clbar"><button type="button" id="clexp">Expand all</button><button type="button" id="clcol">Collapse all</button></div>
   <div id="cllist"></div>
   <div class="btns"><button id="clback">Back</button></div></div></div>
- <div class="ovl bk" id="setmenu"><div class="panel"><h2>Settings</h2>  <div class="srow chk"><label for="rndprem">Random includes Premade decks</label><input type="checkbox" id="rndprem" checked title="When on, the Random button can pick premade decks too. When off, it only picks your own decks (premade ones are used only if you have none)."></div>
-  <div class="srow chk"><label for="hideprem">Hide premade decks in my deck lists</label><input type="checkbox" id="hideprem" title="Premade decks are hidden from the deck pickers as long as you have at least one deck of your own. The bot's deck list is not affected."></div>
-  <div class="srow chk" id="max2row" style="display:none"><label for="max2">Max 2 copies per card (Classic)</label><input type="checkbox" id="max2" title="Classic version only: player-built decks may contain at most 2 copies of the same card. Premade decks are exempt. Decks over the limit stay in your list but cannot be played until you edit them. Online, both players must have this on or off. The page reloads when you change it."></div>
-  <div class="srow chk"><label for="hotnum">Show card numbers (hotkeys 1-8)</label><input type="checkbox" id="hotnum" title="Shows a small number above each card in your hand. Press that number on the keyboard to select the card."></div>
-  <div class="srow"><label>Sound effects</label><input type="range" id="sfxv" min="0" max="100" step="5"><b id="sfxn"></b></div>
-  <div class="srow"><label>Music</label><input type="range" id="musv" min="0" max="100" step="5"><b id="musn"></b></div>
+ <div class="ovl bk" id="setmenu"><div class="panel"><h2>Settings</h2>
+  <div class="stabs"><button type="button" class="on" data-st="gen">General</button><button type="button" data-st="rpl">Replays</button></div>
+  <div id="setbody">
+  <div class="stab" id="set-gen">
+   <div class="srow chk"><label for="rndprem">Random includes Premade decks</label><input type="checkbox" id="rndprem" checked title="When on, the Random button can pick premade decks too. When off, it only picks your own decks (premade ones are used only if you have none)."></div>
+   <div class="srow chk"><label for="hideprem">Hide premade decks in my deck lists</label><input type="checkbox" id="hideprem" title="Premade decks are hidden from the deck pickers as long as you have at least one deck of your own. The bot's deck list is not affected."></div>
+   <div class="srow chk" id="max2row" style="display:none"><label for="max2">Max 2 copies per card (Classic)</label><input type="checkbox" id="max2" title="Classic version only: player-built decks may contain at most 2 copies of the same card. Premade decks are exempt. Decks over the limit stay in your list but cannot be played until you edit them. Online, both players must have this on or off. The page reloads when you change it."></div>
+   <div class="srow chk"><label for="hotnum">Show card numbers (hotkeys 1-8)</label><input type="checkbox" id="hotnum" title="Shows a small number above each card in your hand. Press that number on the keyboard to select the card."></div>
+   <div class="srow"><label>Sound effects</label><input type="range" id="sfxv" min="0" max="100" step="5"><b id="sfxn"></b></div>
+   <div class="srow"><label>Music</label><input type="range" id="musv" min="0" max="100" step="5"><b id="musn"></b></div>
+  </div>
+  <div class="stab" id="set-rpl" hidden>
+   <div class="srow chk"><label for="rpon">Record replays</label><input type="checkbox" id="rpon" title="When off, finished games are not saved as replays."></div>
+   <div class="srow rpopt"><label for="rpkeep">Replays to keep</label><select id="rpkeep" title="How many of the latest replays are stored in this browser. Replays you marked as Kept do not count and are never removed automatically."><option value="5">Last 5 games</option><option value="10">Last 10 games</option><option value="20">Last 20 games</option><option value="30">Last 30 games</option><option value="50">Last 50 games</option></select></div>
+   <div class="ssub rpopt">Record games:</div>
+   <div class="srow chk rpopt"><label for="rpm_bot">Against the bot</label><input type="checkbox" id="rpm_bot" title="Play with the bot (Endless Mode and the Tutorial are never recorded)."></div>
+   <div class="srow chk rpopt"><label for="rpm_mirror">Mirror Match</label><input type="checkbox" id="rpm_mirror" title="Offline and online Mirror Match games."></div>
+   <div class="srow chk rpopt"><label for="rpm_ranked">Ranked games</label><input type="checkbox" id="rpm_ranked"></div>
+   <div class="srow chk rpopt"><label for="rpm_quick">Quick Match games</label><input type="checkbox" id="rpm_quick"></div>
+   <div class="srow chk rpopt"><label for="rpm_friend">Friend and room games</label><input type="checkbox" id="rpm_friend"></div>
+   <div class="srow"><label>Stored replays</label><span id="rpinfo"></span><button type="button" id="rpclear" title="Deletes every replay that is not marked as Kept">Delete unkept</button></div>
+   <div class="snote">Replays are stored in this browser only. If its storage fills up, the oldest replays are removed earlier than the limit above. Lowering the limit removes the oldest replays that are not marked as Kept.</div>
+  </div>
+  </div>
   <div class="btns"><button id="setclose">Close</button></div></div></div>
  <div class="ovl bk" id="lobby"><div id="lload"><span id="lloadt"></span><i></i><i></i><i></i></div><div class="panel"><h2 id="lt"></h2><div id="lcode"></div>
   <div id="lmatch"><div class="lmvs"><div class="lmp"><em class="av" id="lmav0"></em><b id="lmn0"></b><small id="lmr0"></small></div><div class="lmx">VS</div><div class="lmp"><em class="av" id="lmav1"></em><b id="lmn1"></b><small id="lmr1"></small></div></div>
@@ -169,7 +187,7 @@
  <div class="ovl" id="mul"><h2 id="mt">Mulligan - click cards to replace</h2><div id="mh"></div><button id="mok">Confirm</button><div id="mpr" style="display:none;gap:40px"><button id="mfirst">Go first</button><button id="msecond">Go second</button></div></div>
  <div class="ovl" id="hist"></div>
  <div class="ovl" id="modal"><h2>Surrender?</h2><div style="display:flex;gap:30px"><button id="myes">Yes</button><button id="mno">No</button></div></div>
- <div class="ovl" id="ov"><div id="ovt"></div><div id="ovdk"></div><div id="ovmm"></div><div style="display:flex;gap:30px"><button id="ovr">Rematch</button><button id="ovw" style="display:none">Watch replay</button><button id="ovd">Change deck</button><button id="ovb">Menu</button></div></div>
+ <div class="ovl" id="ov"><div id="ovt"></div><div id="ovdk"></div><div id="ovmm"></div><div style="display:flex;gap:30px"><button id="ovr">Rematch</button><button id="ovd">Change deck</button><button id="ovb">Menu</button></div></div>
  <div class="ovl bk" id="dkpick"><div class="panel wide"><h2>Choose your deck</h2><div class="sub">Used for the next game</div>
   <div class="pkx" id="pk2"></div>
   <div class="btns"><button id="dkok">Use this deck</button><button id="dkcancel">Back</button></div></div></div>
@@ -181,5 +199,5 @@
 </div>
 <div id="rot">Please rotate your device to landscape (this game is designed for a wide screen).</div>
 <audio id="au" loop></audio>
-<script src="cards.js?v=20261211"></script><script src="decks.js?v=20261117"></script><script src="live-config.js"></script><script src="cards-live.js"></script><script src="cards-exp.js?v=20261211"></script><script src="decks-exp.js?v=20261119"></script><script src="img-index.js"></script><script src="img-index-exp.js"></script><script src="engine.js?v=20261211"></script><script src="bot.js"></script><script src="sfx.js?v=20261124"></script><script src="music.js?v=20261124"></script><script src="share.js"></script><script src="ui.js?v=20261202"></script><script src="peerjs.min.js"></script><script src="net-config.js"></script><script src="turn-secret.js" onerror="void 0"></script><script src="net.js?v=20261210"></script><script src="changelog.js?v=20261211"></script><script src="menu.js?v=20261211"></script><script src="tutorial-data.js?v=20261201"></script><script src="tutorial.js?v=20261201"></script><script src="menumusic.js?v=20261127"></script><script src="mm.js?v=20261210"></script><script src="ach.js"></script><script src="replay.js?v=20261209"></script>
+<script src="cards.js?v=20261211"></script><script src="decks.js?v=20261117"></script><script src="live-config.js"></script><script src="cards-live.js"></script><script src="cards-exp.js?v=20261218"></script><script src="decks-exp.js?v=20261119"></script><script src="img-index.js"></script><script src="img-index-exp.js"></script><script src="engine.js?v=20261218"></script><script src="bot.js"></script><script src="sfx.js?v=20261124"></script><script src="music.js?v=20261124"></script><script src="share.js"></script><script src="ui.js?v=20261202"></script><script src="peerjs.min.js"></script><script src="net-config.js"></script><script src="turn-secret.js" onerror="void 0"></script><script src="net.js?v=20261210"></script><script src="changelog.js?v=20261219"></script><script src="menu.js?v=20261218"></script><script src="tutorial-data.js?v=20261201"></script><script src="tutorial.js?v=20261201"></script><script src="menumusic.js?v=20261127"></script><script src="mm.js?v=20261210"></script><script src="ach.js"></script><script src="replay.js?v=20261219"></script>
 </body></html>
