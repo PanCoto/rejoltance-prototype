@@ -33,7 +33,7 @@
 
    Also update GAME_VERSION / GAME_VERSION_EXP below so the main menu label matches.
    ============================================================ */
-const GAME_STAGE='Pre-alpha',GAME_VERSION='0.0.4',GAME_VERSION_EXP='Classic 0.0.2';
+const GAME_STAGE='Pre-alpha',GAME_VERSION='0.0.4',GAME_VERSION_EXP='CLASSIC 0.0.4';
 const CHANGELOG=`
 ## v0.0.4 - 2026-11-17
 ### New Keyword
@@ -145,20 +145,20 @@ const CHANGELOG=`
 `;
 
 const CHANGELOG_EXP=`
-## v0.0.3 - 2026-11-16
-### UI Overhaul
-- The new main menu (sections on the left, cards on the right, keyboard controls, Watch bots mode, Decks shortcut in the Collection) is now also used on the experimental branch. See the standard changelog for the full list.
-### Tutorial
-- The new guided tutorial (Play offline -> Tutorial -> Start tutorial) is also available on the experimental branch. See the standard changelog for details.
-### Music
-- New main menu and Collection / Decks screen themes.
-### New Cards
-[[cards: 121, 122]]
-- **Con Artist** (Aberration, 3 cost, 1/4): While in Play: You may play Units during Action phase.
-- **Nesting Doll** (Human, 6 cost, 5/3): When Destroyed: Create a copy of this Unit here with -1/-1. It keeps coming back until its max Health would drop below 1, so a 3 Health Doll has to be destroyed 3 times (Silence stops the chain). The artwork changes after each death.
-## Classic - Max copies option
-### Deck Building
-- New setting **Max 2 copies per card** (Settings, only shown while the Classic version is on). When it is on, player-built decks can have at most 2 copies of the same card.
-- Premade decks are exempt. Your saved decks with 3 copies stay in your list marked **Over limit**, but cannot be played until you edit them.
-- Online: both players must have the setting on or off.
+  // ## v0.0.3 - 2026-11-16
+  // ### UI Overhaul
+  // - The new main menu (sections on the left, cards on the right, keyboard controls, Watch bots mode, Decks shortcut in the Collection) is now also used on the experimental branch. See the standard changelog for the full list.
+  // ### Tutorial
+  // - The new guided tutorial (Play offline -> Tutorial -> Start tutorial) is also available on the experimental branch. See the standard changelog for details.
+  // ### Music
+  // - New main menu and Collection / Decks screen themes.
+  // ### New Cards
+  // [[cards: 121, 122]]
+  // - **Con Artist** (Aberration, 3 cost, 1/4): While in Play: You may play Units during Action phase.
+  // - **Nesting Doll** (Human, 6 cost, 5/3): When Destroyed: Create a copy of this Unit here with -1/-1. It keeps coming back until its max Health would drop below 1, so a 3 Health Doll has to be destroyed 3 times (Silence stops the chain). The artwork changes after each death.
+  // ## Classic - Max copies option
+  // ### Deck Building
+  // - New setting **Max 2 copies per card** (Settings, only shown while the Classic version is on). When it is on, player-built decks can have at most 2 copies of the same card.
+  // - Premade decks are exempt. Your saved decks with 3 copies stay in your list marked **Over limit**, but cannot be played until you edit them.
+  // - Online: both players must have the setting on or off.
 `;

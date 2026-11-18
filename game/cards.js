@@ -1085,7 +1085,7 @@ const CARDS = [
     Id: 67,
     Name: "Aura",
     Type: "Unit",
-    Subtypes: ["Animal"],
+    Subtypes: ["Animal", "Machine"],
     Cost: 4,
     Attack: 2,
     Health: 4,
@@ -1856,7 +1856,7 @@ const CARDS = [
     Id: 115,
     Name: "AI AL",
     Type: "Unit",
-    Subtypes: ["Machine"],
+    Subtypes: ["Machine", "Animal"],
     Cost: 4,
     Attack: 3,
     Health: 3,
@@ -2029,6 +2029,82 @@ const CARDS = [
     }
   ]
 },
+{
+    Id: 126,
+    Name: "Bandit",
+    Type: "Unit",
+    Subtypes: ["Human"],
+    Cost: 2,
+    Attack: 1,
+    Health: 3,
+    Description: "When this deals Damage to an Enemy Unit: Stun it.",
+    Effects: [
+      { Trigger: "OnDamagedEnemyUnit",
+        Actions: [{ Type: "ApplyStatus", Target: "SelectedTarget", StatusKeyword: "Stunned" }] },
+    ],
+  },
+
+  {
+    Id: 127,
+    Name: "Samurai",
+    Type: "Unit",
+    Subtypes: ["Human"],
+    Cost: 5,
+    Attack: 2,
+    Health: 3,
+    Description: "While in Play: When You draw a Card, gain +1/+1. After Combat Here: Do a Bonus Attack.",
+    Effects: [
+      { Trigger: "OnFriendlyCardDrawn",
+        Actions: [{ Type: "BuffStats", Target: "Self", BuffAtk: 1, BuffHp: 1 }] },
+      { Trigger: "OnPostCombatLine",
+        Actions: [{ Type: "BonusAttack", Target: "Self" }] },
+    ],
+  },
+
+  {
+    Id: 128,
+    Name: "Ember Drake",
+    Type: "Unit",
+    Subtypes: ["Machine", "Animal"],
+    Cost: 1,
+    Attack: 1,
+    Health: 1,
+    Description: "When this deals Damage to an Enemy Unit: Apply Burning to it.",
+    Effects: [
+      { Trigger: "OnDamagedEnemyUnit",
+        Actions: [
+          { Type: "ApplyStatus", Target: "SelectedTarget", StatusKeyword: "Burning" },
+        ] },
+    ],
+  },
+  {
+    Id: 129,
+    Name: "Toll Keeper",
+    Type: "Unit",
+    Subtypes: ["Aberration"],
+    Cost: 4,
+    Attack: 2,
+    Health: 3,
+    Description: "While in Play: Enemy Actions cost 1 more.",
+    Effects: [
+      { Trigger: "Passive",
+        Actions: [{ Type: "ModifyCost", Side: "Enemy", Amount: 1, CardFilter: { Type: "Spell" } }] },
+    ],
+  },
+  {
+    Id: 130,
+    Name: "Mute Warden",
+    Type: "Unit",
+    Subtypes: ["Aberration"],
+    Cost: 4,
+    Attack: 2,
+    Health: 3,
+    Description: "While in Play: Adjacent Friendly Units have Unactionable.",
+    Effects: [
+      { Trigger: "Passive",
+        Actions: [{ Type: "GrantKeyword", Target: "AdjacentFriendlyUnits", Keyword: "Unactionable" }] },
+    ],
+  },
 
   // ==================== ORIGINAL TOKENS (unchanged) ====================
 
