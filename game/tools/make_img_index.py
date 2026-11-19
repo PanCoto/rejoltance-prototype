@@ -2,19 +2,19 @@
 """Builds the card-art maps.
 
   img/*.webp          -> img-index.js      (window.RJ_IMG      : current game)
-  img/classic/*.webp  -> img-index-exp.js  (window.RJ_IMG_EXP  : Classic version)
+  img/legacy/*.webp  -> img-index-legacy.js  (window.RJ_IMG_EXP  : Legacy version)
 
 A file belongs to the card whose Id is the number at the start of its file name
 (e.g. 7_Glock-17.webp -> Id 7, 914.webp -> Id 914). Sub-folders (img/stages/,
-img/classic/stages/, img/ach/) are not scanned. Run it from the project root
+img/legacy/stages/, img/ach/) are not scanned. Run it from the project root
 after adding or renaming art:
 
   python tools/make_img_index.py              # both maps
-  python tools/make_img_index.py classic      # only the Classic map
+  python tools/make_img_index.py legacy      # only the Legacy map
   python tools/make_img_index.py current      # only the current map
 
-A Classic card with no file in img/classic/ simply shows its current art
-(see CLFB in ui.js), so the Classic folder may hold only the cards that
+A Legacy card with no file in img/legacy/ simply shows its current art
+(see CLFB in ui.js), so the Legacy folder may hold only the cards that
 changed. Ids that appear twice in one folder are reported and the first
 file (alphabetical) wins.
 """
@@ -27,8 +27,8 @@ NAME = re.compile(r'^(\d+)(?:_.*)?$')
 TARGETS = {
     'current': ('img', 'img-index.js', 'RJ_IMG',
                 'Maps card Id -> file in img/ (matched by the number at the start of the file name).'),
-    'classic': (os.path.join('img', 'classic'), 'img-index-exp.js', 'RJ_IMG_EXP',
-                'Maps card Id -> file in img/classic/ (Classic version). Cards missing here use their current art.'),
+    'legacy': (os.path.join('img', 'legacy'), 'img-index-legacy.js', 'RJ_IMG_EXP',
+                'Maps card Id -> file in img/legacy/ (Legacy version). Cards missing here use their current art.'),
 }
 
 def build(key):
@@ -60,5 +60,5 @@ if __name__ == '__main__':
     args = sys.argv[1:] or list(TARGETS)
     for a in args:
         if a not in TARGETS:
-            sys.exit('unknown target %r (use: current, classic)' % a)
+            sys.exit('unknown target %r (use: current, legacy)' % a)
         build(a)

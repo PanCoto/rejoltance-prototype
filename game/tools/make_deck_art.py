@@ -4,14 +4,14 @@ from disk (file://). Browsers refuse to export a canvas that used local files, s
 there the art is read from these scripts instead of img/.
 
   deck-art.js      window.RJ_ART      = {frame, missing, <Id>: art ...}   (current game)
-  deck-art-exp.js  window.RJ_ART_EXP  = {<Id>: art ...}                   (Classic art only)
+  deck-art-legacy.js  window.RJ_ART_EXP  = {<Id>: art ...}                   (Legacy art only)
 
-The Classic file only holds art from img/classic/; the Classic version loads
+The Legacy file only holds art from img/legacy/; the Legacy version loads
 deck-art.js first and uses it as the fallback (same rule as CLFB in ui.js).
 Needs Pillow (pip install pillow). Run from the project root:
 
   python tools/make_deck_art.py              # both
-  python tools/make_deck_art.py classic      # only deck-art-exp.js
+  python tools/make_deck_art.py legacy      # only deck-art-legacy.js
   python tools/make_deck_art.py current      # only deck-art.js
 """
 import base64, io, json, os, re, sys
@@ -64,11 +64,11 @@ def current():
     d['missing'] = uri(small(os.path.join(ROOT, 'img', 'missing_texture.webp')), 'WEBP')
     write('deck-art.js', 'card art as data URIs for "Share as PNG" when the game is opened from disk (file://).', 'RJ_ART', d)
 
-def classic():
-    write('deck-art-exp.js', 'Classic card art as data URIs for "Share as PNG" when the game is opened from disk (file://).',
-          'RJ_ART_EXP', arts(os.path.join('img', 'classic')))
+def legacy():
+    write('deck-art-legacy.js', 'Legacy card art as data URIs for "Share as PNG" when the game is opened from disk (file://).',
+          'RJ_ART_EXP', arts(os.path.join('img', 'legacy')))
 
 if __name__ == '__main__':
-    args = sys.argv[1:] or ['current', 'classic']
+    args = sys.argv[1:] or ['current', 'legacy']
     for a in args:
-        {'current': current, 'classic': classic}.get(a, lambda: sys.exit('unknown target %r (use: current, classic)' % a))()
+        {'current': current, 'legacy': legacy}.get(a, lambda: sys.exit('unknown target %r (use: current, legacy)' % a))()

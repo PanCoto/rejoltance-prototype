@@ -1,7 +1,7 @@
 /* ============================================================
    Version + changelogs. Edit only this file to publish updates.
    There are TWO separate changelogs: CHANGELOG (normal build) and CHANGELOG_EXP
-   (shown instead when the Classic version is on - Extras -> Classic).
+   (shown instead when the Legacy version is on - Extras -> Legacy).
 
    Format (newest entry FIRST):
      ## v1.0.1 - 2026-11-12        <- version - date (date optional)
@@ -15,7 +15,7 @@
      - A line on its own like   [[cards: Black Cat, 101, Morsel]]   shows those cards
        as a row of pictures (hover one to zoom it). Use it under a "### New Cards" title.
      Names are looked up in the cards of the build being viewed, so in CHANGELOG use
-     cards.js cards and in CHANGELOG_EXP use cards-exp.js cards. Unknown names stay plain text.
+     cards.js cards and in CHANGELOG_EXP use cards-legacy.js cards. Unknown names stay plain text.
 
    Updates menu: "Patch Notes" shows every section EXCEPT balance ones; "Balance Changes" shows only sections whose
    title starts with "Balance" or "Card Changes" (put card stat / text changes there, everything else elsewhere).
@@ -33,7 +33,7 @@
 
    Also update GAME_VERSION / GAME_VERSION_EXP below so the main menu label matches.
    ============================================================ */
-const GAME_STAGE='Pre-alpha',GAME_VERSION='0.0.4',GAME_VERSION_EXP='CLASSIC 0.0.4';
+const GAME_STAGE='Pre-alpha',GAME_VERSION='0.0.4',GAME_VERSION_EXP='LEGACY 0.0.4';
 const CHANGELOG=`
 ## v0.0.4 - 2026-11-17
 ### New Keyword
@@ -177,9 +177,9 @@ const CHANGELOG_EXP=`
   // ## v0.0.4 - 2026-11-17
   // ### Replays
   // - Finished games are now saved as replays (Extras -> Replays) on the experimental branch as well, and Settings has a new **Replays** tab (recording on / off, how many replays to keep, which game types to record). See the standard changelog for details.
-  // ## Classic - Max copies option
+  // ## Legacy - Max copies option
   // ### Deck Building
-  // - New setting **Max 2 copies per card** (Settings, only shown while the Classic version is on). When it is on, player-built decks can have at most 2 copies of the same card.
+  // - New setting **Max 2 copies per card** (Settings, only shown while the Legacy version is on). When it is on, player-built decks can have at most 2 copies of the same card.
   // - Premade decks are exempt. Your saved decks with 3 copies stay in your list marked **Over limit**, but cannot be played until you edit them.
   // - Online: both players must have the setting on or off.
 `;

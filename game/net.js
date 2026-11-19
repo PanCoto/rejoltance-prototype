@@ -171,7 +171,7 @@ function tryBegin(){if(!NET.mull[0]||!NET.mull[1]||!NET.pref[0]||!NET.pref[1])re
 async function hostHandle(m){
  switch(m.t){
  case'hello':{
-  if(m.v!==NETV){netSend({t:'err',msg:(m.x?1:0)!==(window.RJ_EXP?1:0)?'Version mismatch - both players must either be in the Classic version (Extras -> Classic) or both in the current version.':(m.x||0)!==(window.RJ_EXP?(window.RJ_MAXC<3?2:1):0)?'Deck copy limit mismatch - both players must have "Max 2 copies per card" in Settings either on or off.':'Version mismatch - the card data differs. Both players should reload the page (Ctrl+F5) and try again.'});break}
+  if(m.v!==NETV){netSend({t:'err',msg:(m.x?1:0)!==(window.RJ_EXP?1:0)?'Version mismatch - both players must either be in the Legacy version (Extras -> Legacy) or both in the current version.':(m.x||0)!==(window.RJ_EXP?(window.RJ_MAXC<3?2:1):0)?'Deck copy limit mismatch - both players must have "Max 2 copies per card" in Settings either on or off.':'Version mismatch - the card data differs. Both players should reload the page (Ctrl+F5) and try again.'});break}
   const dk=m.deck;if(!okDeck(dk)){netSend({t:'err',msg:'Your deck is not valid.'});break}
   OPN=cleanName(m.name).trim();NET.deckG=dk.map(Number);if(NET.mm&&!NET.lr){NET.hp=1;break}hostGo();break}
  case'mull':{if(!G||G.turn!=0||NET.mull[1])break;

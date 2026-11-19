@@ -1,5 +1,5 @@
 /* ============================================================
-   CARDS - the CURRENT game card list (Classic lives in cards-exp.js)
+   CARDS - the CURRENT game card list (Legacy lives in cards-legacy.js)
    - was: the main card list (v1.0.2: the former experimental set, promoted).
    - IDs 1-100: original cards. New cards: 101-120.
    - Tokens (cannot be put in decks): 900-938.

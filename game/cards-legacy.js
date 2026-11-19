@@ -48,7 +48,7 @@ const CARDS_EXP = [
           {
             Type: "DrawCard",
             Target: "FriendlyHero",
-            Condition: { Condition: "FirstPlayedThisRound", TargetParam: "Spell" },
+            Condition: { Condition: "FirstPlayedThisRound", TargetParam: "Any" },
           },
         ],
       },
@@ -562,12 +562,11 @@ const CARDS_EXP = [
     Cost: 2,
     Attack: 1,
     Health: 4,
-    Description: "Before Combat: Deal 1 Damage and apply Burning to an Enemy Unit.",
+    Description: "Before Combat: Apply Burning to an Enemy Unit.",
     Effects: [
       {
         Trigger: "OnPreCombatLine",
         Actions: [
-          { Type: "DealDamage", Target: "TargetEnemyUnit", Amount: 1 },
           { Type: "ApplyStatus", Target: "TargetEnemyUnit", StatusKeyword: "Burning" },
         ],
       },
@@ -860,17 +859,19 @@ const CARDS_EXP = [
   },
 
   {
-    Id: 96,
-    Name: "Echo Chamber",
+    Id: 114,
+    Name: "Doppelgänger",
     Type: "Unit",
     Subtypes: ["Human"],
     Cost: 4,
     Attack: 3,
     Health: 3,
-    Description:
-      'When Played: Trigger the "When Played" effect of the last 2 cards You played this game.',
+    Description: "When Played: Copy the last Destroyed Unit's Ability, including its When Played.",
     Effects: [
-      { Trigger: "OnPlayed", Actions: [{ Type: "ReplayPlayed", Target: "Self", Last: 2 }] },
+      {
+        Trigger: "OnPlayed",
+        Actions: [{ Type: "CopyDestroyed", Side: "Any", CopyHealth: false }],
+      },
     ],
   },
 

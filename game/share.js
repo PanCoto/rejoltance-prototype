@@ -8,14 +8,14 @@
   const RED = '#c4161c', BG = '#050505', LN = '#2a2a2a';
   let artP = null;
   const loadScript = src => new Promise(res => { const s = document.createElement('script'); s.src = src; s.onload = s.onerror = () => res(); document.head.appendChild(s); });
-  // Classic version: deck-art.js (frame, missing texture, current art as fallback) first, then deck-art-exp.js (RJ_ART_EXP = Classic art).
+  // Legacy version: deck-art.js (frame, missing texture, current art as fallback) first, then deck-art-legacy.js (RJ_ART_EXP = Legacy art).
   const ensureArt = () => {
     if (location.protocol !== 'file:' || (window.RJ_ART && !window.RJ_EXP)) return Promise.resolve();
-    return artP || (artP = loadScript('deck-art.js').then(() => window.RJ_EXP ? loadScript('deck-art-exp.js') : null));
+    return artP || (artP = loadScript('deck-art.js').then(() => window.RJ_EXP ? loadScript('deck-art-legacy.js') : null));
   };
   const cache = {};
   const loadImg = src => cache[src] || (cache[src] = new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; }));
-  // Art as a data URI (file:// only): Classic art first in the Classic version, then the current art (the same fallback artSrc uses).
+  // Art as a data URI (file:// only): Legacy art first in the Legacy version, then the current art (the same fallback artSrc uses).
   const artData = id => {
     if (window.RJ_EXP && +id < 9000) { const c = window.RJ_ART_EXP && window.RJ_ART_EXP[id]; if (c) return c; if (!CLFB) return null; }
     return window.RJ_ART && window.RJ_ART[id];

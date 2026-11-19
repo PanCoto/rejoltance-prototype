@@ -23,9 +23,9 @@ $('rndprem').checked=lsGet('rj_rndpool')!=='mine';
 $('rndprem').onchange=()=>lsSet('rj_rndpool',$('rndprem').checked?'all':'mine');
 $('hideprem').checked=lsGet('rj_hideprem')==='1';
 $('hideprem').onchange=()=>{lsSet('rj_hideprem',$('hideprem').checked?'1':'0');renderPickers()};
-// "Classic" (formerly the Experimental changes setting): Extras -> Classic switches to the classic version and reloads; inside Classic the same button goes back.
-$('classiclbl').textContent=window.RJ_EXP?'Back to current':'Classic';
-$('classicopen').onclick=()=>{const on=!window.RJ_EXP;
+// "Legacy" (formerly the Experimental changes setting): Extras -> Legacy switches to the legacy version and reloads; inside Legacy the same button goes back.
+$('legacylbl').textContent=window.RJ_EXP?'Back to current':'Legacy';
+$('legacyopen').onclick=()=>{const on=!window.RJ_EXP;
  if($('game').style.display=='block'&&!confirm('Switching version reloads the page and ends the current game. Continue?'))return;
  lsSet('rj_exp',on?'1':'0');location.reload()};
 $('max2row').style.display=window.RJ_EXP&&window.RJ_MAX2_TOGGLE?'':'none';$('max2').checked=window.RJ_MAXC<3;
@@ -82,7 +82,7 @@ const clBalNums=ents=>{const nums=new Map();let c=0;
 const clSetOpen=(sec,on)=>{sec.classList.toggle('open',on);const h=sec.querySelector('.clh');if(h)h.setAttribute('aria-expanded',on?'true':'false')};
 const renderChangelog=kind=>{CLK=kind||CLK;const bal=CLK=='bal',box=$('cllist'),exp=!!window.RJ_EXP,src=exp?CHANGELOG_EXP:CHANGELOG;box.textContent='';
  const ents=clParse(src),nums=bal?clBalNums(ents):null;let n=0;
- $('cltitle').textContent=(exp?'Classic ':'')+(bal?'Balance Changes':'Patch Notes');
+ $('cltitle').textContent=(exp?'Legacy ':'')+(bal?'Balance Changes':'Patch Notes');
  for(const e of ents){
   const body=document.createElement('div');body.className='cli';let ul=null,items=0;const names=[];
   for(const sc of e.secs){if(isBal(sc.title)!=bal)continue;if(!sc.lines.length)continue;ul=null;
@@ -104,7 +104,7 @@ const renderChangelog=kind=>{CLK=kind||CLK;const bal=CLK=='bal',box=$('cllist'),
   hd.onclick=()=>clSetOpen(ent,!ent.classList.contains('open'));
   clSetOpen(ent,n==0);   // the newest entry starts open, the rest are folded
   box.appendChild(ent);n++}
- $('clsub').textContent=!n?(bal?'No balance changes yet':'No entries yet'):bal?(exp?'Card balance changes in the Classic version, newest first':'Card balance changes, newest first'):(exp?'Changes in the Classic version, newest first':'New content, changes and fixes, newest first');
+ $('clsub').textContent=!n?(bal?'No balance changes yet':'No entries yet'):bal?(exp?'Card balance changes in the Legacy version, newest first':'Card balance changes, newest first'):(exp?'Changes in the Legacy version, newest first':'New content, changes and fixes, newest first');
  $('clbar').style.visibility=n>1?'':'hidden';box.scrollTop=0};
 $('clexp').onclick=()=>$('cllist').querySelectorAll('.cle').forEach(x=>clSetOpen(x,true));
 $('clcol').onclick=()=>{$('cllist').querySelectorAll('.cle').forEach(x=>clSetOpen(x,false));$('cllist').scrollTop=0};

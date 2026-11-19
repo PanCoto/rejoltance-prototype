@@ -1743,10 +1743,30 @@ function act(G, a, s, c) {
       const cp = (src.Effects || []).filter((e) =>
         e.Trigger == "OnPlayed" ? inZone(e, "Board") : !zoneOf(e) || inZone(e, "Board"),
       );
-      if (cp.length) {
-        s.d = Object.assign({}, s.d, { Effects: (s.d.Effects || []).concat(cp) });
-        EV(G, { k: "trig", u: s.uid });
-      }
+      // The card text now mirrors the copied unit, so the player can see what was copied.
+      s.d = Object.assign({}, s.d, {
+        Effects: (s.d.Effects || []).concat(cp),
+        Description: src.Description || dc.Description || "Copied " + dc.Name + " (no ability).",
+      });
+      if (cp.length) EV(G, { k: "trig", u: s.uid });
+      // Also run the copied "When Played" effects right now (same rules as ReplayPlayed).
+      const SKIPCP = [
+        "SacrificeUnit",
+        "SacrificeUnits",
+        "AbsorbStats",
+        "Merge",
+        "Transform",
+        "ReplayPlayed",
+      ];
+      (src.Effects || []).forEach((e) => {
+        if (G.over || s.gone || s.hp <= 0) return;
+        if (e.Trigger != "OnPlayed" || zoneOf(e) || !cond(e.Condition, s, {}, G)) return;
+        const acts = e.Targeting == "Choice" && e.ChoiceLabels ? [e.Actions[0]] : e.Actions;
+        const ra2 = acts.filter((a2) => !SKIPCP.includes(a2.Type) && !a2.OnlyIfSacrificed);
+        if (!ra2.length) return;
+        if (deferRp(G, s, dd, e, ra2)) return;
+        ra2.forEach((a2) => act(G, a2, s, { rp: 1, tf: 1, nosac: 1, sm: 1 }));
+      });
       break;
     }
     case "RespawnSelf": {
