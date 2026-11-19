@@ -224,16 +224,12 @@ const CARDS_EXP = [
     Cost: 1,
     Attack: 1,
     Health: 2,
-    Description: "When Destroyed: Heal all Friendly Units for 2 and Your Hero for 1.",
-    Effects: [
-      {
-        Trigger: "OnDeath",
-        Actions: [
-          { Type: "Heal", Target: "AllFriendlyUnits", Amount: 2 },
-          { Type: "Heal", Target: "FriendlyHero", Amount: 1 },
-        ],
-      },
+    Description: "When Destroyed: Heal a Friendly Unit or Your Hero for 3.",
+     Effects: [
+      { Trigger: "OnDeath", Targeting: "TargetFriendlyUnitOrHero",
+        Actions: [{ Type: "Heal", Target: "SelectedTarget", Amount: 3 }] },
     ],
+
   },
 
   {
@@ -1079,12 +1075,12 @@ const CARDS_EXP = [
     Cost: 5,
     Attack: 5,
     Health: 10,
-    Description: "After Combat Here: Stun itself.",
+    Description: "When this deals Damage: Stun itself.",
     Effects: [
-      {
-        Trigger: "OnPostCombatLine",
-        Actions: [{ Type: "ApplyStatus", Target: "Self", StatusKeyword: "Stunned" }],
-      },
+      { Trigger: "OnDamagedEnemyUnit",
+        Actions: [{ Type: "ApplyStatus", Target: "Self", StatusKeyword: "Stunned" }] },
+      { Trigger: "OnDamagedEnemyHero",
+        Actions: [{ Type: "ApplyStatus", Target: "Self", StatusKeyword: "Stunned" }] },
     ],
   },
 
