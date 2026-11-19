@@ -968,15 +968,11 @@ const CARDS_EXP = [
     Type: "Unit",
     Subtypes: ["Human"],
     Cost: 4,
-    Attack: 2,
+    Attack: 3,
     Health: 3,
     Description:
-      "While in Play: When You draw a Card, gain +1/+1. After Combat Here: Do a Bonus Attack.",
+      "After Combat Here: Do a Bonus Attack.",
     Effects: [
-      {
-        Trigger: "OnFriendlyCardDrawn",
-        Actions: [{ Type: "BuffStats", Target: "Self", BuffAtk: 1, BuffHp: 1 }],
-      },
       { Trigger: "OnPostCombatLine", Actions: [{ Type: "BonusAttack", Target: "Self" }] },
     ],
   },
