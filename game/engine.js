@@ -2712,6 +2712,7 @@ function canPlay(G, p, ci, ln) {
 }
 const playable = (G, p, i) => {
   const c = p.hand[i];
+  if (c && !CD[c.id]) return false;
   return c && CD[c.id].Type == "Unit"
     ? [0, 1, 2, 3].some((l) => canPlay(G, p, i, l))
     : canPlay(G, p, i, null);

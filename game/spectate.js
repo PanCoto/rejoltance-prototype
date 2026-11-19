@@ -20,7 +20,17 @@ const spX=()=>window.RJ_EXP?(window.RJ_MAXC<3?2:1):0;
 const spNode=root=>({root:!!root,kids:[],fan:SP_FAN,tot:0,cnt:1,dead:false});
 const spFwd=(T,m)=>T.kids.forEach(k=>{try{if(k.c.open)k.c.send(m)}catch(e){}});
 // which games can be watched: room games, Mirror Match online and friend challenges. Quick Match and Ranked never (fair play).
-const spOK=N=>!!(N&&N.code&&!N.qm&&(!N.mm||(window.MM&&MM.cur&&MM.cur.mode=='friend')));
+const spOK=N=>!!(N&&N.host&&!N.dead);   // EVERY hosted game can be watched: room, Mirror Match, Quick Match, Ranked, friend challenge (spectators only get face-down hands/decks)
+// id a spectator connects to: Quick Match (p2p) drops its signalling link when matched, so it gets a dedicated stream peer; the others use the game peer
+const spLinkId=N=>{try{if(!N||!N.host)return'';if(N.wp)return N.wp.open?N.wp.id:'';if(N.qm)return'';return N.peer&&N.peer.id||''}catch(e){return''}};
+function spStream(N){   // Quick Match host: separate peer that only serves spectators
+ if(N.wp||N.wpTry||!N.qm)return;N.wpTry=1;
+ peerOpt().then(opt=>{if(NET!==N||N.dead)return;
+  const open=n=>{const p=new(PeerC())(NETPRE+'W'+newCode()+newCode(),opt);N.wp=p;
+   p.on('connection',c=>{if(NET!==N){try{c.close()}catch(e){}return}if(c.metadata&&c.metadata.spec)spAccept(N.sp||(N.sp=spNode(true)),c);else{try{c.close()}catch(e){}}});
+   p.on('disconnected',()=>{try{if(!p.destroyed)p.reconnect()}catch(e){}});
+   p.on('error',e=>{if(e.type=='unavailable-id'&&n<4){try{p.destroy()}catch(x){}N.wp=null;open(n+1)}})};
+  open(0)}).catch(()=>{N.wpTry=0})}
 const spCloseSoon=c=>setTimeout(()=>{try{c.close()}catch(e){}},400);
 
 /* ---------- hiding: spectators only ever see card backs in hands and decks ---------- */
@@ -57,10 +67,12 @@ function spAccept(T,c){
 /* ---------- host side ---------- */
 function spPush(f,r){   // called by replay.js for every captured frame
  const N=NET;if(!N||!N.host||!spOK(N))return;
+ spStream(N);
  const T=N.sp||(N.sp=spNode(true));
  T.raw={g:r.gid,n:r.fr.length,meta:Object.assign({},r.meta),f};
  if(T.kids.length){const m={t:'sp-f',g:T.raw.g,n:T.raw.n,f:spHide(f)};if(T.raw.n==1)m.meta=T.raw.meta;spFwd(T,m)}}
 function spHostStop(N){
+ if(N&&N.wp){const w=N.wp;setTimeout(()=>{try{w.destroy()}catch(e){}},700)}
  const T=N&&N.sp;if(!T)return;T.dead=true;clearInterval(T.hbI);spFwd(T,{t:'sp-bye'});
  const ks=T.kids.slice();T.kids=[];setTimeout(()=>ks.forEach(k=>{try{k.c.close()}catch(e){}}),400)}
 function spUI(){
@@ -71,8 +83,9 @@ function spUI(){
  else b.style.display='none'}
 setInterval(spUI,1000);
 $('spw').onclick=()=>{
- if(!NET||!NET.host||!NET.code)return;
- const base=location.origin+location.pathname,url=NET.mm&&NET.peer&&NET.peer.id?base+'?watchid='+encodeURIComponent(NET.peer.id):base+'?watch='+NET.code;   // friend challenges use a different peer id than room codes
+ if(!NET||!NET.host)return;
+ const id=spLinkId(NET);if(!id)return toast('Spectator link is being prepared - try again in a few seconds',1);
+ const base=location.origin+location.pathname,url=!NET.mm&&!NET.qm&&NET.code?base+'?watch='+NET.code:base+'?watchid='+encodeURIComponent(id);   // matched games (ranked / friend / quick) have a different peer id than a room code
  (navigator.clipboard?navigator.clipboard.writeText(url).then(()=>toast('Spectator link copied - anyone can watch, there is no limit')).catch(()=>prompt('Copy this link:',url)):prompt('Copy this link:',url))};
 
 /* ---------- spectator side ---------- */
@@ -153,8 +166,11 @@ function spLobby(code){
  $('lin').value=code||'';$('lin').focus()}
 
 // lobby tweaks: the "Join" button becomes "Watch" while this screen is used for spectating
-{const L0=window.lobby;window.lobby=function(t,o){SPM=/^Watch/.test(t);const r=L0.apply(this,arguments);$('lgo').textContent=SPM?'Watch':'Join';return r}}
-{const g0=$('lgo').onclick;$('lgo').onclick=function(e){if(SPM){startAudio();spJoin($('lin').value);return}return g0.call(this,e)}}
+{const L0=window.lobby;window.lobby=function(t,o){SPM=/^Watch/.test(t);const r=L0.apply(this,arguments);$('lgo').textContent=SPM?'Watch':'Join';$('lin').maxLength=SPM?300:5;$('lin').placeholder=SPM?'ROOM CODE OR WATCH LINK':'ROOM CODE';return r}}
+// the Watch box accepts a 5-character room code OR a whole pasted link (?watch=CODE / ?watchid=ID)
+function spParse(v){v=String(v||'').trim();let m=/[?&]watchid=([\w-]{6,64})/.exec(v);if(m&&m[1].indexOf(NETPRE)==0)return{rid:m[1]};
+ m=/[?&]watch=([A-Za-z0-9]{5})/.exec(v);if(m)return{code:m[1]};return{code:v}}
+{const g0=$('lgo').onclick;$('lgo').onclick=function(e){if(SPM){startAudio();const q=spParse($('lin').value);spJoin(q.code,q.rid);return}return g0.call(this,e)}}
 {const c0=$('lcancel').onclick;$('lcancel').onclick=function(e){spStop();return c0.call(this,e)}}
 $('mspec').onclick=()=>{LB='frmenu';spLobby('')};
 addEventListener('pagehide',()=>{try{spStop()}catch(e){}});
@@ -167,7 +183,7 @@ addEventListener('pagehide',()=>{try{spStop()}catch(e){}});
    Server API: POST /api/presence  {act:'set',pid,mode}  |  {act:'clear'}   (Bearer auth like every other call; the entry should expire after ~90 s). */
 const prAllowed=()=>lsGet('rj_sp_fr')!=='0';
 let PRS=null,PROFF=false;
-const prPid=N=>{try{return N.host?(N.peer&&N.peer.id):(N.conn&&N.conn.peer)}catch(e){return''}};
+const prPid=N=>{try{return N.host?spLinkId(N):(N.qm?'':(N.conn&&N.conn.peer))}catch(e){return''}};
 function prSend(act,pid,mode,keep){
  const a=getAcct(),u=cfg();if(!a||!u||PROFF)return;
  try{fetch(u+'/api/presence',{method:'POST',keepalive:!!keep,headers:hdr(a),body:JSON.stringify(act=='set'?{act,pid,mode}:{act})})

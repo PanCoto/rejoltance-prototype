@@ -65,6 +65,7 @@ const stageN=(id,dc)=>{const s=(CD[id]&&CD[id].Stages)||[];let n=0;s.forEach((t,
 const artStage=(id,dc)=>{const n=stageN(id,dc);return n?(isCl(id)?CLDIR+'stages/':'img/stages/')+id+'_'+n+'.webp':artSrc(id)};
 const artStageErr=(el,id)=>{el.onerror=()=>artErr(el,id);el.src=artSrc(id)};
 function cardHTML(x,live,cls,data){
+ if(!x.d&&!CD[x.id])return`<div class="cardback" ${data||''}></div>`;   // hidden card (spectator frames: id 0) - never crash on it
  const d=x.d||CD[x.id],unit=d.Type=='Unit';
  const co=x.fc!=null?x.fc:live?(x.paid!=null?x.paid:Math.max(0,d.Cost-(x.cr||0))):!G?d.Cost:cost(G,G.p[0],x),cc=!live&&co<d.Cost?' cd':!live&&co>d.Cost?' cu':'';
  const atk=live?x.atk:(d.Attack||0)+(x.ba||0),hp=live?x.hp:d.Health;
