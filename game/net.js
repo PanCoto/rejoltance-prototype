@@ -91,7 +91,7 @@ const netErr=e=>({'network':'Could not reach the matchmaking server. Check your 
  'webrtc':'Could not establish a connection between the two devices (a firewall or network may be blocking it, and the relay server may be busy). Try again, or see README (TURN server).'}[e&&e.type]||('Connection problem: '+((e&&(e.type||e.message))||'unknown')));
 function netLeave(keepLobby){const N=NET;NET=null;NETTK++;
  tmStop();mtStop();
- if(N){clearTimeout(N.to);clearTimeout(N.syncT);clearTimeout(N.mT);clearTimeout(N.pT);try{N.conn&&N.conn.close()}catch(e){}try{N.peer&&N.peer.destroy()}catch(e){}}
+ if(N){try{spHostStop(N)}catch(e){}clearTimeout(N.to);clearTimeout(N.syncT);clearTimeout(N.mT);clearTimeout(N.pT);try{N.conn&&N.conn.close()}catch(e){}try{N.peer&&N.peer.destroy()}catch(e){}}
  if(!keepLobby)$('lobby').style.display='none'}
 
 // Matched games (ranked / quick match via the server): the deck is only sent / read once the player presses Ready (mm.js), so it can be changed until then.
@@ -109,6 +109,7 @@ async function hostRoom(mirror){mirror=!!mirror;
   peer.on('open',()=>{if(NET!==N)return;const st='Waiting for your opponent... send them the code or the invite link.';lobby('Your room code',{code,nodeck:mirror,status:st});
    probeRelay(PEEROPT.config.iceServers).then(r=>{if(NET===N&&!N.conn&&!r.relay&&$('ls').textContent==st)$('ls').textContent=st+NORELAY})});
   peer.on('connection',c=>{if(NET!==N)return;
+   if(c.metadata&&c.metadata.spec){spAccept(N.sp||(N.sp=spNode(true)),c);return}   // a spectator (spectate.js), not the opponent
    if(N.conn&&N.conn.open){c.on('open',()=>{c.send({t:'full'});setTimeout(()=>c.close(),300)});return}
    N.conn=c;wire(N,c)});
   peer.on('disconnected',()=>{try{if(NET===N&&!peer.destroyed)peer.reconnect()}catch(e){}});
@@ -219,6 +220,7 @@ async function guestHandle(m){
   sel=pend=null;castMode=false;render();
   const pk=await askExt({d});netSend({t:'askAns',pk:(pk||[]).map(descr)});say('');render();break}
  case'pre':{busy=true;flash=m.i;render();const u=await choosePre(G.p[0].ln[m.i]);netSend({t:'preAns',u:u?u.uid:-1});say('Combat!');render();break}
+ case'spn':NET.spn=m.n|0;spUI();break;
  case'rm':if($('ovr').textContent=='Rematch')$('ovr').textContent='Rematch (opponent ready)';break;
  case'reveal':if(typeof rpReveal=='function')rpReveal(m.v);break;   // game over: the host shows the cards only it knew, so the replay can show its side too (replay.js)
  case'full':case'err':{if(m.t=='full'&&NET.qm){qmAgain();break}const msg=m.t=='full'?'That room already has two players.':m.msg;netLeave(1);lobby('Could not join',{join:1,nodeck:JM,status:msg});break}}}

@@ -88,7 +88,8 @@ function rpCap(ev){
  const s=rpSnap(G),k=JSON.stringify(s),evs=(ev||[]).length?rpClone(ev):[];
  if(!evs.length&&k===REC.last)return;   // nothing changed
  REC.last=k;const f={s};if(evs.length)f.ev=evs;if(REC.st!=null){f.st=REC.st;REC.st=null}
- REC.fr.push(f);if(REC.fr.length>4000)REC.done=true}
+ REC.fr.push(f);try{if(window.spPush)spPush(f,REC)}catch(e){console.warn('spectate',e)}
+ if(REC.fr.length>4000)REC.done=true}
 async function rpFinish(r){
  if(!r||r.done&&r.saved)return;r.done=true;r.saved=true;
  if(r.fr.length<3)return;
@@ -173,23 +174,26 @@ const RP_SPEEDS=[.5,1,2,4];
 function rpBuild(){
  if($('rplbar'))return;
  const d=document.createElement('div');d.id='rplbar';
- d.innerHTML=`<div class="rpt"><b>REPLAY</b><span id="rplmeta"></span></div>
+ d.innerHTML=`<div class="rpt"><b id="rpltag">REPLAY</b><span id="rplmeta"></span></div>
   <div class="rpb"><button id="rplrp" title="Previous round">${RP_ICO.rprev}</button><button id="rplprev" title="Step back (Left)">${RP_ICO.prev}</button><button id="rplpp" class="rppp" title="Play / pause (Space)"></button><button id="rplnext" title="Step forward (Right)">${RP_ICO.next}</button><button id="rplrn" title="Next round">${RP_ICO.rnext}</button></div>
-  <div class="rps"><input type="range" id="rplsl" min="0" max="0" step="1" value="0"><button id="rplspd" title="Playback speed">1x</button></div>
+  <div class="rps"><input type="range" id="rplsl" min="0" max="0" step="1" value="0"><button id="rplspd" title="Playback speed">1x</button><button id="rplgl" title="Jump to the live position">LIVE</button></div>
   <div class="rpl"><span id="rpllbl"></span></div>`;
  $('stage').appendChild(d);
  $('rplpp').onclick=()=>rpToggle();$('rplprev').onclick=()=>rpStep(-1);$('rplnext').onclick=()=>rpStep(1);
  $('rplrp').onclick=()=>rpRound(-1);$('rplrn').onclick=()=>rpRound(1);
+ $('rplgl').onclick=()=>{RP.playing=true;rpGo(RP.fr.length-1,false)};
  $('rplspd').onclick=()=>{RP.speed=RP_SPEEDS[(RP_SPEEDS.indexOf(RP.speed)+1)%RP_SPEEDS.length];rpUI()};
  $('rplsl').oninput=()=>rpSeek(+$('rplsl').value)}
 function rpUI(){
  if(!RP.on)return;
  const n=RP.fr.length,f=RP.fr[Math.max(0,RP.i)],end=RP.i>=n-1;
- $('rplpp').innerHTML=RP.playing&&!end?RP_ICO.pause:RP_ICO.play;
+ $('rplpp').innerHTML=RP.playing&&(!end||RP.live)?RP_ICO.pause:RP_ICO.play;
+ $('rpltag').textContent=RP.live?'LIVE':'REPLAY';
  $('rplsl').max=Math.max(0,n-1);$('rplsl').value=Math.max(0,RP.i);
  $('rplspd').textContent=(RP.speed<1?'0.5':RP.speed)+'x';
  const o=f&&f.s.over;
- $('rpllbl').textContent='Round '+(f?f.s.turn:0)+'  -  '+(Math.max(0,RP.i)+1)+'/'+n+(o&&end?'  -  '+(o.draw?'Draw':o.left||o.win==0?'Win':'Loss'):'')}
+ const mt=RP.d&&RP.d.meta||{},res=o&&end?(RP.live?(o.draw?'Draw':(o.left||o.win==0?mt.me||'Host':mt.opp||'Guest')+' wins'):(o.draw?'Draw':o.left||o.win==0?'Win':'Loss')):'';
+ $('rpllbl').textContent='Round '+(f?f.s.turn:0)+'  -  '+(Math.max(0,RP.i)+1)+'/'+n+(RP.live&&!end?'  -  '+(n-1-RP.i)+' behind':'')+(res?'  -  '+res:RP.live&&end?'  -  live':'')}
 /* ---- replay board: the normal board zoomed out (CSS: body.rpl #game) + a hand band for each player, with their draw and discard piles ---- */
 function rpBoardBuild(){
  if($('rplx'))return;
@@ -248,8 +252,8 @@ function rpPost(){
  rpBoard();
  const m=RP.d&&RP.d.meta||{};
  $('pnb').textContent=m.me||'Playerzacy';$('enb').textContent=m.opp||'Opponent';
- $('end').disabled=true;$('end').textContent='Replay';
- $('sur').textContent='Exit replay'}
+ $('end').disabled=true;$('end').textContent=RP.live?'Live':'Replay';
+ $('sur').textContent=RP.live?'Leave':'Exit replay'}
 /* ---- card flights: which card was played between two frames? ----
    A frame only holds the board, so the "card flies from the hand onto the board" animation of a live game is rebuilt from the difference:
    a new entry in the play history + the card of that player that left the hand (found by uid). Works for old replays too. */
@@ -294,11 +298,11 @@ const rpDelay=f=>{const ev=f.ev||[];return f.st!=null?(ev.some(x=>x.k=='atk'&&x.
 async function rpRun(tk){
  while(RP.on&&RP.tok===tk){
   const end=RP.i>=RP.fr.length-1;
-  if(!RP.playing||end){if(end&&RP.playing){RP.playing=false;rpUI()}await sleep(120);continue}
+  if(!RP.playing||end){if(end&&RP.playing&&!RP.live){RP.playing=false;rpUI()}await sleep(120);continue}
   const f=RP.fr[++RP.i];
   try{await rpShow(f,true,tk)}catch(e){console.error('replay',e);rpFail(e);return}
   if(!RP.on||RP.tok!==tk)return;
-  rpUI();await sleep(rpDelay(f)/RP.speed)}}
+  rpUI();const bh=RP.live?RP.fr.length-1-RP.i:0;await sleep(rpDelay(f)/(RP.speed*(bh>3?1+Math.min(3,(bh-3)/3):1)))}}
 function rpRestart(){const tk=++RP.tok;rpUI();rpRun(tk)}
 async function rpGo(i,animate){   // jump to a frame (paused or running)
  RP.tok++;const tk=RP.tok;i=Math.max(0,Math.min(RP.fr.length-1,i));RP.i=i;
@@ -307,7 +311,7 @@ async function rpGo(i,animate){   // jump to a frame (paused or running)
 const rpSeek=i=>rpGo(i,false);
 function rpStep(d){RP.playing=false;const i=RP.i+d;if(i<0||i>=RP.fr.length)return;rpGo(i,d>0)}
 function rpToggle(){
- if(RP.i>=RP.fr.length-1){RP.playing=true;rpGo(0,false);return}   // finished: play again from the start
+ if(!RP.live&&RP.i>=RP.fr.length-1){RP.playing=true;rpGo(0,false);return}   // finished: play again from the start
  RP.playing=!RP.playing;rpUI()}
 function rpRound(d){
  const t=i=>RP.fr[i].s.turn,cur=RP.i<0?0:RP.i;let j=cur;
@@ -316,10 +320,10 @@ function rpRound(d){
  RP.playing=false;rpGo(j,false)}
 function rpFail(e){toast('This replay could not be played ('+((e&&e.message)||'error')+')',1);rpExit()}
 
-function rpStart(data){
- if(!data||!Array.isArray(data.frames)||data.frames.length<2){toast('This replay is empty or damaged',1);return}
+function rpStart(data,live){
+ if(!data||!Array.isArray(data.frames)||data.frames.length<(live?1:2)){toast('This replay is empty or damaged',1);return}
  if(window.TUT&&TUT.active)TUT.stop();if(typeof extRes!='undefined'&&extRes)extRes();unpin();bpClear();
- RP.on=true;RP.d=data;RP.fr=data.frames;RP.i=-1;RP.playing=true;RP.speed=1;gid++;
+ RP.on=true;RP.live=!!live;document.body.classList.toggle('live',!!live);RP.d=data;RP.fr=data.frames;RP.i=-1;RP.playing=true;RP.speed=1;gid++;
  OPN=data.meta&&data.meta.opp||'';busy=true;sel=pend=null;castMode=false;stickyZoom=false;flash=-1;
  ['ov','mul','hist','modal'].forEach(k=>$(k).style.display='none');
  rpBuild();document.body.classList.add('rpl');rpBoardBuild();rpReset();RP.an=false;
@@ -328,10 +332,10 @@ function rpStart(data){
  const m=data.meta||{};$('rplmeta').textContent=(RP_MODES[m.mode]||'')+(m.ver?'  -  '+m.ver:'');
  rpGo(0,false)}
 function rpExit(){
- if(!RP.on)return;RP.on=false;RP.tok++;document.body.classList.remove('rpl');
+ if(!RP.on)return;const live=RP.live;RP.on=false;RP.live=false;RP.tok++;document.body.classList.remove('rpl','live');
  $('sur').textContent='Surrender';$('end').textContent='End Turn';
- busy=false;toMenu();
- const b=$('ropen');if(b)b.click()}
+ busy=false;if(live&&typeof spStop=='function')spStop();toMenu();
+ if(!live){const b=$('ropen');if(b)b.click()}}
 {const o=$('sur').onclick;$('sur').onclick=function(e){if(RP.on){rpExit();return}return o&&o.call(this,e)}}
 addEventListener('keydown',e=>{
  if(!RP.on||e.ctrlKey||e.metaKey||e.altKey)return;

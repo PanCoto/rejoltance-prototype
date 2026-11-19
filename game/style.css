@@ -1041,3 +1041,9 @@ body.rpl #rplx{display:block}
 #stage #set-rpl .srow button:hover{border-color:#fff;color:#fff}
 #stage #set-rpl .srow button.cf{border-color:var(--red);color:#ff4a50}
 #set-rpl.off .rpopt{opacity:.38;pointer-events:none}
+
+/* spectating */
+#spw{left:1280px;width:110px;font-size:22px}
+body.rpl #spw{display:none!important}
+#rplbar #rplgl{display:none;width:70px;height:40px;font-size:20px;flex:none;color:#fff;background:var(--red);border-color:var(--red)}
+body.live #rplbar #rplgl{display:flex}

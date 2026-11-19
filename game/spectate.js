@@ -1,0 +1,158 @@
+/* ============================================================
+   SPECTATING (unlimited viewers)
+   A room game (Host Online / Join Online / Mirror Match online) can be watched by anyone who has the room code or the link  ?watch=CODE.
+   Spectators are NOT players: they never get the game logic, only the same "frames" the replay recorder produces (see replay.js), with every
+   hand and deck replaced by face-down cards, so nobody can read hidden information. The frames are drawn by the replay player in LIVE mode.
+
+   There is no limit because the viewers form a RELAY TREE instead of all connecting to the host:
+   - the host (root) accepts at most SP_FAN spectators directly; when it is full it answers a new spectator with "go to this peer instead"
+     (the child with the fewest viewers below it), and the spectator repeats that until it finds a node with a free slot;
+   - every spectator accepts up to SP_FAN viewers itself and forwards each frame to them. With SP_FAN=3, 1000 viewers need only ~7 levels;
+   - the host's upload stays tiny however many people watch, so the players' game is not slowed down;
+   - a spectator whose parent disappears (close, or no heartbeat for 25 s) simply rejoins from the root and receives the latest frame again;
+   - counts are summed up the tree and shown to the players ("Watch N" button in the game header).
+   Messages: sp-hi (welcome + latest frame), sp-f (new frame), sp-hb (heartbeat + total), sp-up (child -> parent: viewers below me),
+   sp-redir, sp-err, sp-bye (room closed).
+   ============================================================ */
+const SP_FAN=3;
+let SPEC=null,SPTK=0,SPM=false;
+const spX=()=>window.RJ_EXP?(window.RJ_MAXC<3?2:1):0;
+const spNode=root=>({root:!!root,kids:[],fan:SP_FAN,tot:0,cnt:1,dead:false});
+const spFwd=(T,m)=>T.kids.forEach(k=>{try{if(k.c.open)k.c.send(m)}catch(e){}});
+const spCloseSoon=c=>setTimeout(()=>{try{c.close()}catch(e){}},400);
+
+/* ---------- hiding: spectators only ever see card backs in hands and decks ---------- */
+const spHid=c=>({uid:c.uid,id:0});
+function spHide(f){const s=f.s;
+ return Object.assign({},f,{s:Object.assign({},s,{p:s.p.map(P=>Object.assign({},P,{hand:P.hand.map(spHid),deck:P.deck.map(spHid)}))})})}
+
+/* ---------- a node of the tree (the host and every spectator use the same code) ---------- */
+function spLast(T){
+ if(T.root){const r=T.raw;return r?{g:r.g,n:r.n,meta:r.meta,f:spHide(r.f)}:null}
+ return T.last}
+function spCount(T){
+ const n=T.kids.reduce((a,k)=>a+k.cnt,0);
+ if(T.root){if(T.tot!==n){T.tot=n;try{netSend({t:'spn',n})}catch(e){}spUI()}}
+ else{T.cnt=n+1;clearTimeout(T.upT);T.upT=setTimeout(()=>{try{if(T.up&&T.up.open)T.up.send({t:'sp-up',c:T.cnt})}catch(e){}},400)}}
+function spAccept(T,c){
+ const md=c.metadata||{};
+ c.on('open',()=>{
+  const err=(msg,fatal)=>{try{c.send({t:'sp-err',msg,fatal:fatal?1:0})}catch(e){}spCloseSoon(c)};
+  if(T.dead)return err('This room is closed.',1);
+  if(md.v!==NETV||(md.x|0)!==spX())return err('Version mismatch - the room runs a different version of the game (or Legacy / current differs). Reload the page (Ctrl+F5) and check Extras -> Legacy.',1);
+  if(!T.root&&!T.up)return err('busy');
+  if(T.kids.length>=T.fan&&(md.h|0)<12){   // full: send the spectator one level down, to the child with the fewest viewers below it
+   const bad=Array.isArray(md.bad)?md.bad:[],cand=T.kids.filter(k=>k.c.open&&!bad.includes(k.id)).sort((a,b)=>a.cnt-b.cnt)[0];
+   if(cand){cand.cnt++;try{c.send({t:'sp-redir',to:cand.id})}catch(e){}spCloseSoon(c);return}}
+  const k={c,id:c.peer,cnt:1};T.kids.push(k);
+  c.on('data',m=>{if(m&&m.t=='sp-up'){k.cnt=Math.max(1,Math.min(1e7,+m.c||1));spCount(T)}});
+  const gone=()=>{const i=T.kids.indexOf(k);if(i>=0){T.kids.splice(i,1);spCount(T)}};
+  c.on('close',gone);c.on('error',gone);
+  try{c.send(Object.assign({t:'sp-hi',tot:T.tot},spLast(T)||{g:0}))}catch(e){}
+  spCount(T);
+  if(T.root&&!T.hbI)T.hbI=setInterval(()=>spFwd(T,{t:'sp-hb',n:T.tot}),4000)})}
+
+/* ---------- host side ---------- */
+function spPush(f,r){   // called by replay.js for every captured frame
+ const N=NET;if(!N||!N.host||!N.code||N.mm||N.qm)return;
+ const T=N.sp||(N.sp=spNode(true));
+ T.raw={g:r.gid,n:r.fr.length,meta:Object.assign({},r.meta),f};
+ if(T.kids.length){const m={t:'sp-f',g:T.raw.g,n:T.raw.n,f:spHide(f)};if(T.raw.n==1)m.meta=T.raw.meta;spFwd(T,m)}}
+function spHostStop(N){
+ const T=N&&N.sp;if(!T)return;T.dead=true;clearInterval(T.hbI);spFwd(T,{t:'sp-bye'});
+ const ks=T.kids.slice();T.kids=[];setTimeout(()=>ks.forEach(k=>{try{k.c.close()}catch(e){}}),400)}
+function spUI(){
+ const b=$('spw');if(!b)return;
+ const inGame=!!G&&$('game').style.display=='block'&&!(window.RP&&RP.on),N=NET;
+ if(inGame&&N&&N.host&&N.code&&!N.mm&&!N.qm){const n=N.sp?N.sp.tot:0;b.style.display='block';b.style.pointerEvents='';b.textContent='Watch'+(n?' '+n:'');b.title='Copy the spectator link ('+n+' watching)'}
+ else if(inGame&&N&&!N.host&&N.spn>0){b.style.display='block';b.style.pointerEvents='none';b.textContent='Watch '+N.spn;b.title=''}
+ else b.style.display='none'}
+setInterval(spUI,1000);
+$('spw').onclick=()=>{
+ if(!NET||!NET.host||!NET.code)return;
+ const url=location.origin+location.pathname+'?watch='+NET.code;
+ (navigator.clipboard?navigator.clipboard.writeText(url).then(()=>toast('Spectator link copied - anyone can watch, there is no limit')).catch(()=>prompt('Copy this link:',url)):prompt('Copy this link:',url))};
+
+/* ---------- spectator side ---------- */
+const spRoot=S=>NETPRE+S.code;
+function spStop(){
+ SPTK++;const S=SPEC;SPEC=null;if(!S)return;
+ clearInterval(S.wd);clearTimeout(S.ct);clearTimeout(S.upT);
+ S.kids.forEach(k=>{try{k.c.close()}catch(e){}});
+ try{S.up&&S.up.close()}catch(e){}try{S.peer&&S.peer.destroy()}catch(e){}}
+function spFatal(S,msg){
+ if(SPEC!==S)return;
+ if(S.started){S.ended=1;toast(msg,1);return}
+ spStop();lobby('Watch a game',{join:1,nodeck:1,status:msg})}
+function spFail(S){   // the node we tried to reach did not answer
+ if(SPEC!==S||S.ended)return;
+ if(S.target===spRoot(S)){
+  if(++S.tries>=3)return spFatal(S,S.started?'The host has left the room.':'No room with that code (or the host is not reachable). Check the code and try again.');
+  setTimeout(()=>spGo(S,spRoot(S)),1500)}
+ else{S.bad.push(S.target);S.hop=0;setTimeout(()=>spGo(S,spRoot(S)),300)}}
+function spLost(S){
+ if(SPEC!==S||S.ended)return;
+ toast('Connection to the stream lost - reconnecting...',1);S.hop=0;S.tries=0;
+ setTimeout(()=>spGo(S,spRoot(S)),500+Math.random()*1500)}
+function spGo(S,id){
+ if(SPEC!==S||S.ended)return;
+ S.target=id;
+ const c=S.peer.connect(id,{reliable:true,serialization:'json',metadata:{spec:1,v:NETV,x:spX(),bad:S.bad.slice(-8),h:S.hop}});
+ S.pend=c;clearTimeout(S.ct);
+ S.ct=setTimeout(()=>{if(S.pend===c){S.pend=null;try{c.close()}catch(e){}spFail(S)}},12000);
+ c.on('data',m=>spData(S,c,m));
+ c.on('close',()=>{if(S.up===c){S.up=null;spLost(S)}else if(S.pend===c){S.pend=null;clearTimeout(S.ct);spFail(S)}});
+ c.on('error',()=>{})}
+function spData(S,c,m){
+ if(!m||!m.t||SPEC!==S)return;
+ switch(m.t){
+  case'sp-redir':if(S.pend!==c||!m.to)break;S.pend=null;clearTimeout(S.ct);try{c.close()}catch(e){}S.hop++;spGo(S,String(m.to));break;
+  case'sp-err':if(S.pend!==c)break;S.pend=null;clearTimeout(S.ct);try{c.close()}catch(e){}
+   if(m.fatal)spFatal(S,m.msg||'Could not join.');else spFail(S);break;
+  case'sp-hi':if(S.pend===c){S.pend=null;clearTimeout(S.ct);S.up=c;S.tries=0;S.hop=0;S.bad=[];S.started=1;
+    try{c.send({t:'sp-up',c:S.cnt})}catch(e){}}
+   if(S.up===c){S.tot=m.tot|0;spIn(S,m)}break;
+  case'sp-f':if(S.up===c)spIn(S,m);break;
+  case'sp-hb':if(S.up===c){S.seen=Date.now();S.tot=m.n|0;spFwd(S,m);spMeta(S)}break;
+  case'sp-bye':if(S.up===c){S.ended=1;spFwd(S,m);toast('The host closed the room.',1)}break}}
+function spMeta(S){if(window.RP&&RP.on&&RP.live&&$('rplmeta'))$('rplmeta').textContent='Room  -  '+(S.tot||1)+' watching'}
+function spIn(S,m){
+ S.seen=Date.now();
+ if(!m.f){if(!S.view)$('ls').textContent='Connected. Waiting for the game to start...';return}
+ if(m.meta)S.meta=m.meta;
+ if(m.g!==S.g){S.g=m.g;S.n=0;S.view=0}   // a new game in the same room
+ if(m.n<=S.n)return;
+ S.n=m.n;S.last={g:m.g,n:m.n,meta:S.meta,f:m.f};
+ spFwd(S,m.t=='sp-hi'?{t:'sp-f',g:m.g,n:m.n,meta:S.meta,f:m.f}:m);
+ if(!S.view||!RP.on||!RP.live){
+  S.view=1;S.fr=[m.f];$('lobby').style.display='none';
+  rpStart({meta:Object.assign({},S.meta),frames:S.fr},true);spMeta(S)}
+ else{S.fr.push(m.f);rpUI()}}
+async function spJoin(code){
+ code=(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+ if(code.length!=5){lobby('Watch a game',{join:1,nodeck:1,status:'Enter the 5-character room code.'});return}
+ if(!PeerC())return lobby('Watch a game',{nodeck:1,status:'The networking library did not load. Reload the page and try again.'});
+ netLeave(1);spStop();
+ lobby('Watching '+code+'...',{nodeck:1,status:'Connecting...'});
+ const tk=++SPTK,PEEROPT=await peerOpt();if(tk!==SPTK)return;
+ const peer=new(PeerC())(undefined,PEEROPT);
+ const S=SPEC=Object.assign(spNode(false),{peer,code,g:-1,n:0,fr:[],meta:null,bad:[],hop:0,tries:0,seen:Date.now(),up:null,pend:null,target:'',ended:0,started:0,view:0,last:null});
+ S.wd=setInterval(()=>{if(SPEC===S&&S.up&&!S.ended&&Date.now()-S.seen>25000){const c=S.up;S.up=null;try{c.close()}catch(e){}spLost(S)}},5000);
+ peer.on('open',()=>{if(SPEC===S)spGo(S,spRoot(S))});
+ peer.on('connection',c=>{if(SPEC!==S){try{c.close()}catch(e){}return}spAccept(S,c)});
+ peer.on('disconnected',()=>{try{if(SPEC===S&&!peer.destroyed)peer.reconnect()}catch(e){}});
+ peer.on('error',e=>{if(SPEC!==S)return;
+  if(e.type=='peer-unavailable'){if(S.pend){S.pend=null;clearTimeout(S.ct)}spFail(S)}
+  else if(!S.started&&!S.up)spFatal(S,netErr(e))})}
+function spLobby(code){
+ netLeave();spStop();
+ lobby('Watch a game',{join:1,nodeck:1,status:'Enter the room code of the game you want to watch. There is no limit on the number of spectators.'});
+ $('lin').value=code||'';$('lin').focus()}
+
+// lobby tweaks: the "Join" button becomes "Watch" while this screen is used for spectating
+{const L0=window.lobby;window.lobby=function(t,o){SPM=/^Watch/.test(t);const r=L0.apply(this,arguments);$('lgo').textContent=SPM?'Watch':'Join';return r}}
+{const g0=$('lgo').onclick;$('lgo').onclick=function(e){if(SPM){startAudio();spJoin($('lin').value);return}return g0.call(this,e)}}
+{const c0=$('lcancel').onclick;$('lcancel').onclick=function(e){spStop();return c0.call(this,e)}}
+$('mspec').onclick=()=>{LB='frmenu';spLobby('')};
+addEventListener('pagehide',()=>{try{spStop()}catch(e){}});
+{const w=new URLSearchParams(location.search).get('watch');if(w){LB='frmenu';spLobby(w.toUpperCase().slice(0,5));spJoin(w)}}
