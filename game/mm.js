@@ -74,7 +74,8 @@ async function mmHost(code,tk){
  const peer=new(PeerC())(PID(code),PEEROPT);
  const N=NET={host:true,mm:1,mirror:false,peer,code,conn:null,ev:[],mull:[0,0],pref:[null,null],rm:[0,0],pre:null,dead:false};
  N.to=setTimeout(()=>{if(NET===N)mmFail('Your opponent did not connect.')},45000);
- peer.on('connection',c=>{if(NET!==N)return;if(N.conn){c.close();return}N.conn=c;wire(N,c);c.on('open',()=>clearTimeout(N.to))});
+ peer.on('connection',c=>{if(NET!==N)return;if(c.metadata&&c.metadata.spec){spAccept(N.sp||(N.sp=spNode(true)),c);return}   // a spectator (friend challenge games can be watched, see spectate.js)
+  if(N.conn){c.close();return}N.conn=c;wire(N,c);c.on('open',()=>clearTimeout(N.to))});
  peer.on('disconnected',()=>{try{if(NET===N&&!peer.destroyed)peer.reconnect()}catch(e){}});
  peer.on('error',e=>{if(NET===N)mmFail('Connection problem: '+(e&&e.type||'unknown')+'.')})}
 async function mmGuest(code,tk){
@@ -222,7 +223,7 @@ async function profOpen(msg,home){
  try{
   if(home!==undefined)PFH=home;
   let up=null;if(cfg()){up=await serverUp();if(up){await meLoad();chipRefresh()}}
-  rk('acctmenu').classList.remove('view');rk('pft').textContent='Profile';rk('pfsub').textContent='';rk('pffr').hidden=true;PFP=null;
+  rk('acctmenu').classList.remove('view');rk('pft').textContent='Profile';rk('pfsub').textContent='';rk('pffr').hidden=true;rk('pfwatch').hidden=true;PFP=null;
   openPanel('acctmenu');rk('pfname').value=dispName();rk('pfmsg').textContent=msg||'';rk('pfback').onclick=()=>{const h=PFH;PFH=null;h?h():closePanels()};
   if(!lsGet('rj_first'))lsSet('rj_first',String(Date.now()));
   profFill(MM.me,true);
@@ -233,16 +234,17 @@ async function profOpen(msg,home){
 let PFH=null;
 let PFB=null,PFP=null;   // where Back goes from another player's profile / who is shown
 const frLabel={none:'Add friend',pending_out:'Cancel request',pending_in:'Accept request',friends:'Remove friend'};
-function pfFriendBtn(){const b=rk('pffr'),p=PFP;b.hidden=!(p&&!p.self&&p.rel);if(!b.hidden)b.textContent=frLabel[p.rel]||'Add friend'}
+function pfFriendBtn(){const b=rk('pffr'),p=PFP;b.hidden=!(p&&!p.self&&p.rel);if(!b.hidden)b.textContent=frLabel[p.rel]||'Add friend';
+ const w=rk('pfwatch');if(w)w.hidden=!(p&&!p.self&&p.rel=='friends'&&p.live&&p.live.pid)}   // Watch game: only for friends who are in a watchable game
 async function profView(pid,back){
  if(MM.me&&MM.me.pid==pid)return profOpen();
  if(OPENING)return;ldOn();
  try{
   let p=null,err=null;try{p=await api('/api/player?pid='+encodeURIComponent(pid),null,getAcct());if(p.error)throw new Error(p.error)}catch(e){err=e}
-  PFB=back||rkOpen;PFP=null;rk('acctmenu').classList.add('view');rk('pft').textContent='Player';rk('pfsub').textContent='';rk('pfmsg').textContent='';rk('pffr').hidden=true;
+  PFB=back||rkOpen;PFP=null;rk('acctmenu').classList.add('view');rk('pft').textContent='Player';rk('pfsub').textContent='';rk('pfmsg').textContent='';rk('pffr').hidden=true;rk('pfwatch').hidden=true;
   openPanel('acctmenu');rk('pfback').onclick=()=>PFB();
   if(err){rk('pfsub').textContent='Could not load this profile: '+err.message;return}
-  PFP=p;rk('pft').textContent=p.name;rk('pfsub').textContent=(p.last?'Last seen: '+ago(p.last).replace('Active now','online now'):'');profFill(p,false);pfFriendBtn()}
+  PFP=p;rk('pft').textContent=p.name;rk('pfsub').textContent=(p.last?'Last seen: '+ago(p.last).replace('Active now','online now'):'')+(p.live&&p.live.pid&&p.rel=='friends'?'  -  in a game right now':'');profFill(p,false);pfFriendBtn()}
  finally{ldOff()}}
 rk('pffr').onclick=async()=>{const p=PFP,a=getAcct();if(!p||!a)return;
  const act={none:'request',pending_out:'remove',pending_in:'accept',friends:'remove'}[p.rel];
@@ -250,6 +252,7 @@ rk('pffr').onclick=async()=>{const p=PFP,a=getAcct();if(!p||!a)return;
  try{const r=await api('/api/friends/'+act,{method:'POST',body:{pid:p.pid}},a);if(r.error)throw new Error(r.error);p.rel=r.rel;pfFriendBtn();friendsLoad();
   rk('pfmsg').textContent=r.rel=='pending_out'?'Friend request sent.':r.rel=='friends'?'You are now friends.':r.rel=='none'?'Done.':''}
  catch(e){rk('pfmsg').textContent='Could not do that: '+e.message}};
+rk('pfwatch').onclick=()=>{const p=PFP;if(p&&p.live&&p.live.pid)spWatchPid(p.live.pid,'acctmenu')};
 rk('pchip').onclick=()=>profOpen('',null);
 rk('pfsave').onclick=async()=>{const a=getAcct(),n=cleanName(rk('pfname').value).trim();if(!n){rk('pfmsg').textContent='Enter a name first.';return}
  setMyName(n);chipRefresh();
@@ -270,12 +273,12 @@ rk('avq').oninput=avRender;rk('avgrid').onclick=e=>{const b=e.target.closest('.a
 rk('avclear').onclick=()=>avSet(0);rk('avback').onclick=()=>profOpen();
 
 // ---------- Friends ----------
-function fdRow(p,btns){return '<div class="fdrow" data-pid="'+esc(p.pid)+'"><em class="av">'+avHTML(p.avatar,p.name)+'</em><div class="fi"><b>'+esc(p.name)+'</b><small>'+[p.wins!=null?'Prestige '+prestigeOf(p.wins).lv:'',p.last?ago(p.last):''].filter(Boolean).join('  -  ')+'</small></div><span class="rkbt">'+btns+'</span></div>'}
+function fdRow(p,btns){return '<div class="fdrow" data-pid="'+esc(p.pid)+'"><em class="av">'+avHTML(p.avatar,p.name)+'</em><div class="fi"><b>'+esc(p.name)+'</b><small>'+[p.live&&p.live.pid?'In a game':'',p.wins!=null?'Prestige '+prestigeOf(p.wins).lv:'',p.last?ago(p.last):''].filter(Boolean).join('  -  ')+'</small></div><span class="rkbt">'+btns+'</span></div>'}
 const fdBtn=(a,t)=>'<button data-a="'+a+'">'+t+'</button>';
 function fdRender(){const f=MM.fr;if(!f){rk('fdlist').innerHTML='';return}
  const sec=(t,rows)=>rows?'<h4>'+t+'</h4>'+rows:'';
  const h=sec('Requests ('+f.incoming.length+')',f.incoming.map(p=>fdRow(p,fdBtn('accept','Accept')+fdBtn('remove','Decline'))).join(''))
-  +sec('Friends ('+f.friends.length+')',f.friends.map(p=>fdRow(p,fdBtn('challenge','Challenge')+fdBtn('view','Profile')+fdBtn('remove','Remove'))).join(''))
+  +sec('Friends ('+f.friends.length+')',f.friends.map(p=>fdRow(p,(p.live&&p.live.pid?fdBtn('watch','Watch'):'')+fdBtn('challenge','Challenge')+fdBtn('view','Profile')+fdBtn('remove','Remove'))).join(''))
   +sec('Sent requests ('+f.outgoing.length+')',f.outgoing.map(p=>fdRow(p,fdBtn('remove','Cancel'))).join(''));
  rk('fdlist').innerHTML=h||'<div class="fdempty">No friends yet - search for a player above, or open a profile from the leaderboard and press Add friend.</div>'}
 function fdBadge(){const n=MM.fr?MM.fr.incoming.length:0;rk('fdcnt').textContent=n?String(n):''}
@@ -302,7 +305,8 @@ async function fdAct(act,pid){const a=getAcct();
 rk('fdopen').onclick=()=>fdOpen();rk('fdgo').onclick=fdSearch;rk('fdq').onkeydown=e=>{if(e.key=='Enter')fdSearch()};
 rk('fdmenu').addEventListener('click',e=>{const b=e.target.closest('button[data-a]'),r=e.target.closest('.fdrow');if(!r)return;const pid=r.dataset.pid;
  if(!b){profView(pid,()=>fdOpen());return}
- if(b.dataset.a=='challenge')chSend(pid,r);else if(b.dataset.a=='view')profView(pid,()=>fdOpen());else fdAct(b.dataset.a,pid)});
+ if(b.dataset.a=='watch'){const f=MM.fr&&MM.fr.friends.find(x=>x.pid==pid);if(f&&f.live&&f.live.pid)spWatchPid(f.live.pid,'fdmenu');else fdOpen('That game is not running any more.')}
+ else if(b.dataset.a=='challenge')chSend(pid,r);else if(b.dataset.a=='view')profView(pid,()=>fdOpen());else fdAct(b.dataset.a,pid)});
 
 // ---------- Friend challenges ----------
 // Sender: server creates a room code, the sender hosts it (same peer-to-peer path as Quick Match) and polls until the friend answers.

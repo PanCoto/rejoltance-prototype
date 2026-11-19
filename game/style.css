@@ -1047,3 +1047,6 @@ body.rpl #rplx{display:block}
 body.rpl #spw{display:none!important}
 #rplbar #rplgl{display:none;width:70px;height:40px;font-size:20px;flex:none;color:#fff;background:var(--red);border-color:var(--red)}
 body.live #rplbar #rplgl{display:flex}
+#pfwatch{border-color:var(--red)}
+#stage #acctmenu #pfwatch{border-color:#fff;color:#fff;background:transparent}
+.fdrow button[data-a=watch]{border-color:#fff;color:#fff}

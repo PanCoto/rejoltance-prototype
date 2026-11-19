@@ -19,6 +19,8 @@ let SPEC=null,SPTK=0,SPM=false;
 const spX=()=>window.RJ_EXP?(window.RJ_MAXC<3?2:1):0;
 const spNode=root=>({root:!!root,kids:[],fan:SP_FAN,tot:0,cnt:1,dead:false});
 const spFwd=(T,m)=>T.kids.forEach(k=>{try{if(k.c.open)k.c.send(m)}catch(e){}});
+// which games can be watched: room games, Mirror Match online and friend challenges. Quick Match and Ranked never (fair play).
+const spOK=N=>!!(N&&N.code&&!N.qm&&(!N.mm||(window.MM&&MM.cur&&MM.cur.mode=='friend')));
 const spCloseSoon=c=>setTimeout(()=>{try{c.close()}catch(e){}},400);
 
 /* ---------- hiding: spectators only ever see card backs in hands and decks ---------- */
@@ -54,7 +56,7 @@ function spAccept(T,c){
 
 /* ---------- host side ---------- */
 function spPush(f,r){   // called by replay.js for every captured frame
- const N=NET;if(!N||!N.host||!N.code||N.mm||N.qm)return;
+ const N=NET;if(!N||!N.host||!spOK(N))return;
  const T=N.sp||(N.sp=spNode(true));
  T.raw={g:r.gid,n:r.fr.length,meta:Object.assign({},r.meta),f};
  if(T.kids.length){const m={t:'sp-f',g:T.raw.g,n:T.raw.n,f:spHide(f)};if(T.raw.n==1)m.meta=T.raw.meta;spFwd(T,m)}}
@@ -64,17 +66,17 @@ function spHostStop(N){
 function spUI(){
  const b=$('spw');if(!b)return;
  const inGame=!!G&&$('game').style.display=='block'&&!(window.RP&&RP.on),N=NET;
- if(inGame&&N&&N.host&&N.code&&!N.mm&&!N.qm){const n=N.sp?N.sp.tot:0;b.style.display='block';b.style.pointerEvents='';b.textContent='Watch'+(n?' '+n:'');b.title='Copy the spectator link ('+n+' watching)'}
+ if(inGame&&N&&N.host&&spOK(N)){const n=N.sp?N.sp.tot:0;b.style.display='block';b.style.pointerEvents='';b.textContent='Watch'+(n?' '+n:'');b.title='Copy the spectator link ('+n+' watching)'}
  else if(inGame&&N&&!N.host&&N.spn>0){b.style.display='block';b.style.pointerEvents='none';b.textContent='Watch '+N.spn;b.title=''}
  else b.style.display='none'}
 setInterval(spUI,1000);
 $('spw').onclick=()=>{
  if(!NET||!NET.host||!NET.code)return;
- const url=location.origin+location.pathname+'?watch='+NET.code;
+ const base=location.origin+location.pathname,url=NET.mm&&NET.peer&&NET.peer.id?base+'?watchid='+encodeURIComponent(NET.peer.id):base+'?watch='+NET.code;   // friend challenges use a different peer id than room codes
  (navigator.clipboard?navigator.clipboard.writeText(url).then(()=>toast('Spectator link copied - anyone can watch, there is no limit')).catch(()=>prompt('Copy this link:',url)):prompt('Copy this link:',url))};
 
 /* ---------- spectator side ---------- */
-const spRoot=S=>NETPRE+S.code;
+const spRoot=S=>S.rid||NETPRE+S.code;
 function spStop(){
  SPTK++;const S=SPEC;SPEC=null;if(!S)return;
  clearInterval(S.wd);clearTimeout(S.ct);clearTimeout(S.upT);
@@ -87,7 +89,7 @@ function spFatal(S,msg){
 function spFail(S){   // the node we tried to reach did not answer
  if(SPEC!==S||S.ended)return;
  if(S.target===spRoot(S)){
-  if(++S.tries>=3)return spFatal(S,S.started?'The host has left the room.':'No room with that code (or the host is not reachable). Check the code and try again.');
+  if(++S.tries>=3)return spFatal(S,S.started?'The host has left the room.':S.rid?'That game is not running any more (or the host is not reachable).':'No room with that code (or the host is not reachable). Check the code and try again.');
   setTimeout(()=>spGo(S,spRoot(S)),1500)}
  else{S.bad.push(S.target);S.hop=0;setTimeout(()=>spGo(S,spRoot(S)),300)}}
 function spLost(S){
@@ -128,15 +130,16 @@ function spIn(S,m){
   S.view=1;S.fr=[m.f];$('lobby').style.display='none';
   rpStart({meta:Object.assign({},S.meta),frames:S.fr},true);spMeta(S)}
  else{S.fr.push(m.f);rpUI()}}
-async function spJoin(code){
- code=(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
- if(code.length!=5){lobby('Watch a game',{join:1,nodeck:1,status:'Enter the 5-character room code.'});return}
+async function spJoin(code,rid){
+ if(rid)code=rid.slice(NETPRE.length);   // joining by the host's full peer id (friend's profile, ?watchid=)
+ else{code=(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(code.length!=5){lobby('Watch a game',{join:1,nodeck:1,status:'Enter the 5-character room code.'});return}}
  if(!PeerC())return lobby('Watch a game',{nodeck:1,status:'The networking library did not load. Reload the page and try again.'});
  netLeave(1);spStop();
  lobby('Watching '+code+'...',{nodeck:1,status:'Connecting...'});
  const tk=++SPTK,PEEROPT=await peerOpt();if(tk!==SPTK)return;
  const peer=new(PeerC())(undefined,PEEROPT);
- const S=SPEC=Object.assign(spNode(false),{peer,code,g:-1,n:0,fr:[],meta:null,bad:[],hop:0,tries:0,seen:Date.now(),up:null,pend:null,target:'',ended:0,started:0,view:0,last:null});
+ const S=SPEC=Object.assign(spNode(false),{peer,code,rid:rid||'',g:-1,n:0,fr:[],meta:null,bad:[],hop:0,tries:0,seen:Date.now(),up:null,pend:null,target:'',ended:0,started:0,view:0,last:null});
  S.wd=setInterval(()=>{if(SPEC===S&&S.up&&!S.ended&&Date.now()-S.seen>25000){const c=S.up;S.up=null;try{c.close()}catch(e){}spLost(S)}},5000);
  peer.on('open',()=>{if(SPEC===S)spGo(S,spRoot(S))});
  peer.on('connection',c=>{if(SPEC!==S){try{c.close()}catch(e){}return}spAccept(S,c)});
@@ -156,3 +159,30 @@ function spLobby(code){
 $('mspec').onclick=()=>{LB='frmenu';spLobby('')};
 addEventListener('pagehide',()=>{try{spStop()}catch(e){}});
 {const w=new URLSearchParams(location.search).get('watch');if(w){LB='frmenu';spLobby(w.toUpperCase().slice(0,5));spJoin(w)}}
+{const q=new URLSearchParams(location.search),wi=q.get('watchid');if(!q.get('watch')&&wi&&/^[\w-]{6,64}$/.test(wi)&&wi.indexOf(NETPRE)==0){LB='frmenu';spJoin('',wi)}}
+
+/* ---------- watching a friend (Friends list / player profile) ----------
+   Needs the ranking server (mm.js, RJ_MM): while you are in a watchable game the client tells the server the id of the host's peer ("presence");
+   the server shows it to your FRIENDS only (as `live:{pid,mode}` in /api/friends and /api/player), where mm.js turns it into a Watch button.
+   Server API: POST /api/presence  {act:'set',pid,mode}  |  {act:'clear'}   (Bearer auth like every other call; the entry should expire after ~90 s). */
+const prAllowed=()=>lsGet('rj_sp_fr')!=='0';
+let PRS=null,PROFF=false;
+const prPid=N=>{try{return N.host?(N.peer&&N.peer.id):(N.conn&&N.conn.peer)}catch(e){return''}};
+function prSend(act,pid,mode,keep){
+ const a=getAcct(),u=cfg();if(!a||!u||PROFF)return;
+ try{fetch(u+'/api/presence',{method:'POST',keepalive:!!keep,headers:hdr(a),body:JSON.stringify(act=='set'?{act,pid,mode}:{act})})
+  .then(r=>{if(r.status==404||r.status==405)PROFF=true}).catch(()=>{})}catch(e){}}
+function prTick(){
+ if(PROFF)return;
+ const N=NET,inGame=!!G&&$('game').style.display=='block'&&!(window.RP&&RP.on);
+ const pid=inGame&&N&&!N.dead&&spOK(N)&&prAllowed()?prPid(N):'';
+ if(pid){if(!PRS||PRS.n!==N||PRS.pid!==pid||Date.now()-PRS.t>40000){PRS={n:N,pid,t:Date.now()};prSend('set',pid,N.mm?'friend':'room')}}
+ else if(PRS){PRS=null;prSend('clear')}}
+setInterval(prTick,5000);
+addEventListener('pagehide',()=>{if(PRS){PRS=null;prSend('clear',0,0,true)}});
+function spWatchPid(pid,back){
+ if(!/^[\w-]{6,64}$/.test(pid)||pid.indexOf(NETPRE)!=0)return toast('That game is not available.',1);
+ LB=back||'fdmenu';startAudio();spJoin('',pid)}
+// the Friends list is refreshed while it is open, so Watch buttons appear / disappear by themselves
+setInterval(()=>{try{if($('fdmenu').style.display=='flex'&&typeof friendsLoad=='function')friendsLoad()}catch(e){}},15000);
+{const b=$('spfr');if(b){b.checked=prAllowed();b.onchange=()=>{lsSet('rj_sp_fr',b.checked?'1':'0');prTick()}}}

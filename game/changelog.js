@@ -52,6 +52,7 @@ const CHANGELOG=`
 - Anyone can now **watch** a room game live: Play with a friend -> **Watch a Game**, enter the room code (or open the link ?watch=CODE). The **Watch** button in the game header copies that link and shows how many people are watching.
 - There is **no limit** on the number of spectators: viewers relay the game to each other, so the players' connection is not affected.
 - Spectators only see face-down cards in both hands and decks. They get the replay player's LIVE mode: pause, step back, and jump back to live at any time.
+- **Watch a friend**: when a friend is in a room game or a friend challenge, a **Watch** button appears next to them in the Friends list and on their profile. Turn this off with **Settings -> Let friends watch my games**. Ranked and Quick Match games cannot be watched.
 ### Replays
 - Every finished game is now saved automatically as a **replay** (Extras -> Replays): vs the bot, Mirror Match, Quick Match, Ranked and friend / room games. Tutorial and Endless Mode are not recorded.
 - The Replays screen lists your saved games with the result, opponent, mode, date, number of rounds and game version. **Watch** plays a replay on the board with a hand band for each player and their draw and discard piles (click a pile to see its cards), cards flying from the hand to the board, and the opponent's hand and deck revealed after the game.
