@@ -46,7 +46,7 @@ const CHANGELOG=`
 - **Bandit** (Human, 2 cost, 1/3): When this deals Damage to an Enemy Unit: Stun it.
 - **Samurai** (Human, 5 cost, 2/3): While in Play: When You draw a Card, gain +1/+1. After Combat Here: Do a Bonus Attack.
 - **Ember Drake** (Machine / Animal, 1 cost, 1/1): When this deals Damage to an Enemy Unit: Apply Burning to it.
-- **Toll Keeper** (Aberration, 2 cost, 2/1): While in Play: Enemy Actions cost 1 more.
+- **T34** (Machine, 5 cost, 4/4): Unactionable.
 - **Parasol Couple** (Aberration, 4 cost, 1/6): Unactionable. While in Play: Adjacent Friendly Units have Unactionable.
 ### Replays
 - Every finished game is now saved automatically as a **replay** (Extras -> Replays): vs the bot, Mirror Match, Quick Match, Ranked and friend / room games. Tutorial and Endless Mode are not recorded.

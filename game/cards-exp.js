@@ -499,12 +499,15 @@ const CARDS_EXP = [
     Cost: 2,
     Attack: 2,
     Health: 3,
-    Description: "Deals double the Damage to the Enemy Hero.",
+    Description: "Deals double the Damage to the Enemy Hero and Enemy Machines.",
     Effects: [
       {
         Trigger: "Passive",
         Zone: "Board",
-        Actions: [{ Type: "ModifyDamage", Against: "EnemyHero", Multiplier: 2 }],
+        Actions: [
+          { Type: "ModifyDamage", Against: "EnemyHero", Multiplier: 2 },
+          { Type: "ModifyDamage", Against: "EnemyUnit", Where: { Subtype: "Machine" }, Multiplier: 2 },
+        ],
       },
     ],
   },
@@ -940,15 +943,22 @@ const CARDS_EXP = [
   },
 
   {
-    Id: 98,
-    Name: "Door-Machine",
+    Id: 129,
+    Name: "T34",
     Type: "Unit",
     Subtypes: ["Machine"],
     Cost: 4,
     Attack: 4,
     Health: 4,
     Keywords: ["Unactionable"],
-    Description: "",
+    Description: "Can't be Damaged by Human cards.",
+    Effects: [
+      {
+        Trigger: "Passive",
+        Zone: "Board",
+        Actions: [{ Type: "DamageImmunity", From: { Subtype: "Human" } }],
+      },
+    ],
   },
 
   {

@@ -1099,6 +1099,16 @@ function dmgMod(G, t, n, s, melee) {
   });
   return Math.max(0, Math.floor(n));
 }
+// Passive "DamageImmunity": the unit takes no damage from sources (units or spells)
+// that match From (e.g. { Subtype: "Human" }). Silenced units lose it.
+function dmgImmune(t, s) {
+  if (!t || t.h || t.sil || !s || !s.d) return false;
+  return (t.d.Effects || []).some(
+    (e) =>
+      e.Trigger == "Passive" &&
+      e.Actions.some((a) => a.Type == "DamageImmunity" && cardOK(s.d, a.From)),
+  );
+}
 function lifesteal(G, s, n) {
   if (!(n > 0 && s && s.uid && !s.sp && s.kw && s.kw.has("Lifesteal") && !s.sil && !G.over)) return;
   const p = G.p[s.o];
@@ -1138,6 +1148,11 @@ function dmg(G, t, n, s, melee) {
       );
     chk(G);
     return;
+  }
+  if (n > 0 && dmgImmune(t, s)) {
+    n = 0;
+    L(G, t.d.Name + " is immune to damage from " + s.d.Name);
+    EV(G, { k: "trig", u: t.uid });
   }
   if (n > 0 && t.kw.has("Protected")) n = 0;
   const ar = t.kw.has("Armored") ? kwp(t, "Armored") : t.kw.has("Armor2") ? 2 : 0;
