@@ -221,6 +221,7 @@ async function guestHandle(m){
   const pk=await askExt({d});netSend({t:'askAns',pk:(pk||[]).map(descr)});say('');render();break}
  case'pre':{busy=true;flash=m.i;render();const u=await choosePre(G.p[0].ln[m.i]);netSend({t:'preAns',u:u?u.uid:-1});say('Combat!');render();break}
  case'spn':NET.spn=m.n|0;spUI();break;
+ case'spid':NET.spid=String(m.id||'');break;
  case'rm':if($('ovr').textContent=='Rematch')$('ovr').textContent='Rematch (opponent ready)';break;
  case'reveal':if(typeof rpReveal=='function')rpReveal(m.v);break;   // game over: the host shows the cards only it knew, so the replay can show its side too (replay.js)
  case'full':case'err':{if(m.t=='full'&&NET.qm){qmAgain();break}const msg=m.t=='full'?'That room already has two players.':m.msg;netLeave(1);lobby('Could not join',{join:1,nodeck:JM,status:msg});break}}}

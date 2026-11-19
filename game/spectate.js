@@ -23,24 +23,87 @@ const spFwd=(T,m)=>T.kids.forEach(k=>{try{if(k.c.open)k.c.send(m)}catch(e){}});
 const spOK=N=>!!(N&&N.host&&!N.dead);   // EVERY hosted game can be watched: room, Mirror Match, Quick Match, Ranked, friend challenge (spectators only get face-down hands/decks)
 // id a spectator connects to: Quick Match (p2p) drops its signalling link when matched, so it gets a dedicated stream peer; the others use the game peer
 const spLinkId=N=>{try{if(!N||!N.host)return'';if(N.wp)return N.wp.open?N.wp.id:'';if(N.qm)return'';return N.peer&&N.peer.id||''}catch(e){return''}};
-function spStream(N){   // Quick Match host: separate peer that only serves spectators
- if(N.wp||N.wpTry||!N.qm)return;N.wpTry=1;
- peerOpt().then(opt=>{if(NET!==N||N.dead)return;
-  const open=n=>{const p=new(PeerC())(NETPRE+'W'+newCode()+newCode(),opt);N.wp=p;
-   p.on('connection',c=>{if(NET!==N){try{c.close()}catch(e){}return}if(c.metadata&&c.metadata.spec)spAccept(N.sp||(N.sp=spNode(true)),c);else{try{c.close()}catch(e){}}});
+// ---------- beacons: a peer with a STABLE id per account (rejoltance-L<pid>) that exists only while that player is in a game ----------
+// Friends' lists probe these ids, so a running game can be found (and watched) without a room code and without any server support.
+// Host: the beacon is the root of the spectator tree. Guest: the beacon only redirects spectators to the host's beacon (id sent with {t:'spid'}).
+const spPidOf=()=>{try{const p=window.MM&&MM.me&&MM.me.pid;return p&&/^[\w-]{3,40}$/.test(p)?String(p):''}catch(e){return''}};
+const spBid=pid=>NETPRE+'L'+pid,spRnd=()=>NETPRE+'W'+newCode()+newCode();
+function spBeacon(N,id,onConn,fallback){
+ return peerOpt().then(opt=>{
+  if(NET!==N||N.dead||N.wp)return;
+  const open=(n,pid)=>{
+   const p=new(PeerC())(pid,opt);N.wp=p;
+   p.on('open',()=>{if(NET===N&&N.host)netSend({t:'spid',id:p.id})});
+   p.on('connection',c=>{
+    if(NET!==N){try{c.close()}catch(e){}return}
+    const md=c.metadata||{};
+    if(md.probe){c.on('open',()=>setTimeout(()=>{try{c.close()}catch(e){}},300));return}   // a friends list asking "are you in a game?"
+    if(md.spec)onConn(c);else{try{c.close()}catch(e){}}});
    p.on('disconnected',()=>{try{if(!p.destroyed)p.reconnect()}catch(e){}});
-   p.on('error',e=>{if(e.type=='unavailable-id'&&n<4){try{p.destroy()}catch(x){}N.wp=null;open(n+1)}})};
-  open(0)}).catch(()=>{N.wpTry=0})}
+   p.on('error',e=>{if(e.type!='unavailable-id')return;   // the old beacon of this account is still registered (previous game / second tab): retry shortly
+    try{p.destroy()}catch(x){}N.wp=null;
+    if(n<5)setTimeout(()=>{if(NET===N&&!N.dead&&!N.wp)open(n+1,n>=2&&fallback?fallback:pid)},1500)})};
+  open(0,id)})}
+function spStream(N){   // host, called for every frame
+ if(N.wp||N.wpTry)return;
+ const pid=prAllowed()?spPidOf():'';
+ if(!pid&&!N.qm)return;   // without an account only Quick Match needs it (its game peer drops the signalling link); other games are reached through the game peer
+ N.wpTry=1;
+ spBeacon(N,pid?spBid(pid):spRnd(),c=>spAccept(N.sp||(N.sp=spNode(true)),c),spRnd()).catch(()=>{N.wpTry=0})}
+function spGuest(N){   // guest: friends of the guest can find the game too
+ if(N.host||N.wp||N.wpTry||N.dead)return;
+ const pid=prAllowed()?spPidOf():'';if(!pid)return;
+ N.wpTry=1;
+ spBeacon(N,spBid(pid),c=>c.on('open',()=>{try{c.send(N.spid?{t:'sp-redir',to:N.spid}:{t:'sp-err',msg:'busy'})}catch(e){}spCloseSoon(c)}),null).catch(()=>{N.wpTry=0})}
+setInterval(()=>{try{const N=NET;if(N&&!N.host&&!N.dead&&G&&$('game').style.display=='block'&&!(window.RP&&RP.on))spGuest(N)}catch(e){}},4000);
+
+// ---------- friends list: which friends are in a game right now? (called by mm.js) ----------
+// Connects to every friend's beacon id: it is only registered while that friend is in a game, and it answers the probe. Positive answers only.
+let SPPR=null,SPPB=false;
+function spProbePeer(){
+ if(SPPR&&SPPR.p&&!SPPR.p.destroyed)return SPPR.ready;
+ const o=SPPR={p:null,w:{}};
+ o.ready=peerOpt().then(opt=>new Promise(res=>{
+  const p=o.p=new(PeerC())(undefined,opt);
+  p.on('open',()=>res(o));
+  p.on('error',e=>{const m=/peer (\S+)/.exec(e&&e.message||''),w=m&&o.w[m[1]];if(w)w.dead=1;else if(!p.open)res(null)});
+  p.on('disconnected',()=>{try{if(!p.destroyed)p.reconnect()}catch(x){}});
+  setTimeout(()=>res(null),8000)}));
+ return o.ready}
+window.spProbe=async function(list){
+ if(SPPB||!PeerC())return false;
+ const fr=(list||[]).filter(p=>p&&/^[\w-]{3,40}$/.test(p.pid||'')&&!(p.live&&p.live.pid&&p.live.mode!='beacon')).slice(0,40);
+ if(!fr.length)return false;
+ SPPB=true;
+ try{
+  const o=await spProbePeer();if(!o)return false;
+  o.w={};
+  fr.forEach(p=>{const id=spBid(p.pid),w=o.w[id]={p,ok:0,dead:0};
+   try{w.c=o.p.connect(id,{reliable:true,serialization:'json',metadata:{probe:1}});w.c.on('open',()=>{w.ok=1});w.c.on('error',()=>{})}catch(e){w.dead=1}});
+  for(let t=0;t<24;t++){await new Promise(r=>setTimeout(r,250));if(Object.values(o.w).every(w=>w.ok||w.dead))break}
+  let ch=false;
+  for(const id in o.w){const w=o.w[id],was=!!(w.p.live&&w.p.live.mode=='beacon');
+   const now=w.ok?true:w.dead?false:was;   // no answer yet: keep what we knew
+   try{w.c&&w.c.close()}catch(e){}
+   if(now&&!w.p.live)w.p.live={pid:id,mode:'beacon'};else if(!now&&was)w.p.live=null;
+   if(now!=was)ch=true}
+  return ch}
+ finally{SPPB=false}};
+addEventListener('pagehide',()=>{try{SPPR&&SPPR.p&&SPPR.p.destroy()}catch(e){}});
 const spCloseSoon=c=>setTimeout(()=>{try{c.close()}catch(e){}},400);
 
 /* ---------- hiding: spectators only ever see card backs in hands and decks ---------- */
 const spHid=c=>({uid:c.uid,id:0});
-function spHide(f){const s=f.s;
- return Object.assign({},f,{s:Object.assign({},s,{p:s.p.map(P=>Object.assign({},P,{hand:P.hand.map(spHid),deck:P.deck.map(spHid)}))})})}
+// Spectators SEE both hands (the draw piles stay face-down). Ranked: an opponent could open a watch link on a second device and read your hand,
+// so there the hands stay hidden. Set SP_HANDS_RANKED=true if you do not care.
+const SP_HANDS_RANKED=false;
+const spHH=N=>!!(N&&N.mm&&window.MM&&MM.cur&&MM.cur.mode=='ranked'&&!SP_HANDS_RANKED);
+function spHide(f,hh){const s=f.s;
+ return Object.assign({},f,{s:Object.assign({},s,{p:s.p.map(P=>Object.assign({},P,{hand:hh?P.hand.map(spHid):P.hand,deck:P.deck.map(spHid)}))})})}
 
 /* ---------- a node of the tree (the host and every spectator use the same code) ---------- */
 function spLast(T){
- if(T.root){const r=T.raw;return r?{g:r.g,n:r.n,meta:r.meta,f:spHide(r.f)}:null}
+ if(T.root){const r=T.raw;return r?{g:r.g,n:r.n,meta:r.meta,f:spHide(r.f,T.hh)}:null}
  return T.last}
 function spCount(T){
  const n=T.kids.reduce((a,k)=>a+k.cnt,0);
@@ -68,9 +131,9 @@ function spAccept(T,c){
 function spPush(f,r){   // called by replay.js for every captured frame
  const N=NET;if(!N||!N.host||!spOK(N))return;
  spStream(N);
- const T=N.sp||(N.sp=spNode(true));
+ const T=N.sp||(N.sp=spNode(true));T.hh=spHH(N);
  T.raw={g:r.gid,n:r.fr.length,meta:Object.assign({},r.meta),f};
- if(T.kids.length){const m={t:'sp-f',g:T.raw.g,n:T.raw.n,f:spHide(f)};if(T.raw.n==1)m.meta=T.raw.meta;spFwd(T,m)}}
+ if(T.kids.length){const m={t:'sp-f',g:T.raw.g,n:T.raw.n,f:spHide(f,T.hh)};if(T.raw.n==1)m.meta=T.raw.meta;spFwd(T,m)}}
 function spHostStop(N){
  if(N&&N.wp){const w=N.wp;setTimeout(()=>{try{w.destroy()}catch(e){}},700)}
  const T=N&&N.sp;if(!T)return;T.dead=true;clearInterval(T.hbI);spFwd(T,{t:'sp-bye'});
@@ -104,7 +167,8 @@ function spFail(S){   // the node we tried to reach did not answer
  if(S.target===spRoot(S)){
   if(++S.tries>=3)return spFatal(S,S.started?'The host has left the room.':S.rid?'That game is not running any more (or the host is not reachable).':'No room with that code (or the host is not reachable). Check the code and try again.');
   setTimeout(()=>spGo(S,spRoot(S)),1500)}
- else{S.bad.push(S.target);S.hop=0;setTimeout(()=>spGo(S,spRoot(S)),300)}}
+ else{if((S.rt=(S.rt|0)+1)>8)return spFatal(S,'That game is not running any more (or the host is not reachable).');
+  S.bad.push(S.target);S.hop=0;setTimeout(()=>spGo(S,spRoot(S)),300)}}
 function spLost(S){
  if(SPEC!==S||S.ended)return;
  toast('Connection to the stream lost - reconnecting...',1);S.hop=0;S.tries=0;
@@ -124,13 +188,13 @@ function spData(S,c,m){
   case'sp-redir':if(S.pend!==c||!m.to)break;S.pend=null;clearTimeout(S.ct);try{c.close()}catch(e){}S.hop++;spGo(S,String(m.to));break;
   case'sp-err':if(S.pend!==c)break;S.pend=null;clearTimeout(S.ct);try{c.close()}catch(e){}
    if(m.fatal)spFatal(S,m.msg||'Could not join.');else spFail(S);break;
-  case'sp-hi':if(S.pend===c){S.pend=null;clearTimeout(S.ct);S.up=c;S.tries=0;S.hop=0;S.bad=[];S.started=1;
+  case'sp-hi':if(S.pend===c){S.pend=null;clearTimeout(S.ct);S.up=c;S.tries=0;S.hop=0;S.rt=0;S.bad=[];S.started=1;
     try{c.send({t:'sp-up',c:S.cnt})}catch(e){}}
    if(S.up===c){S.tot=m.tot|0;spIn(S,m)}break;
   case'sp-f':if(S.up===c)spIn(S,m);break;
   case'sp-hb':if(S.up===c){S.seen=Date.now();S.tot=m.n|0;spFwd(S,m);spMeta(S)}break;
   case'sp-bye':if(S.up===c){S.ended=1;spFwd(S,m);toast('The host closed the room.',1)}break}}
-function spMeta(S){if(window.RP&&RP.on&&RP.live&&$('rplmeta'))$('rplmeta').textContent='Room  -  '+(S.tot||1)+' watching'}
+function spMeta(S){if(window.RP&&RP.on&&RP.live){if($('rplmeta'))$('rplmeta').textContent='Room  -  '+(S.tot||1)+' watching';$('sur').title='Leave  -  '+(S.tot||1)+' watching'}}
 function spIn(S,m){
  S.seen=Date.now();
  if(!m.f){if(!S.view)$('ls').textContent='Connected. Waiting for the game to start...';return}

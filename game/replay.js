@@ -241,7 +241,7 @@ function rpReset(){['rpeh','rpmh'].forEach(k=>{const e=$(k);if(e)e.innerHTML=''}
 function rpPile(s,kind){
  if(!G)return;const p=G.p[s],who=s?(RP.d&&RP.d.meta&&RP.d.meta.opp||'Opponent')+"'s":'Your';
  const cards=kind=='deck'?p.deck.slice().sort((a,b)=>a.id&&b.id?cmpC(CD[a.id],CD[b.id]):0):p.disc.slice().reverse();
- if(cards.some(c=>!c.id)){toast('The opponent\'s hidden cards were not shared for this match (it was recorded before replays could reveal them)',1);return}
+ if(cards.some(c=>!c.id)){toast(RP.live?'Hidden while watching live':'The opponent\'s hidden cards were not shared for this match (it was recorded before replays could reveal them)',1);return}
  viewPile(who+(kind=='deck'?' deck ('+cards.length+') - sorted by cost':' discard pile ('+cards.length+') - newest first'),cards)}
 function rpBoard(){
  rpBoardBuild();$('rplx').style.setProperty('--rpd',(.45/(RP.speed||1)).toFixed(3)+'s');
@@ -341,7 +341,7 @@ addEventListener('keydown',e=>{
  if(!RP.on||e.ctrlKey||e.metaKey||e.altKey)return;
  const ovl=['hist','mul','modal','setmenu'].some(k=>$(k)&&$(k).style.display=='flex');
  if(e.key=='Escape'){if(!ovl){rpExit();e.preventDefault();e.stopImmediatePropagation()}return}
- if(ovl)return;
+ if(ovl||RP.live)return;   // live: no hidden controls (the bar is hidden), so no keyboard pause either
  if(e.key==' '){rpToggle();e.preventDefault()}
  else if(e.key=='ArrowRight'){rpStep(1);e.preventDefault()}
  else if(e.key=='ArrowLeft'){rpStep(-1);e.preventDefault()}},true);

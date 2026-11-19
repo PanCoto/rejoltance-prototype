@@ -244,7 +244,8 @@ async function profView(pid,back){
   PFB=back||rkOpen;PFP=null;rk('acctmenu').classList.add('view');rk('pft').textContent='Player';rk('pfsub').textContent='';rk('pfmsg').textContent='';rk('pffr').hidden=true;rk('pfwatch').hidden=true;
   openPanel('acctmenu');rk('pfback').onclick=()=>PFB();
   if(err){rk('pfsub').textContent='Could not load this profile: '+err.message;return}
-  PFP=p;rk('pft').textContent=p.name;rk('pfsub').textContent=(p.last?'Last seen: '+ago(p.last).replace('Active now','online now'):'')+(p.live&&p.live.pid&&p.rel=='friends'?'  -  in a game right now':'');profFill(p,false);pfFriendBtn()}
+  PFP=p;rk('pft').textContent=p.name;rk('pfsub').textContent=(p.last?'Last seen: '+ago(p.last).replace('Active now','online now'):'')+(p.live&&p.live.pid&&p.rel=='friends'?'  -  in a game right now':'');profFill(p,false);pfFriendBtn();
+  if(p.rel=='friends'&&window.spProbe&&!(p.live&&p.live.pid))spProbe([p]).then(ch=>{if(ch&&PFP===p){pfFriendBtn();if(p.live&&p.live.pid)rk('pfsub').textContent+='  -  in a game right now'}}).catch(()=>{})}
  finally{ldOff()}}
 rk('pffr').onclick=async()=>{const p=PFP,a=getAcct();if(!p||!a)return;
  const act={none:'request',pending_out:'remove',pending_in:'accept',friends:'remove'}[p.rel];
@@ -278,12 +279,16 @@ const fdBtn=(a,t)=>'<button data-a="'+a+'">'+t+'</button>';
 function fdRender(){const f=MM.fr;if(!f){rk('fdlist').innerHTML='';return}
  const sec=(t,rows)=>rows?'<h4>'+t+'</h4>'+rows:'';
  const h=sec('Requests ('+f.incoming.length+')',f.incoming.map(p=>fdRow(p,fdBtn('accept','Accept')+fdBtn('remove','Decline'))).join(''))
-  +sec('Friends ('+f.friends.length+')',f.friends.map(p=>fdRow(p,(p.live&&p.live.pid?fdBtn('watch','Watch'):'')+fdBtn('challenge','Challenge')+fdBtn('view','Profile')+fdBtn('remove','Remove'))).join(''))
+  +sec('Friends ('+f.friends.length+')',f.friends.map(p=>fdRow(p,(p.live&&p.live.pid?fdBtn('watch','Watch'):fdBtn('challenge','Challenge'))+fdBtn('view','Profile')+fdBtn('remove','Remove'))).join(''))
   +sec('Sent requests ('+f.outgoing.length+')',f.outgoing.map(p=>fdRow(p,fdBtn('remove','Cancel'))).join(''));
  rk('fdlist').innerHTML=h||'<div class="fdempty">No friends yet - search for a player above, or open a profile from the leaderboard and press Add friend.</div>'}
 function fdBadge(){const n=MM.fr?MM.fr.incoming.length:0;rk('fdcnt').textContent=n?String(n):''}
 async function friendsLoad(){const a=getAcct();if(!a||!cfg())return null;
- try{MM.fr=await api('/api/friends',{method:'POST'},a);fdBadge();if(rk('fdmenu').style.display=='flex')fdRender();return MM.fr}catch(e){return null}}
+ try{const old=MM.fr;MM.fr=await api('/api/friends',{method:'POST'},a);
+  if(old&&old.friends&&MM.fr&&MM.fr.friends){const k={};old.friends.forEach(p=>{if(p.live&&p.live.mode=='beacon')k[p.pid]=p.live});MM.fr.friends.forEach(p=>{if(!p.live&&k[p.pid])p.live=k[p.pid]})}   // keep what the last probe found until the next one answers
+  fdBadge();if(rk('fdmenu').style.display=='flex'){fdRender();fdProbe()}return MM.fr}catch(e){return null}}
+// which friends are in a game right now (spectate.js, no server needed): a Watch button replaces Challenge
+function fdProbe(){const fr=MM.fr;if(!fr||!window.spProbe||rk('fdmenu').style.display!='flex')return;spProbe(fr.friends).then(ch=>{if(ch&&MM.fr===fr&&rk('fdmenu').style.display=='flex')fdRender()}).catch(()=>{})}
 async function fdOpen(msg){
  if(OPENING)return;ldOn();
  try{
@@ -292,7 +297,7 @@ async function fdOpen(msg){
   if(!cfg()){rk('fdsub').textContent='Friends need the online server, which is not configured for this copy of the game.';return}
   if(!getAcct()){rk('fdsub').textContent='Friends need an account: open your Profile and log in with Discord first.';return}
   if(!f){rk('fdsub').textContent='Could not reach the server.';return}
-  rk('fdsub').textContent=msg||'';fdRender()}
+  rk('fdsub').textContent=msg||'';fdRender();fdProbe()}
  finally{ldOff()}}
 async function fdSearch(){const q=rk('fdq').value.trim();if(q.length<2){rk('fdres').innerHTML='<div class="fdempty">Type at least 2 letters.</div>';return}
  try{const r=await api('/api/search?q='+encodeURIComponent(q),null,getAcct()),me=MM.me&&MM.me.pid;
@@ -388,4 +393,5 @@ $('mquick').onclick=async()=>{LB='frmenu';startAudio();window.QMNOTE='';if(!cfg(
 {const oc=$('lcancel').onclick;$('lcancel').onclick=()=>{const cid=MM.chid,a=getAcct(),c0=MM.cur;MM.chid=null;
  if(c0&&c0.mode=='ranked'&&c0.id&&a&&NET&&NET.mm)api('/api/report',{method:'POST',body:{id:c0.id,r:'abort'}},a).catch(()=>{});if(cid&&a)api('/api/challenge',{method:'POST',body:{act:'decline',id:cid}},a).catch(()=>{});
  mmStop();MM.cur=null;window.QMNOTE='';const fr=LB=='fdmenu',rkb=LB=='rkmenu';oc();if(fr)fdOpen();else if(rkb)rkOpen()}}
+window.getAcct=getAcct;window.cfg=cfg;window.hdr=hdr;window.friendsLoad=friendsLoad;   // used by spectate.js (presence + friends refresh)
 })();
