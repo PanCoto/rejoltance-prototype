@@ -185,7 +185,7 @@ const CARDS_EXP = [
 
   {
     Id: 44,
-    Name: "Area Drone",
+    Name: "Katyusha",
     Type: "Unit",
     Subtypes: ["Machine"],
     Cost: 1,
@@ -251,7 +251,7 @@ const CARDS_EXP = [
 
   {
     Id: 42,
-    Name: "Artificer",
+    Name: "Soldat",
     Type: "Unit",
     Subtypes: ["Human"],
     Cost: 1,
@@ -493,7 +493,7 @@ const CARDS_EXP = [
 
   {
     Id: 81,
-    Name: "Double Tap",
+    Name: "Isu",
     Type: "Unit",
     Subtypes: ["Machine"],
     Cost: 2,
@@ -651,7 +651,7 @@ const CARDS_EXP = [
 
   {
     Id: 91,
-    Name: "Factoid Factory",
+    Name: "BWP",
     Type: "Unit",
     Subtypes: ["Machine"],
     Cost: 3,
@@ -1367,28 +1367,22 @@ const CARDS_EXP = [
 
   {
     Id: 904,
-    Name: "SE",
+    Name: "Barristan",
     Type: "Unit",
-    Subtypes: ["Machine", "Token"],
+    Subtypes: ["Monster", "Token"],
     Cost: 2,
     Attack: 1,
     Health: 3,
-    Keywords: ["Taunt"],
-    Description: "While in Play: All Friendly Units have Armored 1.",
-    Effects: [
-      {
-        Trigger: "Passive",
-        Zone: "Board",
-        Actions: [{ Type: "GrantKeyword", Target: "AllFriendlyUnits", Keyword: "Armored" }],
-      },
-    ],
+    Keywords: ["Taunt", "Armored"],
+    KeywordParams: { Armored: 1 },
+    Description: "",
   },
 
   {
     Id: 905,
-    Name: "Janal",
+    Name: "July",
     Type: "Unit",
-    Subtypes: ["Machine", "Token"],
+    Subtypes: ["Monster", "Token"],
     Cost: 2,
     Attack: 2,
     Health: 2,
@@ -1398,18 +1392,18 @@ const CARDS_EXP = [
 
   {
     Id: 906,
-    Name: "Front Man",
+    Name: "Dismas",
     Type: "Unit",
-    Subtypes: ["Machine", "Token"],
+    Subtypes: ["Monster", "Token"],
     Cost: 2,
     Attack: 3,
     Health: 1,
-    Description: "While in Play: All Friendly Units get +1 ATK.",
+    Description: "Deals double the Damage to Undamaged Units.",
     Effects: [
       {
         Trigger: "Passive",
         Zone: "Board",
-        Actions: [{ Type: "AuraBuff", Target: "AllFriendlyUnits", BuffAtk: 1 }],
+        Actions: [{ Type: "ModifyDamage", Against: "Unit", Where: { Undamaged: true }, Multiplier: 2 }],
       },
     ],
   },
