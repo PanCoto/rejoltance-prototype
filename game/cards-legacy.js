@@ -19,16 +19,16 @@ const CARDS_EXP = [
 
   {
     Id: 13,
-    Name: "Seek",
+    Name: "Critical Thinking",
     Type: "Spell",
     Cost: 1,
-    Description: "Choose a Card from Your Deck and add it to your hand.",
+    Description: "Draw 3 Cards. Place 2 Cards from Your Hand on the bottom of Your Draw Pile.",
     Effects: [
       {
         Trigger: "OnPlayed",
         Actions: [
-          { Type: "TutorCard", Target: "Self" },
-          { Type: "ShuffleDeck", Target: "Self" },
+          { Type: "DrawCard", Target: "FriendlyHero", Amount: 3 },
+          { Type: "BottomFromHand", Target: "FriendlyHero", Amount: 2 },
         ],
       },
     ],
@@ -1118,12 +1118,11 @@ const CARDS_EXP = [
     Health: 4,
     Rule: "persistentGrowth",
     Description:
-      "While in Hand, Deck, Discard or on Board: Gain +1 ATK whenever a Friendly Machine is Destroyed.",
+      "While in Hand, Deck, Discard or on Board: Gain +1 ATK whenever a Friendly Unit is Destroyed.",
     Effects: [
       {
         Trigger: "OnFriendlyUnitDied",
         Zone: ["Deck", "Hand", "Discard", "Board"],
-        Condition: { Condition: "IsSubtype", TargetParam: "Machine" },
         Actions: [{ Type: "BuffStats", Target: "Self", BuffAtk: 1 }],
       },
     ],

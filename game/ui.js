@@ -183,7 +183,7 @@ function autoSkip(){
   if(G&&!G.over&&G.step<3&&mine()&&!pend&&sel==null&&!castMode&&noMoves())endNow();else asClear()},AUTOSKIP_MS)}
 setInterval(autoSkip,400);
 // ===== END AUTO-SKIP =====
-const ASK={L:'Choose a free lane to summon into',M:'Choose units to sacrifice',e:'Choose an enemy unit',f:'Choose a friendly unit',S:'Choose a unit to sacrifice',a:'Choose any unit',D:'Choose a card from your deck',eh:'Choose an enemy unit or the enemy hero',fh:'Choose a friendly unit or your hero',P:'Choose a lane - enemy units there and in the adjacent lanes are affected'};
+const ASK={L:'Choose a free lane to summon into',M:'Choose units to sacrifice',e:'Choose an enemy unit',f:'Choose a friendly unit',S:'Choose a unit to sacrifice',a:'Choose any unit',D:'Choose a card from your deck',B:'Choose a card from your hand to put on the bottom of your draw pile',eh:'Choose an enemy unit or the enemy hero',fh:'Choose a friendly unit or your hero',P:'Choose a lane - enemy units there and in the adjacent lanes are affected'};
 const LX=[36,332,624,916],LY=[88,432];
 const mine=()=>(G.act==0||(pend&&pend.ext))&&!busy&&!G.over;
 const pdef=()=>pend.ext?pend.ext.d:CD[G.p[0].hand[pend.ci].id];   // the card (or pseudo card) whose picks are being made
@@ -191,7 +191,7 @@ const ksNow=()=>pend.pre?pend.ks:apicks(G,G.p[0],pdef(),pend.got,pend.ln);
 const kind=()=>pend?ksNow()[pend.got.length]:null;
 function laneEx(){const ex=pend.ln!=null?[pend.ln]:[];ksNow().forEach((k,j)=>{if(k=='L'&&j<pend.got.length&&typeof pend.got[j]=='number')ex.push(pend.got[j])});return ex}
 const pendSp=()=>{if(pend&&pend.ext)return pend.ext.d.Type=='Spell';const c=pend&&!pend.pre&&G.p[0].hand[pend.ci];return !!c&&CD[c.id].Type=='Spell'};
-function validTargets(){const k=kind();if(k=='L')return req(G,G.p[0],'L',null,laneEx());if(!k||k=='C'||k=='D')return[];
+function validTargets(){const k=kind();if(k=='L')return req(G,G.p[0],'L',null,laneEx());if(!k||k=='C'||k=='D'||k=='B')return[];
  const f=(ksNow().f||[])[pend.got.length]||null;return req(G,G.p[0],k,f,null,pendSp(),pend.ext?pend.ext.d.ExU:null)}
 function dots(p){return Array.from({length:10},(_,i)=>`<i class="${i<p.b?'on':i<p.mb?'sp':''}"></i>`).join('')}
 function say(t,cancel){const b=$('msg');if(!t){b.style.display='none';b.innerHTML='';return}b.innerHTML=t+(cancel?' <button data-cancel="1">Cancel</button>':'');b.style.display='block'}
@@ -337,6 +337,7 @@ function pickActs(d){const out=[];let hasT=0,hasE=0,hasF=0,hasA=0;
   for(const a0 of e.Actions){const a=TYPEALIAS[a0.Type]?Object.assign({},a0,{Type:TYPEALIAS[a0.Type]}):a0,T=a.Type,tt=a.Target;if(T=='AbsorbStats')continue;
    if(a.Select=='P'){out.push({k:'P',a,e});continue}
    if(T=='TutorCard'){out.push({k:'D',a,e});continue}
+   if(T=='BottomFromHand'){if(d.BotAsk)for(let i=0;i<(a.Amount||1);i++)out.push({k:'B',a,e});continue}
    if(T=='SacrificeUnits'){out.push({k:'M',a,e});continue}
    if((T=='MakeAUnit'||T=='Reanimate')&&a.StringParam!='AdjacentLanes'&&!a.Auto){for(let i=0;i<(a.Count||1);i++)out.push({k:'L',a,e});continue}
    if(T=='SacrificeUnit'&&tt!='Self'){if(tt=='SelectedTarget'&&hasT)continue;out.push({k:'S',a,e});continue}
@@ -359,6 +360,7 @@ function nextPick(){const me=G.p[0],d=pdef(),ks=apicks(G,me,d,pend.got,pend.ln),
   render();
   if(k=='C'){const e=d.Effects.find(x=>x.ChoiceLabels);say(`<b>${d.Name}</b>: `+e.ChoiceLabels.map((l,i)=>`<button data-ch="${i}" ${choiceOK(G,me,d,i)?'':'disabled'}>${l}</button>`).join(''),cx)}
   else if(k=='D'){say(ASK.D,cx);pickCard(d.Name+' - choose a card from your deck',[...me.deck].sort((a,b)=>CD[a.id].Cost-CD[b.id].Cost||CD[a.id].Name.localeCompare(CD[b.id].Name)),c=>{pend.got.push(c);nextPick()})}
+  else if(k=='B'){const tot=ks.filter(x=>x=='B').length,n=pend.got.filter((_,j)=>ks[j]=='B').length+1;say(ASK.B+(tot>1?` (${n}/${tot})`:''),0);pickCard(d.Name+' - put a card on the bottom of your draw pile'+(tot>1?` (${n}/${tot})`:''),me.hand.filter(c=>!pend.got.includes(c)),c=>{pend.got.push(c);nextPick()})}
   else if(k=='M'){pend.multi=[];mmsg()}
   else if(k=='S'&&optSac(d))say(`<b>${d.Name}</b>: sacrifice a unit? (red outline) <button data-skip="1">Don't sacrifice</button>`,cx);
   else{const fx=pend.ext?effNote(d,ks,pend.got,k):'';

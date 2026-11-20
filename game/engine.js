@@ -673,6 +673,7 @@ function pickCtx(ks, pk, ctx) {
       else ctx.sac = v;
     } else if (k == "M") ctx.sacs = v;
     else if (k == "D") ctx.tut = v;
+    else if (k == "B") (ctx.bot = ctx.bot || []).push(v);
     else if (k == "C") ctx.ch = v;
     else if (k == "P") ctx.pl = v;
     else if (k == "L") (ctx.lanes = ctx.lanes || []).push(v);
@@ -704,9 +705,46 @@ function runChain(G, s, list, v) {
     acts.forEach((a) => act(G, a, s, cx));
   });
 }
+// Seek: put n cards from the hand on the bottom of the draw pile. `chosen` = the cards the player picked;
+// anything missing (simulation, timeout, hand too small to choose) is filled in with the cards that cost the most.
+function bottomCards(G, p, n, chosen) {
+  const out = [];
+  (chosen || []).forEach((c) => {
+    if (out.length < n && c && p.hand.includes(c) && !out.includes(c)) out.push(c);
+  });
+  p.hand
+    .filter((c) => !out.includes(c))
+    .sort((a, b) => CD[b.id].Cost - CD[a.id].Cost)
+    .slice(0, n - out.length)
+    .forEach((c) => out.push(c));
+  if (!out.length) return;
+  p.hand = p.hand.filter((c) => !out.includes(c));
+  p.deck.push(...out);
+  p.lastDrawn = null;
+  L(
+    G,
+    (p.i ? "Enemy places " : "You place ") +
+      out.length +
+      " card" +
+      (out.length > 1 ? "s" : "") +
+      " on the bottom of " +
+      (p.i ? "their" : "your") +
+      " draw pile",
+  );
+  EV(G, { k: "snd", n: "cardDrawn", o: p.i });
+  aura(G);
+  acHand(G, p);
+}
 function runItem(G, it, pk) {
   pk = pk || [];
   if (G.over) return;
+  if (it.k == "bot") {
+    const p = G.p[it.pi],
+      ctx = pickCtx(apicks(G, p, it.d, pk, null), pk, {});
+    bottomCards(G, p, it.n, ctx.bot);
+    resolve(G);
+    return;
+  }
   if (it.k == "spell2") {
     const p = G.p[it.pi],
       d = it.d,
@@ -1697,6 +1735,26 @@ function act(G, a, s, c) {
       if (got) gained(G, me, "tutor");
       break;
     }
+    case "BottomFromHand": {
+      const n = a.Amount || 1;
+      if (me.hand.length <= n || !askOnE(G, me.i)) {
+        bottomCards(G, me, n, null);
+        break;
+      }
+      pq(G).push({
+        k: "bot",
+        pi: me.i,
+        n,
+        d: {
+          Name: (s.d ? s.d.Name : "Seek") + " (Bottom)",
+          Id: s.id,
+          Type: "Spell",
+          BotAsk: 1,
+          Effects: [{ Trigger: "OnPlayed", Actions: [a] }],
+        },
+      });
+      break;
+    }
     case "ShuffleDeck":
       shuf(me.deck);
       break;
@@ -2555,6 +2613,10 @@ function picks(d, noSac) {
         push("D");
         continue;
       }
+      if (T == "BottomFromHand") {
+        if (d.BotAsk) for (let n = 0; n < (a.Amount || 1); n++) push("B");
+        continue;
+      }
       if (T == "SacrificeUnits") {
         push("M");
         continue;
@@ -2615,9 +2677,11 @@ function req(G, p, k, f, ex, sp, xu) {
                 ? [...fl(me), H(p.i)]
                 : k == "D"
                   ? p.deck
-                  : k == "C"
-                    ? [0, 1]
-                    : [];
+                  : k == "B"
+                    ? p.hand
+                    : k == "C"
+                      ? [0, 1]
+                      : [];
 }
 const actKind = (a, e) => selKind(a, e);
 function apicks(G, p, d, got, ln) {

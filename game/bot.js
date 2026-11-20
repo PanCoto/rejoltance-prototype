@@ -183,6 +183,7 @@ function botAskPicks(G,it){
   else if(k=='M')v=[];
   else if(k=='C')v=(p.deck.length<2&&p.disc.length>=2)?1:0;
   else if(k=='D')v=p.deck.slice().sort((a,b)=>CD[b.id].Cost-CD[a.id].Cost)[0];
+  else if(k=='B'){const lim=Math.min(10,G.turn+MANA_BONUS+2),sc=c=>{const x=CD[c.id].Cost;return x>lim?100+x:-x};v=p.hand.filter(c=>!pk.includes(c)).sort((a,b)=>sc(b)-sc(a))[0]}   // Seek: bottom what it can't afford yet, then the cheapest cards
   else if(k=='S')v=optSac(d)?NOSAC:req(G,p,k,f,null,sp,xu).sort((a,b)=>unitVal(a)-unitVal(b))[0];
   else{
    const ex=k=='L'?pk.filter((_,j)=>ks[j]=='L'&&typeof pk[j]=='number'):null,ts=req(G,p,k,f,ex,sp,xu);
