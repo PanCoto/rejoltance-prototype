@@ -671,7 +671,7 @@ const CARDS_EXP = [
     Health: 5,
     Keywords: ["AntiAirborne"],
     Description:
-      "While in Play: When an Enemy Unit is Played in a different Lane, move it here. If it can't be moved here, deal 2 Damage to it instead.",
+      "While in Play: When an Enemy Unit is Played in a different Lane, move it here. If it can't be moved here, deal 2 Damage to it instead (Once per Round).",
     Effects: [
       {
         Trigger: "OnEnemyUnitPlayed",
@@ -680,7 +680,7 @@ const CARDS_EXP = [
           {
             Type: "MoveToSourceLane",
             Target: "EventUnit",
-            Else: { Type: "DealDamage", Amount: 2 },
+            Else: { Type: "DealDamage", Amount: 2, OncePerTurn: true },
           },
         ],
       },
@@ -1035,7 +1035,7 @@ const CARDS_EXP = [
 
   {
     Id: 125,
-    Name: "Grandfather Bomb",
+    Name: "Giant Skeleton",
     Type: "Unit",
     Subtypes: ["Aberration"],
     Cost: 5,
