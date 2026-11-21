@@ -1801,7 +1801,7 @@ const CARDS_EXP = [
     Stages: [2, 4],
     Effects: [
       { Trigger: "OnDeath",
-        Actions: [{ Type: "RespawnSelf", Target: "Self", BuffAtk: -2, BuffHp: -2 }] },
+        Actions: [{ Type: "RespawnSelf", Target: "Self", BuffAtk: -1, BuffHp: -1 }] },
     ],
   },
 
