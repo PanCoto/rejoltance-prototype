@@ -1793,7 +1793,7 @@ const CARDS_EXP = [
     Name: "Nesting Doll",
     Type: "Unit",
     Subtypes: ["Human"],
-    Cost: 6,
+    Cost: 5,
     Attack: 5,
     Health: 5,
     Description: "When Destroyed: Create a copy of this Unit here with -1/-1.",
