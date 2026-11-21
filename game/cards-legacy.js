@@ -1796,9 +1796,9 @@ const CARDS_EXP = [
     Cost: 6,
     Attack: 5,
     Health: 5,
-    Description: "When Destroyed: Create a copy of this Unit here with -2/-2.",
+    Description: "When Destroyed: Create a copy of this Unit here with -1/-1.",
     // Sprite changes after this many deaths: img/stages/122_1.webp from 1 death, 122_2.webp from 2 deaths.
-    Stages: [1, 2],
+    Stages: [2, 4],
     Effects: [
       { Trigger: "OnDeath",
         Actions: [{ Type: "RespawnSelf", Target: "Self", BuffAtk: -2, BuffHp: -2 }] },
