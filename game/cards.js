@@ -1722,7 +1722,7 @@ const CARDS = [
     Cost: 5,
     Attack: 2,
     Health: 4,
-    Description: "When Played: The Enemy Hero gains a copy of Cinder Ash, and You shuffle a copy of Cinder Ash into the Enemy's deck. When this deals Damage: Shuffle 2 copies of Cinder Ash into the Enemy's deck.",
+    Description: "When Played: The Enemy Hero gains a copy of Cinder Ash into their Hand and Deck. When this deals Damage: Shuffle 2 copies of Cinder Ash into the Enemy's deck.",
     Effects: [
       { Trigger: "OnPlayed",
         Actions: [
@@ -2203,10 +2203,10 @@ const CARDS = [
   {
     Id: 914, Name: "Cinder Ash", Type: "Spell", Subtypes: ["Token"],
     Cost: 0,
-    Description: "Deal Damage to a Friendly Unit or Your Hero equal to the number of Cinder Ash You have played this game. Start of Round: If this is in Your Hand, gain a copy of Cinder Ash.",
+    Description: "Deal Damage 1 to a Friendly Unit or Hero. Start of Round: If this is in Your Hand, gain a copy of Cinder Ash.",
     Effects: [
       { Trigger: "OnPlayed", Targeting: "TargetFriendlyUnitOrHero",
-        Actions: [{ Type: "DealDamage", Target: "SelectedTarget", Amount: { Count: "AshesPlayed" } }] },
+        Actions: [{ Type: "DealDamage", Target: "SelectedTarget", Amount: 1] },
       { Trigger: "OnStartOfRound", Zone: "Hand",
         Actions: [{ Type: "AddCardToHand", Target: "FriendlyHero", ValueParam: 914 }] },
     ],
