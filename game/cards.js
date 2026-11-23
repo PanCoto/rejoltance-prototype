@@ -2206,7 +2206,7 @@ const CARDS = [
     Description: "Deal Damage 1 to a Friendly Unit or Hero. Start of Round: If this is in Your Hand, gain a copy of Cinder Ash.",
     Effects: [
       { Trigger: "OnPlayed", Targeting: "TargetFriendlyUnitOrHero",
-        Actions: [{ Type: "DealDamage", Target: "SelectedTarget", Amount: 1] },
+        Actions: [{ Type: "DealDamage", Target: "SelectedTarget", Amount: 1 }] },
       { Trigger: "OnStartOfRound", Zone: "Hand",
         Actions: [{ Type: "AddCardToHand", Target: "FriendlyHero", ValueParam: 914 }] },
     ],
