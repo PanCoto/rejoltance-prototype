@@ -8,9 +8,10 @@ function blindClone(G,me){const c=cloneG(G);c.p.forEach(p=>shuf(p.deck));
  if(me!=null&&c.p[1-me]){const o=c.p[1-me],pool=o.hand.concat(o.deck),ids=shuf(pool.map(x=>x.id));pool.forEach((x,i)=>x.id=ids[i])}
  return c}
 
-var BW=Object.assign({atk:1.2,hp:0.9,base:1,kw:1,neg:1,eff:1.5,hero:1.1,low:0.7,open:0.5,hs:3,hu:2,hc:0.45,unk:3,oh:2.6,stop:0.35,look:1,lw:0.6,mull:1,worlds:5},typeof BW_OVERRIDE!=='undefined'?BW_OVERRIDE:{});
+var BW=Object.assign({atk:1.2,hp:0.9,base:1,kw:1,neg:1,eff:1.5,hero:1.1,low:0.7,open:0.5,hs:3,hu:2,hc:0.45,unk:3,oh:2.6,stop:0.35,look:1,lw:0.6,mull:1,worlds:5,ash:1.5,clog:1.5,cw:3,mull2:0,tutor:1.5,echo:1.2,mS:32,rwOn:1,outpen:0.05},typeof BW_OVERRIDE!=='undefined'?BW_OVERRIDE:{});
 function unitVal(u){
  let v=BW.atk*u.atk+BW.hp*Math.max(u.hp,0)+BW.base;
+ if(u.id==107)v+=BW.cw; // Cinderwright: its Ash lock wins games by itself, so it's worth more than its stats
  const k=u.kw,K=BW.kw;
  if(k.has('Flying')&&u.atk>0)v+=K*1.5;
  if(k.has('Armored')||k.has('Armor2'))v+=K*(0.8*(k.has('Armor2')?2:kwp(u,'Armored')));
@@ -30,14 +31,20 @@ function unitVal(u){
  if(!u.sil&&u.d.Effects&&u.d.Effects.length)v+=BW.eff;
  return v}
 const heroVal=h=>h+Math.max(0,8-h)*BW.low;
-const handVal=c=>{const d=CD[c.id];return(d.Type=='Spell'?BW.hs+BW.hc*d.Cost:BW.hu+BW.hc*d.Cost)+(c.unk?BW.unk:0)};
+const handVal=c=>{const d=CD[c.id];if(c.id==914)return-BW.ash; // Cinder Ash is a clog, not a card
+ return(d.Type=='Spell'?BW.hs+BW.hc*d.Cost:BW.hu+BW.hc*d.Cost)+(c.unk?BW.unk:0)};
 function evalG(G,me){
- if(G.over)return G.over.draw?0:G.over.win==me?10000:-10000;
  const a=G.p[me],b=G.p[1-me];let s=BW.hero*(heroVal(a.hp)-heroVal(b.hp));
  for(let i=0;i<4;i++){const x=a.ln[i],y=b.ln[i];
   if(x){s+=unitVal(x);if(!y)s+=BW.open*x.atk}
   if(y){s-=unitVal(y);if(!x)s-=BW.open*y.atk}}
- a.hand.forEach(c=>s+=handVal(c));s-=BW.oh*b.hand.length;
+ a.hand.forEach(c=>s+=handVal(c));s-=BW.oh*b.hand.filter(c=>c.id!=914).length;
+ // Ash in hand copies itself every round start and a full hand cancels draws: penalise the draws we are about to lose
+ const ash=a.hand.filter(c=>c.id==914).length;
+ if(ash)s-=BW.clog*Math.max(0,a.hand.length-ash+2*ash+1-HAND_MAX);
+ // Forced results keep the normal board score as a tie-break (like an engine that still plays the best move when it is 'mated in 2').
+ // Without it every move of a forced win/loss scored exactly +/-10000, nothing beat 'stop' and the bot skipped its whole turn.
+ if(G.over)return G.over.draw?0:(G.over.win==me?10000:-10000)+Math.max(-2000,Math.min(2000,s));
  return s}
 function project(G,me){const c=blindClone(G,me);
  for(let i=0;i<4&&!c.over;i++)lane(c,i,{});
@@ -91,7 +98,7 @@ function projectRoll(G,me,reseed){
  const e1=evalG(c,me);
  startRound(c);
  if(!c.over)finishRound(c,true);
- const e2=c.over?(c.over.draw?0:c.over.win==me?3000:-3000):evalG(c,me);
+ const e2=evalG(c,me);
  return(e1+BW.lw*e2)/(1+BW.lw)}
 function botSearchLook(G,p,t0,BUDGET,BEAM,DEPTH){
  const me=p.i,orig=Math.random,K=Math.max(1,Math.round(BW.worlds||1)),base=Math.floor(orig()*2147483647);
@@ -144,6 +151,35 @@ function botSearchClassic(G,p,t0,BUDGET,BEAM,DEPTH){
  return{ci:m.ci,ln:m.ln,pk:m.pd.map(o=>resolvePick(G,p,null,o)),sp:m.sp,id:m.id}}
 
 const tempoVal=id=>{const d=CD[id];let v=d.Cost+1.5;if(d.Type=='Unit')v+=0.25*((d.Attack||0)+(d.Health||0)-(2*d.Cost+1));else v*=0.85;return Math.max(0.5,v)};
+// Synergy-aware card value for the mulligan simulation. Reads the card data (action types), not card names, so new cards work too.
+const acts=d=>[].concat(...(d.Effects||[]).map(e=>e.Actions||[]));
+const hasAct=(d,t)=>acts(d).some(a=>a.Type==t);
+const needsFriendly=d=>(d.Effects||[]).some(e=>e.Targeting=='TargetFriendlyUnit');
+function cardVal(id,played,r,hasUnit){
+ const d=CD[id];let v=tempoVal(id);
+ if(hasAct(d,'TutorCard'))v+=BW.tutor;                       // finds the piece you actually want
+ if(hasAct(d,'ReplayPlayed')){                              // Echo-style: only as good as the When Played effects already used
+  const n=Math.min(4,played.filter(x=>(CD[x].Effects||[]).some(e=>e.Trigger=='OnPlayed')).length);v=v*0.5+BW.echo*n}
+ const tf=acts(d).find(a=>a.Type=='Transform'&&a.IntoFrom=='LastPlayed');
+ if(tf){const st=tf.Filter&&tf.Filter.Subtype;                // Shapeshifter-style: weak with nothing to copy
+  const best=played.filter(x=>CD[x].Type=='Unit'&&(!st||(CD[x].Subtypes||[]).includes(st))).map(x=>CD[x].Cost).sort((a,b)=>b-a)[0];
+  v=best!=null?v+0.6*best:v*0.6}
+ if(needsFriendly(d)&&!hasUnit)v*=0.15;                      // Evolution etc. is dead on an empty board
+ if(r==1&&(d.Effects||[]).some(e=>/Enemy/.test(e.Targeting||'')))v*=0.7; // enemy-target effects often have no target on turn 1
+ return v}
+const RW=[1.3,1.2,1.1,1,0.9];                                // early turns matter more than turn 5
+function curveScore2(hand,draws,R){
+ let h=hand.slice(),tot=0;const played=[];
+ for(let r=1;r<=R;r++){
+  if(r>1&&draws.length>=r-1)h.push(draws[r-2]);
+  const n=h.length,pu=played.some(x=>CD[x].Type=='Unit'),v0=h.map(id=>cardVal(id,played,r,false)),v1=h.map(id=>cardVal(id,played,r,true)),isU=h.map(id=>CD[id].Type=='Unit'),cs=h.map(id=>CD[id].Cost);
+  let best=0,bm=0;
+  for(let m=1;m<(1<<n);m++){let c=0,v=0,su=pu;for(let i=0;i<n;i++)if(m>>i&1&&isU[i])su=true;
+   for(let i=0;i<n;i++)if(m>>i&1){c+=cs[i];v+=su?v1[i]:v0[i]}
+   if(c<=r+MANA_BONUS&&v>best){best=v;bm=m}}
+  tot+=best*(BW.rwOn?RW[Math.min(r,RW.length)-1]:1);
+  if(bm){for(let i=0;i<n;i++)if(bm>>i&1)played.push(h[i]);h=h.filter((_,i)=>!(bm>>i&1))}}
+ return tot}
 function curveScore(hand,draws,R){
  let h=hand.slice(),tot=0;
  for(let r=1;r<=R;r++){
@@ -153,16 +189,17 @@ function curveScore(hand,draws,R){
   tot+=best;if(bm)h=h.filter((_,i)=>!(bm>>i&1))}
  return tot}
 function botMullPlan(G,p){
+ const CS=BW.mull2?curveScore2:curveScore;
  const hand=p.hand,n=hand.length;if(!n)return;
- const ids=p.deck.map(c=>c.id),S=24,R=5,perms=Array.from({length:S},()=>shuf(ids.slice())),keys=Array.from({length:S},()=>Array.from({length:ids.length+n},()=>Math.random()));
+ const ids=p.deck.map(c=>c.id),S=BW.mull2?BW.mS:24,R=5,perms=Array.from({length:S},()=>shuf(ids.slice())),keys=Array.from({length:S},()=>Array.from({length:ids.length+n},()=>Math.random()));
  let bestM=0,bestV=-1e9;
  for(let mask=0;mask<(1<<n);mask++){
   const out=[],keep=[];hand.forEach((c,i)=>(mask>>i&1?out:keep).push(c.id));
   let sum=0;
   for(let s=0;s<S;s++){
    const d=perms[s],nw=d.slice(0,out.length),rest=d.slice(out.length).map((id,i)=>({id,k:keys[s][i]})).concat(out.map((id,j)=>({id,k:keys[s][d.length+j]})));
-   rest.sort((a,b)=>a.k-b.k);sum+=curveScore(keep.concat(nw),rest.map(x=>x.id),R)}
-  const v=sum/S-0.05*out.length;
+   rest.sort((a,b)=>a.k-b.k);sum+=CS(keep.concat(nw),rest.map(x=>x.id),R)}
+  const v=sum/S-BW.outpen*out.length;
   if(v>bestV){bestV=v;bestM=mask}}
  mulligan(G,p,hand.filter((_,i)=>bestM>>i&1).map(c=>c.uid))}
 function botMullSmart(G,p){
