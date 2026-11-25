@@ -858,6 +858,14 @@ function fire0(G, trig, u, ctx) {
     if (s0 !== null && gsig(G) !== s0) EV(G, { k: "trig", u: u.uid });
   });
 }
+// What the engine can actually execute. The Clownboy generator checks every rolled effect against this list (clownValid in clownboy.js),
+// so a card can never be rolled with an action / target / trigger that would silently do nothing. KEEP IN SYNC when you add a case to act(), tg0() or fire().
+const ENGINE_CAPS = {
+  actions: new Set(["AbsorbStats", "AddCardToDeck", "AddCardToEnemyDeck", "AddCardToHand", "AddResource", "ApplyStatus", "BonusAttack", "BottomFromHand", "BuffStats", "CopyDestroyed", "CopyLastEnemyCard", "CopySelf", "CopyUnit", "DealDamage", "DestroyUnit", "DoubleStats", "DrawCard", "DrawFromDiscard", "DrawKilledLastRound", "GiveToOpponent", "GrantActionPlay", "GrantRule", "Heal", "HealToFull", "IncreaseMaxHp", "LaneDebuff", "LoseBlood", "LoseHealth", "MakeAUnit", "Merge", "ModifyGlobalBuff", "MoveRight", "MoveToSourceLane", "PlayNextTwice", "Reanimate", "ReplayPlayed", "RespawnSelf", "ReturnToHand", "SacrificeUnit", "SacrificeUnits", "ShuffleDeck", "Silence", "SpendBlood", "SummonUnit", "Transform", "TutorCard"]),
+  passiveActions: new Set(["GrantKeyword", "ApplyStatus", "AuraBuff", "ScaleAttack"]),
+  targets: new Set(["AdjacentEnemyUnits", "AdjacentFriendlyUnits", "AllEnemyUnits", "AllFriendlyUnits", "AllOtherUnitsOnBoard", "AllUnitsOnBoard", "EnemyHero", "EnemyUnitsInSelfLaneAndAdjacent", "EnemyUnitsNearLane", "EventUnit", "EventUnitAndAdjacent", "FriendlyHero", "OppositeEnemyUnit", "OtherFriendlyUnits", "RandomEnemyUnit", "RandomFriendlyUnit", "Sacrificer", "SelectedTarget", "Self", "SelfLaneEnemyAndAdjacentAny", "TargetAnyUnit", "TargetEnemyUnit", "TargetEnemyUnitOrHero", "TargetFriendlyUnit", "TargetFriendlyUnitOrHero"]),
+  triggers: new Set(["OnAttackDone", "OnDamagedEnemyHero", "OnDamagedEnemyUnit", "OnDeath", "OnEndOfRound", "OnEnemyUnitDied", "OnEnemyUnitGainedStats", "OnEnemyUnitPlayed", "OnEnemyUnitSacrificed", "OnFriendlyActionPlayed", "OnFriendlyCardDrawn", "OnFriendlyCardGained", "OnFriendlyCardPlayed", "OnFriendlyUnitDamaged", "OnFriendlyUnitDied", "OnFriendlyUnitHpOne", "OnFriendlyUnitPlayed", "OnFriendlyUnitSummoned", "OnKill", "OnOpponentCardDrawn", "OnOpponentCardGained", "OnOtherUnitSacrificed", "OnPlayed", "OnPostCombatLine", "OnPreCombatLine", "OnSacrificed", "OnStartOfRound", "OnStatusApplied"]),
+};
 // A rolled card (Clownboy) can carry ANY chosen-target effect on ANY trigger. When nobody picked a target (bot, simulation, a trigger that cannot ask,
 // no valid choice left) the engine picks one itself instead of letting the whole effect fizzle: the opposite / strongest enemy, a random friend, or a hero.
 function autoTarget(G, u, e) {
@@ -1897,7 +1905,7 @@ function act(G, a, s, c) {
         L(G, s.d.Name + " is gone for good");
         break;
       }
-      const nu = mk(s.id, s.o);
+      const nu = mk(s.id, s.o, s.d && s.d.Rolled ? s.d : undefined);
       nu.atk = Math.max(0, s.atk - (s.aurA || 0) + (a.BuffAtk || 0));
       nu.hp = nu.mx = nu.lh = hp;
       nu.dc = (s.dc || 0) + 1;
@@ -1913,7 +1921,7 @@ function act(G, a, s, c) {
       const ls = [0, 1, 2, 3].filter((i) => !me.ln[i]);
       if (!ls.length) break;
       const i = ls[R(ls.length)];
-      const nu = mk(s.id, s.o);
+      const nu = mk(s.id, s.o, s.d && s.d.Rolled ? s.d : undefined);
       nu.dc = s.dc || 0;
       L(G, s.d.Name + " copies itself into lane " + (i + 1));
       place(G, me, nu, i);
@@ -2190,6 +2198,11 @@ function act(G, a, s, c) {
         });
       break;
     }
+    default:
+      if (!ENGINE_CAPS.actions.has(T) && s.d && s.d.Rolled) {
+        L(G, "(unknown effect " + T + " ignored)");
+        if (typeof console != "undefined") console.warn("Unknown action type on a rolled card:", T);
+      }
   }
   resolve(G);
 }

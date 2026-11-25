@@ -5,6 +5,9 @@
    the UI, replays and the online snapshot read it like any other card. Nothing about it is balanced by hand: it can buff an enemy, hurt you,
    gift your opponent a card... the generator only pays it back (stronger ability = smaller stats, a drawback = bigger stats).
 
+   NOT ROLLED YET (they need their own player prompts or only make sense on spells): Transform, Merge, Reanimate, CopyUnit, ReplayPlayed, TutorCard,
+   SacrificeUnit(s), GiveToOpponent (spells only), EventUnitAndAdjacent / Sacrificer / EnemyUnitsNearLane targets.
+
    TARGETING: the engine can ask the player for ONE target per card, and only for "When Played" (before the card is played) or "When Destroyed"
    (when it dies). So a rolled card has at most one chosen target; every other trigger uses a fixed, well-defined target (this unit, the opposite
    enemy unit, all enemies, a hero, the unit that triggered the effect...). Text and engine target are always built from the same entry, so they agree.
@@ -63,6 +66,11 @@ const TG = {
   Opposite: { Target: "OppositeEnemyUnit", side: "e", obj: "the opposite Enemy Unit", subj: "The opposite Enemy Unit", need: "lane" },
   Board:    { Target: "AllUnitsOnBoard", side: "m", grp: 1, obj: "all Units", subj: "All Units" },
   OtherBoard:{ Target: "AllOtherUnitsOnBoard", side: "m", grp: 1, obj: "all other Units", subj: "All other Units", need: "self" },
+  RandEn:   { Target: "RandomEnemyUnit", side: "e", obj: "a random Enemy Unit", subj: "A random Enemy Unit" },
+  RandFr:   { Target: "RandomFriendlyUnit", side: "f", obj: "a random other Friendly Unit", subj: "A random other Friendly Unit" },
+  AdjEn:    { Target: "AdjacentEnemyUnits", side: "e", grp: 1, obj: "Enemy Units in adjacent lanes", subj: "Enemy Units in adjacent lanes", need: "lane" },
+  LaneEn:   { Target: "EnemyUnitsInSelfLaneAndAdjacent", side: "e", grp: 1, obj: "Enemy Units in this and adjacent lanes", subj: "Enemy Units in this and adjacent lanes", need: "lane" },
+  Cross:    { Target: "SelfLaneEnemyAndAdjacentAny", side: "m", grp: 1, obj: "the opposite Enemy Unit and all Adjacent Units", subj: "The opposite Enemy Unit and all Adjacent Units", need: "lane" },
   It:       { Target: "SelectedTarget", side: "e", obj: "it", subj: "It", need: "it" },
   Event:    { Target: "EventUnit", side: "m", obj: "that Unit", subj: "That Unit", need: "ev" },
   MyHero:   { Target: "FriendlyHero", side: "f", hero: 1, obj: "Your Hero", subj: "Your Hero" },
@@ -101,6 +109,11 @@ const TRIG = {
   OnStatusApplied:        { txt: "Whenever another Unit gains a Status", w: 1, m: 1.1, f: ["self", "lane", "ev"], ban: ["status"] },
   OnEnemyUnitGainedStats: { txt: "Whenever an Enemy Unit gains Stats", w: 1, m: 1.2, f: ["self", "lane"], ban: ["buff"] },
   OnOpponentCardGained:   { txt: "Whenever the Enemy gains a Card", w: 1, m: 1.2, f: ["self", "lane"], ban: ["draw", "add", "ret"] },
+  OnEnemyUnitDied:        { txt: "Whenever an Enemy Unit is Destroyed", w: 1, m: 1.2, f: ["self", "lane"] },
+  OnFriendlyUnitPlayed:   { txt: "Whenever another Friendly Unit is Played", w: 1, m: 1.1, f: ["self", "lane", "ev"], ban: ["summon"] },
+  OnSacrificed:           { txt: "When this is Sacrificed", w: 1, m: 0.9, f: ["self", "lane"], ban: ["summon"] },
+  OnFriendlyCardGained:   { txt: "Whenever You gain a Card", w: 1, m: 1.2, f: ["self", "lane"], ban: ["draw", "add", "ret"] },
+  OnOpponentCardDrawn:    { txt: "Whenever the Enemy Draws a Card", w: 1, m: 1.2, f: ["self", "lane"], ban: ["draw", "add", "ret"] },
   Passive:                { txt: "While in Play", w: 2, m: 1.6, f: ["self", "lane"], passive: 1 },
 };
 
@@ -127,6 +140,14 @@ const ACT = {
   destroy:   { kind: "unit", mk: () => ({ a: { Type: "DestroyUnit" }, t: (o) => "Destroy " + o, v: -4 }) },
   bounce:    { kind: "unit", tag: "ret", mk: () => ({ a: { Type: "ReturnToHand" }, t: (o, s, pl) => "Return " + o + (pl ? " to their owners' Hands" : " to its owner's Hand"), v: -1 }) },
   bonus:     { kind: "unit", tag: "bonus", mk: () => ({ a: { Type: "BonusAttack" }, t: (o, s, pl) => s + (pl ? " do" : " does") + " a Bonus Attack", v: 2 }) },
+  loseHp:    { kind: "any", mk: () => { const n = cr(1, 4); return { a: { Type: "LoseHealth", Amount: n }, t: (o, s, pl) => s + (pl ? " lose " : " loses ") + n + " HP", v: -1.1 * n }; } },
+  atkDown:   { kind: "unit", mk: () => { const n = cr(1, 3); return { a: { Type: "LaneDebuff", Amount: n }, t: (o) => "Reduce the Attack of " + o + " by " + n, v: -0.8 * n }; } },
+  // "free" actions take no target: they act on this unit / the players' decks. need = trigger flag required, only = the only triggers they make sense on
+  copySelf:  { kind: "free", tag: "summon", need: "self", mk: () => ({ a: { Type: "CopySelf" }, t: () => "Copy itself into a random empty lane", v: 3.5 }) },
+  respawn:   { kind: "free", tag: "summon", only: ["OnDeath"], mk: () => ({ a: { Type: "RespawnSelf", BuffHp: -1 }, t: () => "Return to play in its lane with -1 HP", v: 3 }) },
+  moveRight: { kind: "free", need: "self", only: ["OnPlayed", "OnStartOfRound", "OnEndOfRound", "OnFriendlyActionPlayed", "OnEnemyUnitPlayed", "OnFriendlyCardDrawn", "OnFriendlyCardGained", "OnOpponentCardGained", "OnOpponentCardDrawn"],
+             mk: () => { const th = clownRnd(2); return { a: th ? { Type: "MoveRight", ThenAttack: true } : { Type: "MoveRight" }, t: () => th ? "Move one lane to the right, then Attack" : "Move one lane to the right", v: th ? 1.5 : 0.3 }; } },
+  curseEnemy:{ kind: "free", mk: () => { const ash = typeof CD != "undefined" && CD[914]; return ash ? { a: { Type: "AddCardToEnemyDeck", ValueParam: 914 }, t: () => "Shuffle a " + ash.Name + " into the Enemy's Deck", v: 1.5 } : { a: { Type: "AddCardToEnemyDeck", Filter: { Token: 0 } }, t: () => "Shuffle a random card into the Enemy's Deck", v: -0.5 }; } },
   // hero / resource actions: the target is Your Hero or the Enemy Hero
   draw:      { kind: "hero", tag: "draw", mk: () => { const n = cr(1, 2); return { a: { Type: "DrawCard", Amount: n }, t: (o, s, pl, en) => (en ? "The Enemy Hero Draws " : "Draw ") + plural(n, "Card"), v: 2 * n }; } },
   loseBlood: { kind: "hero", mk: () => { const n = cr(1, 3); return { a: { Type: "LoseBlood", Amount: n }, t: (o, s, pl, en) => (en ? "The Enemy Hero loses " : "You lose ") + n + " Blood", v: -1.2 * n }; } },
@@ -138,6 +159,21 @@ const ACT = {
   summon:    { kind: "hero", onlyF: 1, tag: "summon", mk: () => { const c = pick1(cards({ Type: "Unit", MaxCost: 6, Token: 0 })); return c ? { a: { Type: "MakeAUnit", ValueParam: c.Id, Auto: true }, t: () => "Summon " + c.Name, v: 0.4 * ((c.Attack || 0) + (c.Health || 0)) + 1 } : null; } },
 };
 const SIDE = { f: 1, e: -1, m: 0.25 };    // how a target's side turns "worth to the target" into "worth to you"
+
+// Safety net: never hand out a card whose trigger / action / target the engine cannot execute (it would silently do nothing).
+const _clownWarned = {};
+function clownValid(effs) {
+  if (typeof ENGINE_CAPS == "undefined") return true;
+  const bad = (kind, name) => { if (!_clownWarned[kind + name]) { _clownWarned[kind + name] = 1; if (typeof console != "undefined") console.warn("Clownboy: engine has no " + kind + " '" + name + "' - rolls using it are skipped"); } return false; };
+  return effs.every((e) => {
+    if (e.Trigger != "Passive" && !ENGINE_CAPS.triggers.has(e.Trigger)) return bad("trigger", e.Trigger);
+    return e.Actions.every((a) => {
+      if (e.Trigger == "Passive" ? !ENGINE_CAPS.passiveActions.has(a.Type) : !ENGINE_CAPS.actions.has(a.Type)) return bad("action", a.Type);
+      if (a.Target && !ENGINE_CAPS.targets.has(a.Target)) return bad("target", a.Target);
+      return true;
+    });
+  });
+}
 
 function clownRoll(base) {
   base = base || CD[CLOWN_ID];
@@ -162,8 +198,11 @@ function clownRoll(base) {
       for (let k = 0; k < nA; k++) {
         const id = pick1(akeys), A = ACT[id];
         if ((T.ban || []).includes(A.tag)) continue;
+        if ((A.need && !T.f.includes(A.need)) || (A.only && !A.only.includes(tk))) continue;
         let Tname, side, obj, subj, pl = 0, en = 0;
-        if (A.kind == "hero") {
+        if (A.kind == "free") {
+          Tname = null; side = "f"; obj = ""; subj = "";
+        } else if (A.kind == "hero") {
           en = A.onlyF ? 0 : clownRnd(2);
           const H0 = TG[en ? "EnHero" : "MyHero"];
           Tname = H0.Target; side = H0.side; obj = H0.obj; subj = H0.subj;
@@ -191,7 +230,7 @@ function clownRoll(base) {
         const key = id + ":" + Tname + ":" + JSON.stringify(made.a);
         if (used.has(key)) continue;
         used.add(key);
-        actions.push(Object.assign(A.onlyF ? {} : { Target: Tname }, made.a));
+        actions.push(Object.assign(A.onlyF || A.kind == "free" ? {} : { Target: Tname }, made.a));
         parts.push(made.t(obj, subj, pl, en));
         value += made.v * SIDE[side] * (pl ? 1.8 : 1) * T.m;
         nAct++;
@@ -201,7 +240,7 @@ function clownRoll(base) {
       if (ch && tk == "OnDeath") eff.Targeting = ch.c.Target;
       effs.push(eff);
     }
-    if (!effs.length) continue;
+    if (!effs.length || !clownValid(effs)) continue;
     const power = 2 * cost + cr(0, 2);                               // what a card of this mana cost is "worth"
     if (value > power + 2 || value < -7) continue;                  // absurdly strong / hopeless: roll again
     const tot = Math.max(1, Math.min(12, Math.round(power - value))), hp = Math.max(1, Math.min(tot, Math.round(tot / 2) + cr(-1, 1)));
