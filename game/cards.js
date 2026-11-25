@@ -2120,7 +2120,7 @@ const CARDS = [
     Cost: 3,
     Attack: 2,
     Health: 2,
-    Description: "While in Hand and Start of Round: █▓▒░ ░▒▓█ ▓▒░█ ▒░▓",
+    Description: "While in Hand and Start of Round: █▓▒░ ░▒▓█ ▓▒░█ ▒░▓ ",
     Effects: [],
   },
 
