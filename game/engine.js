@@ -1977,7 +1977,7 @@ function act(G, a, s, c) {
         if (!pool.length) return;
         const pk = pool[R(pool.length)];
         me.disc.splice(me.disc.indexOf(pk), 1);
-        const nu = mk(pk.id, s.o);
+        const nu = mk(pk.id, s.o, pk.d && pk.d.Rolled ? pk.d : undefined);
         nu.atk += pk.ba || 0;
         nu.cba = pk.ba || 0;
         nu.cr = pk.red || 0;
@@ -2321,6 +2321,7 @@ function killUnit(G, u, lane) {
       unk: u.kw.has("Unkillable") ? 1 : 0,
       ...(u.cr ? { red: u.cr } : {}),
       ...(u.cba ? { ba: u.cba } : {}),
+      ...(u.d && u.d.Rolled ? { d: u.d } : {}),
     });
   fire(G, "OnDeath", u, { u });
   flushHurt(G, u);

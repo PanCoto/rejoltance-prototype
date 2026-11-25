@@ -5,8 +5,8 @@
    the UI, replays and the online snapshot read it like any other card. Nothing about it is balanced by hand: it can buff an enemy, hurt you,
    gift your opponent a card... the generator only pays it back (stronger ability = smaller stats, a drawback = bigger stats).
 
-   NOT ROLLED YET (they need their own player prompts or only make sense on spells): Transform, Merge, Reanimate, CopyUnit, ReplayPlayed, TutorCard,
-   SacrificeUnit(s), GiveToOpponent (spells only), EventUnitAndAdjacent / Sacrificer / EnemyUnitsNearLane targets.
+   NOT ROLLED (need specific cards / only make sense on spells): Merge (needs its 4 piece cards), GiveToOpponent (spells only),
+   EventUnitAndAdjacent / Sacrificer / EnemyUnitsNearLane targets.
 
    TARGETING: the engine can ask the player for ONE target per card, and only for "When Played" (before the card is played) or "When Destroyed"
    (when it dies). So a rolled card has at most one chosen target; every other trigger uses a fixed, well-defined target (this unit, the opposite
@@ -89,7 +89,7 @@ const CHOICE = {
    pick (can ask the player: "p" before playing, "d" when destroyed), ban = action tags that would loop or make no sense. m = value multiplier. */
 const TRIG = {
   OnPlayed:               { txt: "When Played", w: 5, m: 1, f: ["self", "lane"], pick: "p" },
-  OnDeath:                { txt: "When Destroyed", w: 3, m: 0.9, f: [], pick: "d" },
+  OnDeath:                { txt: "When Destroyed", w: 3, m: 0.9, f: [], pick: "d", ban: ["sac"] },
   OnStartOfRound:         { txt: "Start of Round", w: 2, m: 1.4, f: ["self", "lane"] },
   OnEndOfRound:           { txt: "End of Round", w: 2, m: 1.4, f: ["self", "lane"] },
   OnPreCombatLine:        { txt: "Before Combat Here", w: 2, m: 1.3, f: ["self", "lane"] },
@@ -98,20 +98,20 @@ const TRIG = {
   OnDamagedEnemyUnit:     { txt: "When this deals Damage to an Enemy Unit", w: 2, m: 0.8, f: ["self", "lane", "it"], ban: ["bonus"] },
   OnDamagedEnemyHero:     { txt: "When this deals Damage to the Enemy Hero", w: 1, m: 0.8, f: ["self", "lane"], ban: ["bonus"] },
   OnKill:                 { txt: "When this Destroys a Unit", w: 1, m: 0.8, f: ["self", "lane"], ban: ["bonus"] },
-  OnFriendlyUnitDied:     { txt: "Whenever a Friendly Unit is Destroyed", w: 1, m: 1.2, f: ["self", "lane"] },
+  OnFriendlyUnitDied:     { txt: "Whenever a Friendly Unit is Destroyed", w: 1, m: 1.2, f: ["self", "lane"], ban: ["sac"] },
   OnFriendlyUnitDamaged:  { txt: "Whenever a Friendly Unit is Damaged", w: 1, m: 1.2, f: ["self", "lane"], ban: ["dmgF"] },
   OnFriendlyUnitHpOne:    { txt: "Whenever a Friendly Unit drops to 1 HP", w: 1, m: 1.1, f: ["self", "lane", "ev"], ban: ["dmgF"] },
   OnFriendlyCardDrawn:    { txt: "Whenever You Draw a Card", w: 1, m: 1.2, f: ["self", "lane"], ban: ["draw", "add", "ret"] },
   OnFriendlyActionPlayed: { txt: "Whenever You play an Action", w: 1, m: 1.2, f: ["self", "lane"] },
   OnEnemyUnitPlayed:      { txt: "Whenever the Enemy plays a Unit", w: 1, m: 1.2, f: ["self", "lane", "ev"] },
   OnFriendlyUnitSummoned: { txt: "Whenever another Friendly Unit is Summoned", w: 1, m: 1.1, f: ["self", "lane", "ev"], ban: ["summon"] },
-  OnOtherUnitSacrificed:  { txt: "Whenever another Unit is Sacrificed", w: 1, m: 1.2, f: ["self", "lane"] },
+  OnOtherUnitSacrificed:  { txt: "Whenever another Unit is Sacrificed", w: 1, m: 1.2, f: ["self", "lane"], ban: ["sac"] },
   OnStatusApplied:        { txt: "Whenever another Unit gains a Status", w: 1, m: 1.1, f: ["self", "lane", "ev"], ban: ["status"] },
   OnEnemyUnitGainedStats: { txt: "Whenever an Enemy Unit gains Stats", w: 1, m: 1.2, f: ["self", "lane"], ban: ["buff"] },
   OnOpponentCardGained:   { txt: "Whenever the Enemy gains a Card", w: 1, m: 1.2, f: ["self", "lane"], ban: ["draw", "add", "ret"] },
   OnEnemyUnitDied:        { txt: "Whenever an Enemy Unit is Destroyed", w: 1, m: 1.2, f: ["self", "lane"] },
   OnFriendlyUnitPlayed:   { txt: "Whenever another Friendly Unit is Played", w: 1, m: 1.1, f: ["self", "lane", "ev"], ban: ["summon"] },
-  OnSacrificed:           { txt: "When this is Sacrificed", w: 1, m: 0.9, f: ["self", "lane"], ban: ["summon"] },
+  OnSacrificed:           { txt: "When this is Sacrificed", w: 1, m: 0.9, f: ["self", "lane"], ban: ["summon", "sac"] },
   OnFriendlyCardGained:   { txt: "Whenever You gain a Card", w: 1, m: 1.2, f: ["self", "lane"], ban: ["draw", "add", "ret"] },
   OnOpponentCardDrawn:    { txt: "Whenever the Enemy Draws a Card", w: 1, m: 1.2, f: ["self", "lane"], ban: ["draw", "add", "ret"] },
   Passive:                { txt: "While in Play", w: 2, m: 1.6, f: ["self", "lane"], passive: 1 },
@@ -148,6 +148,24 @@ const ACT = {
   moveRight: { kind: "free", need: "self", only: ["OnPlayed", "OnStartOfRound", "OnEndOfRound", "OnFriendlyActionPlayed", "OnEnemyUnitPlayed", "OnFriendlyCardDrawn", "OnFriendlyCardGained", "OnOpponentCardGained", "OnOpponentCardDrawn"],
              mk: () => { const th = clownRnd(2); return { a: th ? { Type: "MoveRight", ThenAttack: true } : { Type: "MoveRight" }, t: () => th ? "Move one lane to the right, then Attack" : "Move one lane to the right", v: th ? 1.5 : 0.3 }; } },
   curseEnemy:{ kind: "free", mk: () => { const ash = typeof CD != "undefined" && CD[914]; return ash ? { a: { Type: "AddCardToEnemyDeck", ValueParam: 914 }, t: () => "Shuffle a " + ash.Name + " into the Enemy's Deck", v: 1.5 } : { a: { Type: "AddCardToEnemyDeck", Filter: { Token: 0 } }, t: () => "Shuffle a random card into the Enemy's Deck", v: -0.5 }; } },
+  // --- player-prompt actions. On "When Played" the engine asks the player (Sacrifice target, lane, card from the deck...); on every other trigger it decides itself.
+  sacrifice: { kind: "free", tag: "sac", need: "self", mk: (tk) => { const ab = clownRnd(2), pl = tk == "OnPlayed";
+               return { as: [{ Type: "SacrificeUnit", Target: "TargetFriendlyUnit" }].concat(ab ? [{ Type: "AbsorbStats", Target: "Self" }] : []),
+                        t: () => (pl ? "Sacrifice a Friendly Unit" : "Sacrifice the weakest other Friendly Unit") + (ab ? ". This absorbs its Stats" : ""), v: ab ? 0.8 : -2.2 }; } },
+  sacMany:   { kind: "free", tag: "sac", need: "self", only: ["OnPlayed"], mk: () => ({ a: { Type: "SacrificeUnits", Target: "OtherFriendlyUnits", Absorb: true }, t: () => "Sacrifice any number of other Friendly Units. This absorbs their Stats", v: 1.5 }) },
+  reanimate: { kind: "free", tag: "summon", mk: () => { const n = cr(2, 5); return { a: { Type: "Reanimate", Filter: { MaxCost: n } }, t: () => "Summon a random Friendly Unit that costs " + n + " or less from Your Discard Pile", v: 0.5 * n + 1 }; } },
+  tutor:     { kind: "free", tag: "draw", mk: (tk) => ({ a: { Type: "TutorCard", Target: "Self" }, t: () => tk == "OnPlayed" ? "Choose a Card from Your Deck and add it to Your Hand" : "Add the most expensive Card from Your Deck to Your Hand", v: 2.5 }) },
+  replay:    { kind: "free", tag: "summon", need: "self", only: ["OnPlayed"], mk: () => { const all = clownRnd(2);
+               return { a: all ? { Type: "ReplayPlayed", Target: "Self" } : { Type: "ReplayPlayed", Target: "Self", Last: 1 },
+                        t: () => all ? "Trigger the \"When Played\" effect of each Unit You played this game" : "Trigger the \"When Played\" effect of the last card You played (if it is a Unit)", v: all ? 3.5 : 1.5 }; } },
+  morphSelf: { kind: "free", tag: "summon", need: "self", mk: () => {
+               if (clownRnd(3) == 0) return { a: { Type: "Transform", Target: "Self", IntoFrom: "LastPlayed" }, t: () => "Transform into the last Unit You played", v: 1.5 };
+               const c = pick1(cards({ Type: "Unit", MaxCost: 5, Token: 0 }));
+               return c ? { a: { Type: "Transform", Target: "Self", Into: c.Id }, t: () => "Transform into " + c.Name, v: 0.4 * ((c.Attack || 0) + (c.Health || 0)) + 1 } : null; } },
+  morph:     { kind: "unit", single: 1, noSelf: 1, tag: "summon", mk: () => {
+               const c = pick1(cards({ Type: "Unit", MaxCost: 2, Token: 0 }));
+               return c ? { a: { Type: "Transform", Into: c.Id, FirePlayed: false }, t: (o) => "Transform " + o + " into " + c.Name, v: 0.45 * ((c.Attack || 0) + (c.Health || 0)) - 4 } : null; } },
+  copyUnit:  { kind: "unit", single: 1, noSelf: 1, abs: 1, tag: "summon", mk: () => ({ a: { Type: "CopyUnit" }, t: (o) => "Summon a copy of " + o + " in an empty lane", v: 3.2 }) },
   // hero / resource actions: the target is Your Hero or the Enemy Hero
   draw:      { kind: "hero", tag: "draw", mk: () => { const n = cr(1, 2); return { a: { Type: "DrawCard", Amount: n }, t: (o, s, pl, en) => (en ? "The Enemy Hero Draws " : "Draw ") + plural(n, "Card"), v: 2 * n }; } },
   loseBlood: { kind: "hero", mk: () => { const n = cr(1, 3); return { a: { Type: "LoseBlood", Amount: n }, t: (o, s, pl, en) => (en ? "The Enemy Hero loses " : "You lose ") + n + " Blood", v: -1.2 * n }; } },
@@ -218,21 +236,24 @@ function clownRoll(base) {
             const G0 = TG[g];
             if (G0.hero) return A.kind != "unit";
             if (G0.need && !T.f.includes(G0.need)) return false;
-            if (id == "bounce" && g == "Self") return false;                                  // "return this to hand" re-rolls it forever
+            if (id == "bounce" && g == "Self") return false;
+            if (A.single && G0.grp) return false;                                              // one-unit actions (copy / transform) never take a group
+            if (A.noSelf && g == "Self") return false;                                  // "return this to hand" re-rolls it forever
             if ((T.ban || []).includes("dmgF") && A.tag == "dmg" && G0.side != "e") return false;
             return true;
           });
           const G0 = TG[pick1(opts)];
           Tname = G0.Target; side = G0.side; obj = G0.obj; subj = G0.subj; pl = !!G0.grp; en = !!(G0.hero && G0.side == "e");
         }
-        const made = A.mk();
+        const made = A.mk(tk);
         if (!made) continue;
         const key = id + ":" + Tname + ":" + JSON.stringify(made.a);
         if (used.has(key)) continue;
         used.add(key);
-        actions.push(Object.assign(A.onlyF || A.kind == "free" ? {} : { Target: Tname }, made.a));
+        const base = A.onlyF || A.kind == "free" ? {} : { Target: Tname };
+        (made.as || [made.a]).forEach((x) => actions.push(Object.assign({}, base, x)));
         parts.push(made.t(obj, subj, pl, en));
-        value += made.v * SIDE[side] * (pl ? 1.8 : 1) * T.m;
+        value += (A.abs ? made.v : made.v * SIDE[side] * (pl ? 1.8 : 1)) * T.m;
         nAct++;
       }
       if (!actions.length) continue;
