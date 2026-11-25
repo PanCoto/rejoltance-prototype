@@ -5,7 +5,7 @@ function cloneG(G){
   ln:p.ln.map(cloneUnit),gb:Object.assign({},p.gb)});
  return Object.assign({},G,{sim:1,en:G.en?Object.assign({},G.en,{mod:Object.assign({},G.en.mod),log:[]}):G.en,p:G.p.map(cp),log:[],hist:[],dead:(G.dead||[]).slice(),ev:[],q:null,over:G.over?Object.assign({},G.over):null})}
 function blindClone(G,me){const c=cloneG(G);c.p.forEach(p=>shuf(p.deck));
- if(me!=null&&c.p[1-me]){const o=c.p[1-me],pool=o.hand.concat(o.deck),ids=shuf(pool.map(x=>x.id));pool.forEach((x,i)=>x.id=ids[i])}
+ if(me!=null&&c.p[1-me]){const o=c.p[1-me],pool=o.hand.concat(o.deck),ids=shuf(pool.map(x=>x.id));pool.forEach((x,i)=>{x.id=ids[i];delete x.d})}
  return c}
 
 var BW=Object.assign({atk:1.2,hp:0.9,base:1,kw:1,neg:1,eff:1.5,hero:1.1,low:0.7,open:0.5,hs:3,hu:2,hc:0.45,unk:3,oh:2.6,stop:0.35,look:1,lw:0.6,mull:1,worlds:5,ash:1.5,clog:1.5,cw:3,mull2:0,tutor:1.5,echo:1.2,mS:32,rwOn:1,outpen:0.05},typeof BW_OVERRIDE!=='undefined'?BW_OVERRIDE:{});

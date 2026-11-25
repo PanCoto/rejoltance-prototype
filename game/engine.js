@@ -1,4 +1,6 @@
 const CD = {};
+// A card in hand may carry its own data (c.d), e.g. Clownboy's rolled ability; everything else reads the shared card table.
+const cdc = (c) => c.d || CD[c.id];
 CARDS.forEach((c) => {
   if (c.Type == "Action") c.Type = "Spell";
   CD[c.Id] = c;
@@ -216,8 +218,8 @@ const kwp = (u, k, df) => (u.d.KeywordParams || {})[k] || df || 1;
 const burnN = (u) => (u && u.kw && u.kw.has("Burning") ? Math.max(1, u.bn || 0) : 0);
 const sgN = (u) => (u && u.kw && u.kw.has("SoulGuard") ? Math.max(1, u.sgn || 0) : 0);
 const dgN = (u) => (u && u.kw && u.kw.has("Dodge") ? Math.max(1, u.dgn || 0) : 0);
-function mk(id, o) {
-  const d = CD[id];
+function mk(id, o, d0) {
+  const d = d0 || CD[id];
   return {
     uid: UID++,
     id,
@@ -239,7 +241,7 @@ const MANA_BONUS = START_MANA[RJ_MODE] - 1,
   FAIR_MAXCOST = FAIR_MAX[RJ_MODE];
 function fairOpen(G, p) {
   for (let k = 0; k < 3; k++) draw(G, p, 1);
-  const cheap = (c) => CD[c.id].Cost <= FAIR_MAXCOST;
+  const cheap = (c) => cdc(c).Cost <= FAIR_MAXCOST;
   if (!p.hand.some(cheap)) {
     const i = p.deck.findIndex(cheap);
     if (i >= 0) {
@@ -370,6 +372,7 @@ function startRound(G) {
     }
   });
   L(G, "— Round " + G.turn + " —");
+  if (G.turn > 1) G.p.forEach((p) => { rerollHand(G, p); acHand(G, p); });
   if (G.en) bossRound(G);
   regainAtk(G);
   roundTrig(G, "OnStartOfRound");
@@ -388,6 +391,18 @@ function regainAtk(G) {
       }
     }),
   );
+}
+// Cards with a random ability (Clownboy) get it the moment they enter a hand, before anyone sees them; see clownboy.js.
+function rollHand(p) {
+  if (typeof clownRoll != "function") return;
+  for (const c of p.hand) if (c.id == CLOWN_ID && !c.d) c.d = clownRoll(CD[c.id]);
+}
+// ...and it is rewritten again at the start of every Round while it waits in a hand (Cost, Stats and ability all change).
+function rerollHand(G, p) {
+  if (typeof clownRoll != "function") return;
+  let n = 0;
+  for (const c of p.hand) if (c.id == CLOWN_ID) { c.d = clownRoll(CD[c.id]); n++; }
+  if (n) L(G, (p.i ? "Enemy's" : "Your") + " Clownboy changes...");
 }
 function draw(G, p, quiet, idx) {
   if (G.en && p.i == 1 && !p.deck.length) {
@@ -416,6 +431,7 @@ function draw(G, p, quiet, idx) {
     return;
   }
   p.hand.push(c);
+  rollHand(p);
   p.lastDrawn = c;
   acn(G, p, "drawn", 1, 10, "fast");
   aura(G);
@@ -427,6 +443,7 @@ function draw(G, p, quiet, idx) {
   gained(G, p, "draw");
 }
 function gained(G, p, how) {
+  rollHand(p);
   aura(G);
   acHand(G, p);
   if (RULES.drawMeansGain && how != "bounce" && how != "unkillable") {
@@ -439,7 +456,7 @@ function gained(G, p, how) {
 const has = (p, id) => p.ln.some((u) => u && u.id == id && !u.sil);
 const cnt = (p, id) => p.ln.filter((u) => u && u.id == id && !u.sil).length;
 function costMods(G, p, c) {
-  const d = CD[c.id],
+  const d = cdc(c),
     out = [];
   G.p.forEach((q) =>
     units(q).forEach((src) => {
@@ -473,7 +490,7 @@ function costMods(G, p, c) {
   return out;
 }
 function cost(G, p, c) {
-  const d = CD[c.id];
+  const d = cdc(c);
   if (c.z && c.z === G.turn) return 0;
   let x = d.Cost;
   costMods(G, p, c).forEach((m) => (x += m.amt));
@@ -798,7 +815,19 @@ function bestLane(G, o) {
   }
   return b;
 }
+// Rolled cards can build self-feeding loops (e.g. "when a Friendly Unit is damaged: deal 1 damage to a Friendly Unit"): cap the nesting so it can never hang or overflow the stack.
+let FIRE_DEPTH = 0;
 function fire(G, trig, u, ctx) {
+  if (!u || u.sil || G.over) return;
+  if (u.d && u.d.Rolled && FIRE_DEPTH >= 6) return;
+  FIRE_DEPTH++;
+  try {
+    return fire0(G, trig, u, ctx);
+  } finally {
+    FIRE_DEPTH--;
+  }
+}
+function fire0(G, trig, u, ctx) {
   if (!u || u.sil || G.over) return;
   ctx = ctx || {};
   if (trig == "OnPlayed") {
@@ -818,12 +847,39 @@ function fire(G, trig, u, ctx) {
       if (trig == "OnDeath" && deferDeath(G, u, e, ctx)) return;
       ctx = Object.assign({}, ctx, { t: autoFH(G, u) });
     }
+    if (u.d.Rolled && !ctx.t && e.Targeting != "Choice") {
+      const at = autoTarget(G, u, e);
+      if (at) ctx = Object.assign({}, ctx, { t: at });
+    }
     const s0 = !G.sim && u.uid ? gsig(G) : null;
     if (e.Targeting == "Choice" && e.ChoiceLabels && e.ChoiceLabels.length == e.Actions.length)
       act(G, e.Actions[ctx.ch || 0], u, ctx);
     else e.Actions.forEach((a) => act(G, a, u, ctx));
     if (s0 !== null && gsig(G) !== s0) EV(G, { k: "trig", u: u.uid });
   });
+}
+// A rolled card (Clownboy) can carry ANY chosen-target effect on ANY trigger. When nobody picked a target (bot, simulation, a trigger that cannot ask,
+// no valid choice left) the engine picks one itself instead of letting the whole effect fizzle: the opposite / strongest enemy, a random friend, or a hero.
+function autoTarget(G, u, e) {
+  let k = null;
+  for (const a of e.Actions || []) {
+    const kk = SELKIND[a.Target] || (a.Target == "SelectedTarget" ? SELKIND[e.Targeting] : null);
+    if (kk) { k = kk; break; }
+  }
+  if (!k) return null;
+  const me = G.p[u.o], op = G.p[1 - u.o], ok = (x) => x && !x.gone && x.hp > 0 && !shield(x, u);
+  const en = units(op).filter(ok), fr = units(me).filter(ok);
+  const bestEn = () => {
+    const o = op.ln[u.lane];
+    return ok(o) ? o : en.slice().sort((x, y) => y.atk + y.hp - (x.atk + x.hp))[0];
+  };
+  const rnd = (l) => (l.length ? l[R(l.length)] : null);
+  if (k == "e") return bestEn() || null;
+  if (k == "f") return rnd(fr);
+  if (k == "a") return bestEn() || rnd(fr);
+  if (k == "eh") return bestEn() || H(1 - u.o);
+  if (k == "fh") return rnd(fr) || H(u.o);
+  return null;
 }
 function gsig(G) {
   return G.p
@@ -846,7 +902,7 @@ function gsig(G) {
 function fireHand(G, trig, p, ctx) {
   const run = (c, zone) => {
     if (c.used || (c.nf && ctx.u && c.nf === ctx.u.uid)) return;
-    (CD[c.id].Effects || []).forEach((e) => {
+    (cdc(c).Effects || []).forEach((e) => {
       if (e.Trigger != trig || !inZone(e, zone) || !cond(e.Condition, { o: p.i }, ctx, G)) return;
       if (e.Count) {
         c.cnt = (c.cnt || 0) + 1;
@@ -860,7 +916,7 @@ function fireHand(G, trig, p, ctx) {
           else c.ba = (c.ba || 0) + (a.BuffAtk || 0);
           if (zone == "Hand") EV(G, { k: "hand", c: c.uid });
         } else if (a.Type == "TransformInHand" && zone == "Hand" && a.Into != null && CD[a.Into]) {
-          const nm = CD[c.id].Name;
+          const nm = cdc(c).Name;
           c.id = a.Into;
           c.cnt = 0;
           L(G, nm + " transforms into " + CD[a.Into].Name);
@@ -898,7 +954,7 @@ function fireHand(G, trig, p, ctx) {
           u.gb = c.gb || 0;
           if (c.unk) u.kw.add("Unkillable");
           place(G, p, u, ctx.lane);
-          L(G, CD[c.id].Name + " rises");
+          L(G, cdc(c).Name + " rises");
           fire(G, "OnPlayed", u, { ask: 1 });
           if (RULES.summonTriggers && !G.over) announce(G, u, 1);
         }
@@ -1089,6 +1145,10 @@ function tg0(G, a, s, c) {
       return [...units(me), ...units(op)].filter((u) => u !== s && aoeOK(u, s));
     case "OtherFriendlyUnits":
       return units(me).filter((u) => u != s && aoeOK(u, s));
+    case "AdjacentFriendlyUnits":
+      return units(me).filter((u) => u !== s && Math.abs(u.lane - s.lane) == 1 && aoeOK(u, s));
+    case "AdjacentEnemyUnits":
+      return units(op).filter((u) => Math.abs(u.lane - s.lane) == 1 && aoeOK(u, s));
     case "EnemyUnitsNearLane": {
       const l0 = c.pl != null ? c.pl : bestLane(G, s.o);
       return units(op).filter((x) => Math.abs(x.lane - l0) <= 1 && aoeOK(x, s));
@@ -1313,6 +1373,8 @@ function act(G, a, s, c) {
     "AllUnitsOnBoard",
     "AllOtherUnitsOnBoard",
     "OtherFriendlyUnits",
+    "AdjacentFriendlyUnits",
+    "AdjacentEnemyUnits",
     "SelfLaneEnemyAndAdjacentAny",
   ].includes(a.Target);
   if (
@@ -1707,7 +1769,7 @@ function act(G, a, s, c) {
       });
       break;
     case "BonusAttack":
-      unitsOnly.forEach((t) => strike(G, t));
+      unitsOnly.filter((t) => !t.gone && t.hp > 0).forEach((t) => strike(G, t));
       break;
     case "LaneDebuff": {
       const n = a.Amount || 3,
@@ -2744,7 +2806,7 @@ function canPlay(G, p, ci, ln) {
   const c = p.hand[ci];
   if (!c || G.over) return false;
   if (G.act != null && p.i != G.act) return false;
-  const d = CD[c.id];
+  const d = cdc(c);
   if (
     (G.allow == "U" && d.Type != "Unit") ||
     (G.allow == "A" &&
@@ -2776,15 +2838,15 @@ function canPlay(G, p, ci, ln) {
 }
 const playable = (G, p, i) => {
   const c = p.hand[i];
-  if (c && !CD[c.id]) return false;
-  return c && CD[c.id].Type == "Unit"
+  if (c && !cdc(c)) return false;
+  return c && cdc(c).Type == "Unit"
     ? [0, 1, 2, 3].some((l) => canPlay(G, p, i, l))
     : canPlay(G, p, i, null);
 };
 function play(G, p, ci, ln, pk) {
   if (!canPlay(G, p, ci, ln)) return false;
   const c = p.hand[ci],
-    d = CD[c.id],
+    d = cdc(c),
     ctx = {};
   if ((pk || []).includes(NOSAC) && !optSac(d)) return false;
   const ks = apicks(G, p, d, pk, ln);
@@ -2821,7 +2883,7 @@ function play(G, p, ci, ln, pk) {
     });
   p.fr = Object.assign({}, p.fr, { [d.Type]: G.turn, Any: G.turn });
   if (d.Type == "Unit") {
-    const u = mk(c.id, p.i);
+    const u = mk(c.id, p.i, c.d);
     u.atk += c.ba || 0;
     u.paid = paid;
     u.cr = c.red || 0;
@@ -2863,6 +2925,7 @@ function play(G, p, ci, ln, pk) {
     } else p.disc.push({ uid: UID++, id: c.id });
     p.ln.forEach((w) => w && fire(G, "OnFriendlyActionPlayed", w, {}));
     fireHand(G, "OnFriendlyActionPlayed", p, {});
+    if (!G.over) resolve(G);
     if (!G.over) fireHand(G, "OnFriendlyCardPlayed", p, { pc: d });
   }
   return true;
@@ -2887,7 +2950,7 @@ function botPlanBasic(G, p) {
   const op = G.p[1 - p.i];
   const order = p.hand.map((c, i) => ({ c, i, k: cost(G, p, c) })).sort((a, b) => b.k - a.k);
   for (const { c, i } of order) {
-    const d = CD[c.id];
+    const d = cdc(c);
     if (!playable(G, p, i)) continue;
     const pick = (ln) => {
       const pk = [];
@@ -2914,7 +2977,7 @@ function botPlanBasic(G, p) {
         (d.Effects || []).some((e) => (e.Actions || []).some((a) => a.Type == "GrantActionPlay")) &&
         (!p.ln.some((x) => !x) ||
           !p.hand.some(
-            (h, j) => j != i && CD[h.id].Type == "Unit" && cost(G, p, h) <= p.b - cost(G, p, c),
+            (h, j) => j != i && cdc(h).Type == "Unit" && cost(G, p, h) <= p.b - cost(G, p, c),
           ))
       )
         continue;

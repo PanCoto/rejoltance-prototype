@@ -67,7 +67,7 @@ async function rpLoad(id){const p=localStorage.getItem(RPK(id));if(!p)throw new 
 /* ---------- recording ---------- */
 // What a frame looks like: the same shape an online guest receives (see snap() in net.js) but from YOUR side and without any hidden information.
 function rpSnap(G){
- const uc=u=>{if(!u)return null;const x=Object.assign({},u);delete x.d;delete x.hurtQ;x.kw=[...u.kw];return x};
+ const uc=u=>{if(!u)return null;const x=Object.assign({},u);if(u.d===CD[u.id])delete x.d;delete x.hurtQ;x.kw=[...u.kw];return x};
  const cp=c=>Object.assign({},c);
  // both hands and both decks are kept as they are: when this client runs the game (vs bot / as host) the opponent's cards are real, when it was only a guest they are already hidden (id 0)
  const side=p=>({ac:{un:[]},fk:p.ac?p.ac.fk:0,i:p.i,hp:p.hp,mhp:p.mhp,fr:p.fr,mb:p.mb,b:p.b,gb:p.gb,sp:p.sp,sc:p.sc,fat:p.fat||0,

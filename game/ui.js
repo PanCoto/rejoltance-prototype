@@ -74,7 +74,7 @@ function cardHTML(x,live,cls,data){
  const kl=ks.map(k=>`<i class="${BAD.has(k)?'r':''}">${kwLabel(d,k,live?x:null)}</i>`).join(' ');
  const nf=d.Name.length>18?.62:d.Name.length>14?.75:d.Name.length>11?.88:1;
  const sub=unit?(d.Subtypes||[]).join(' '):'Action';
- return`<div class="card ${cls||''}" ${data||''} data-cid="${x.id}" data-ba="${x.ba||0}" style="--nf:${nf}"><img class="art" src="${live?artStage(x.id,x.dc):artSrc(x.id)}" alt="" draggable="false" onerror="${live&&stageN(x.id,x.dc)?`artStageErr(this,${x.id})`:`artErr(this,${x.id})`}"><i class="fr"></i><span class="nm">${d.Name}</span><span class="st">- ${sub} -</span><span class="co${cc}">${ROM(co)}</span>`+
+ return`<div class="card ${cls||''}" ${data||''} data-cid="${x.id}" data-ba="${x.ba||0}" style="--nf:${nf}"><img class="art" src="${d.Sprite || (live?artStage(x.id,x.dc):artSrc(x.id))}" alt="" draggable="false" onerror="${d.Sprite ? 'this.onerror=null' : (live&&stageN(x.id,x.dc)?`artStageErr(this,${x.id})`:`artErr(this,${x.id})`)}"><i class="fr"></i><span class="nm">${d.Name}</span><span class="st">- ${sub} -</span><span class="co${cc}">${ROM(co)}</span>`+
  (unit?`<div class="bx a${au}">${atk}</div><div class="bx h${hc}">${hp}</div>`:'')+
  `<div class="tx">${kl?`<span class="kwl">${kl}</span>`:''}${live&&x.sil?'':`<span>${hl(d.Description)}</span>`}</div></div>`}
 // Cards a card makes, gives or merges into (Bone Baronet -> The Tempting Goblet, Collector -> The Collection...). Used by the hover glossary.
@@ -186,11 +186,11 @@ setInterval(autoSkip,400);
 const ASK={L:'Choose a free lane to summon into',M:'Choose units to sacrifice',e:'Choose an enemy unit',f:'Choose a friendly unit',S:'Choose a unit to sacrifice',a:'Choose any unit',D:'Choose a card from your deck',B:'Choose a card from your hand to put on the bottom of your draw pile',eh:'Choose an enemy unit or the enemy hero',fh:'Choose a friendly unit or your hero',P:'Choose a lane - enemy units there and in the adjacent lanes are affected'};
 const LX=[36,332,624,916],LY=[88,432];
 const mine=()=>(G.act==0||(pend&&pend.ext))&&!busy&&!G.over;
-const pdef=()=>pend.ext?pend.ext.d:CD[G.p[0].hand[pend.ci].id];   // the card (or pseudo card) whose picks are being made
+const pdef=()=>pend.ext?pend.ext.d:(G.p[0].hand[pend.ci].d||CD[G.p[0].hand[pend.ci].id]);   // the card (or pseudo card) whose picks are being made
 const ksNow=()=>pend.pre?pend.ks:apicks(G,G.p[0],pdef(),pend.got,pend.ln);
 const kind=()=>pend?ksNow()[pend.got.length]:null;
 function laneEx(){const ex=pend.ln!=null?[pend.ln]:[];ksNow().forEach((k,j)=>{if(k=='L'&&j<pend.got.length&&typeof pend.got[j]=='number')ex.push(pend.got[j])});return ex}
-const pendSp=()=>{if(pend&&pend.ext)return pend.ext.d.Type=='Spell';const c=pend&&!pend.pre&&G.p[0].hand[pend.ci];return !!c&&CD[c.id].Type=='Spell'};
+const pendSp=()=>{if(pend&&pend.ext)return pend.ext.d.Type=='Spell';const c=pend&&!pend.pre&&G.p[0].hand[pend.ci];return !!c&&(c.d||CD[c.id]).Type=='Spell'};
 function validTargets(){const k=kind();if(k=='L')return req(G,G.p[0],'L',null,laneEx());if(!k||k=='C'||k=='D'||k=='B')return[];
  const f=(ksNow().f||[])[pend.got.length]||null;return req(G,G.p[0],k,f,null,pendSp(),pend.ext?pend.ext.d.ExU:null)}
 function dots(p){return Array.from({length:10},(_,i)=>`<i class="${i<p.b?'on':i<p.mb?'sp':''}"></i>`).join('')}
@@ -209,12 +209,12 @@ function render(){
  $('game').classList.toggle('et',G.act==1);$('enb').className='nbar'+(G.act==1?' act':'');$('pnb').className='nbar'+(G.act==0?' act':'');
  const hs=h=>RULES.fullHandRework?`${h.length}/${HAND_MAX}`:h.length;$('ecn').textContent=`hand ${hs(op.hand)} - deck ${op.deck.length}`;$('pcn').textContent=`hand ${hs(me.hand)} - deck ${me.deck.length}`;$('edots').innerHTML=dots(op);$('pdots').innerHTML=dots(me);
  const top=me.disc[me.disc.length-1];$('pile').className=top?'':'empty';$('pile').innerHTML=top?cardHTML(top,0):'';$('pc').textContent=me.disc.length+'x';$('dc').textContent=me.deck.length?me.deck.length+'x':'Fatigue '+((me.fat||0)+1);
- const placing=mine()&&sel!=null&&!pend&&me.hand[sel]&&CD[me.hand[sel].id].Type=='Unit';
+ const placing=mine()&&sel!=null&&!pend&&me.hand[sel]&&(me.hand[sel].d||CD[me.hand[sel].id]).Type=='Unit';
  for(const row of[1,0])for(let i=0;i<4;i++){const u=G.p[row].ln[i];const free=(placing&&!u&&row==0&&canPlay(G,me,sel,i))||(!u&&row==0&&tg.includes(i)&&pend&&!pend.pre&&kind()=='L')||(pend&&!pend.pre&&kind()=='P')||(pend&&pend.pre&&pend.mv&&row==0&&!u&&pend.mv.includes(i));
   h+=`<div class="slot ${free?'hl':''} ${flash==i?'fl':''}" data-r="${row}" data-i="${i}" style="left:${LX[i]}px;top:${LY[row?0:1]}px">${u?cardHTML(u,1,(row?'e ':'')+(tg.includes(u)?'tgt':'')+(pend&&pend.multi&&pend.multi.includes(u)?' msel':''),`data-u="${u.uid}"`):`<span class="num">${ROM(i+1)}</span>`}</div>`}
  if(flash>=0)h='<div class="laneband" style="left:'+(LX[flash]-14)+'px"></div>'+h;
  $('board').innerHTML=h+'<div id="castlbl"></div>';
- $('board').classList.toggle('cast',castMode);if(castMode)$('castlbl').textContent='Click the board to cast '+CD[me.hand[sel].id].Name;
+ $('board').classList.toggle('cast',castMode);if(castMode)$('castlbl').textContent='Click the board to cast '+(me.hand[sel].d||CD[me.hand[sel].id]).Name;
  const n=me.hand.length,step=Math.min(235,1150/Math.max(n,1)),mid=(n-1)/2;
  const hc=$('hand'),ex={};[...hc.children].forEach(e=>ex[e.dataset.hid]=e);
  me.hand.forEach((c,i)=>{let el=ex[c.uid],fresh=!el;delete ex[c.uid];if(el)el.style.visibility='';
@@ -368,7 +368,7 @@ function nextPick(){const me=G.p[0],d=pdef(),ks=apicks(G,me,d,pend.got,pend.ln),
    else if(k=='L')say(`<b>${d.Name}</b>: ${ASK.L} (white outline)${fx}`,cx);
    else say((pend.ext?`<b>${d.Name}</b>: `:'')+ASK[k]+' (red outline)'+fx,cx)}return}
  const p=pend;if(p.ext){p.ext.fin(p.got.slice());return}sel=pend=null;castMode=false;doPlay(p)}
-async function doPlay(p){const me=G.p[0],c=me.hand[p.ci],d=CD[c.id];say('');busy=true;
+async function doPlay(p){const me=G.p[0],c=me.hand[p.ci],d=c.d||CD[c.id];say('');busy=true;
  const el=document.querySelector(`#hand [data-hid="${c.uid}"]`),sp=d.Type=='Spell';
  const from=el?el.getBoundingClientRect():{left:innerWidth/2-60,top:innerHeight-200,width:120,height:170};
  if(el)el.style.visibility='hidden';const fc=cost(G,me,c);
@@ -399,7 +399,7 @@ async function askPending(my){const was=busy;busy=true;
   runItem(G,it,pk);render();anim();if(NET)netPush();await sleep(350)}
  if(my==gid){busy=was;if(G)render()}}   // redraw: the hand / End button were last drawn while busy
 function selectHand(i){const me=G.p[0];pend=null;castMode=false;sel=sel==i?null:i;say('');render();if(sel==null)return;
- const c=me.hand[i],d=CD[c.id];
+ const c=me.hand[i],d=c.d||CD[c.id];
  if(!playable(G,me,i)){const why=cost(G,me,c)>me.b?'not enough Blood':G.allow=='U'&&d.Type!='Unit'?'only Units now':G.allow=='A'&&d.Type!='Spell'&&!d.ActionPlay&&!(d.Type=='Unit'&&(unitsInAction(me)||actionPass(G,me)))?'only Actions now':d.Type=='Spell'&&G.allow!='A'&&(d.Effects||[]).some(e=>(e.Actions||[]).some(a=>a.Type=='GrantActionPlay'))?'only in the Action Phase':'no valid target';say(`Can't play ${d.Name} now (${why})`);return}
  if(d.Type=='Spell'){const ks=apicks(G,me,d);if(ks.length)begin(i,null);else{castMode=true;render();say(`<b>${d.Name}</b>: click anywhere on the board to cast`,1)}}
  else say(`Choose a free lane for ${d.Name}`,1)}
@@ -425,7 +425,7 @@ document.addEventListener('click',e=>{if(!G||G.over||$('game').style.display!='b
  if(sl){const r=+sl.dataset.r,i=+sl.dataset.i,u=G.p[r].ln[i];
   if(pend){if(kind()=='P'){pend.got.push(i);nextPick();return}if(kind()=='L'){if(!u&&r==0&&validTargets().includes(i)){pend.got.push(i);nextPick()}return}
    if(u&&validTargets().includes(u)){if(kind()=='M'){const a=pend.multi,j=a.indexOf(u);j<0?a.push(u):a.splice(j,1);render();mmsg()}else{pend.got.push(u);nextPick()}}return}
-  if(sel!=null&&r==0&&!u&&CD[me.hand[sel].id].Type=='Unit'&&canPlay(G,me,sel,i)){begin(sel,i);return}
+  if(sel!=null&&r==0&&!u&&(me.hand[sel].d||CD[me.hand[sel].id]).Type=='Unit'&&canPlay(G,me,sel,i)){begin(sel,i);return}
   }});
 document.addEventListener('contextmenu',e=>{if(G&&$('game').style.display=='block'&&(sel!=null||pend)){e.preventDefault();if(!(pend&&pend.pre))cancel()}});
 document.addEventListener('keydown',e=>{if(!G||$('game').style.display!='block'||e.target.tagName=='INPUT'||$('setmenu').style.display=='flex')return;
@@ -448,7 +448,7 @@ function choiceSpot(el,d){const me=G.p[0],ef=(d.Effects||[]).find(x=>x.ChoiceLab
   if(node)return{node,j,unit,ok:choiceOK(G,me,d,j)}}
  return null}
 function dropInfo(el){const me=G.p[0];if(!el||sel==null||!me.hand[sel])return null;
- const d=CD[me.hand[sel].id],sl=el.closest&&el.closest('#board .slot');
+ const d=(me.hand[sel].d||CD[me.hand[sel].id]),sl=el.closest&&el.closest('#board .slot');
  if(d.Type=='Unit'){if(sl&&+sl.dataset.r==0&&!me.ln[+sl.dataset.i]&&canPlay(G,me,sel,+sl.dataset.i))return{node:sl,ok:1,run:()=>sl.click()};return null}
  if(castMode)return el.closest('#board')?{node:null,ok:1,run:()=>el.click()}:null;
  if(pend){const k=kind();
@@ -465,7 +465,7 @@ function dropInfo(el){const me=G.p[0];if(!el||sel==null||!me.hand[sel])return nu
 const ringOf=n=>n.id=='ehero'||n.id=='phero'?n.querySelector('.ring'):n;
 function dropOn(el){const i=dropInfo(el);if(i)i.run();else cancel()}
 function dragZones(on){document.querySelectorAll('.dz,.dh').forEach(x=>x.classList.remove('dz','dh'));if(!on||sel==null)return;
- const me=G.p[0],d=CD[me.hand[sel].id];if(d.Type!='Spell'||pend||castMode)return;const ef=(d.Effects||[]).find(x=>x.ChoiceLabels);if(!ef)return;
+ const me=G.p[0],d=(me.hand[sel].d||CD[me.hand[sel].id]);if(d.Type!='Spell'||pend||castMode)return;const ef=(d.Effects||[]).find(x=>x.ChoiceLabels);if(!ef)return;
  ef.Actions.forEach((a,j)=>{if(!choiceOK(G,me,d,j))return;
   if(a.Type=='DrawCard')$('deckb').classList.add('dz');else if(a.Type=='DrawFromDiscard')$('pile').classList.add('dz');
   else if(a.Target=='EnemyHero')ringOf($('ehero')).classList.add('dz');
@@ -476,7 +476,7 @@ document.addEventListener('pointermove',e=>{if(!drag)return;
  if(!drag.on){if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)<10)return;
   const me=G.p[0],i=drag.i,c=me.hand[i];
   if(!c||!playable(G,me,i)){drag=null;return}
-  const d=CD[c.id],k0=d.Type=='Spell'?apicks(G,me,d)[0]:null;if(k0=='D'||(k0=='C'&&!(d.Effects||[]).some(x=>x.ChoiceLabels))){drag=null;return}
+  const d=c.d||CD[c.id],k0=d.Type=='Spell'?apicks(G,me,d)[0]:null;if(k0=='D'||(k0=='C'&&!(d.Effects||[]).some(x=>x.ChoiceLabels))){drag=null;return}
   stickyZoom=false;$('zoom').style.display='none';
   if(k0=='C'){cancel();sel=i;render()}else if(sel!=i)selectHand(i);
   dragZones(true);

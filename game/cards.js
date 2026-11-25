@@ -2112,6 +2112,18 @@ const CARDS = [
     ],
   },
 
+  {
+    Id: 131,
+    Name: "Clownboy",
+    Type: "Unit",
+    Subtypes: ["Human"],
+    Cost: 3,
+    Attack: 2,
+    Health: 2,
+    Description: "While in Hand and Start of Round: █▓▒░ ░▒▓█ ▓▒░█ ▒░▓",
+    Effects: [],
+  },
+
   // ==================== ORIGINAL TOKENS (unchanged) ====================
 
   {

@@ -37,7 +37,7 @@ const startAudio=()=>musicStart();
 const flipLog=s=>String(s).replace(/^(You|Enemy)\b/,m=>m=='You'?'Enemy':'You');
 const mev=e=>{const x=Object.assign({},e);if(x.o!=null)x.o=1-x.o;if(x.h!=null)x.h=1-x.h;if(x.us)x.us=x.us.map(y=>Object.assign({},y,{o:1-y.o}));return x};
 function snap(G){
- const uc=u=>{if(!u)return null;const x=Object.assign({},u);delete x.d;delete x.hurtQ;x.kw=[...u.kw];x.o=1-u.o;return x};   // hurtQ = engine-internal queue whose entries point back at the unit (circular): a unit killed mid-lane (e.g. by the hero dying) still holds it and JSON.stringify threw, so the guest never got the game-over state
+ const uc=u=>{if(!u)return null;const x=Object.assign({},u);if(u.d===CD[u.id])delete x.d;delete x.hurtQ;x.kw=[...u.kw];x.o=1-u.o;return x};   // hurtQ = engine-internal queue whose entries point back at the unit (circular): a unit killed mid-lane (e.g. by the hero dying) still holds it and JSON.stringify threw, so the guest never got the game-over state
  const hid=c=>({uid:c.uid,id:0}),cp=c=>Object.assign({},c);
  const side=(p,own)=>({ac:own?p.ac:{un:[]},fk:p.ac?p.ac.fk:0,i:1-p.i,hp:p.hp,mhp:p.mhp,fr:p.fr,mb:p.mb,b:p.b,gb:p.gb,sp:p.sp,sc:p.sc,fat:p.fat||0,
   hand:own?p.hand.map(cp):p.hand.map(hid),
@@ -47,7 +47,7 @@ function snap(G){
   over:G.over?{win:G.over.draw?-1:1-G.over.win,draw:G.over.draw,sur:G.over.sur,left:G.over.left}:null,
   log:G.log.slice(-60).map(flipLog),hist:G.hist.slice(-80).map(h=>({p:1-h.p,t:h.t,id:h.id,tg:h.tg,uid:h.uid,tf:h.tf})),
   p:[side(G.p[1],1),side(G.p[0],0)]}))}
-function unsnap(s,ev){s.p.forEach(p=>p.ln.forEach(u=>{if(u){u.kw=new Set(u.kw);u.d=CD[u.id]}}));s.ev=ev||[];s.q=null;return s}
+function unsnap(s,ev){s.p.forEach(p=>p.ln.forEach(u=>{if(u){u.kw=new Set(u.kw);u.d=u.d||CD[u.id]}}));s.ev=ev||[];s.q=null;return s}
 function netPush(x){if(!NET||!NET.host||!G)return;
  let m;try{m=Object.assign({t:'st',s:snap(G),ev:NET.ev.map(mev)},x||{})}catch(e){console.error('snapshot failed',e);return}   // never let a snapshot error abort the host's flow
  NET.ev=[];netSend(m)}
@@ -183,7 +183,7 @@ async function hostHandle(m){
   if(!G||G.over||G.act!==1||G.step>=3){netPush();break}
   const p=G.p[1],c=p.hand[m.ci],ln=m.ln;
   if(!c||!(ln==null||(Number.isInteger(ln)&&ln>=0&&ln<4))||!canPlay(G,p,m.ci,ln==null?null:ln)){netPush();break}
-  const d=CD[c.id],sp=d.Type=='Spell';
+  const d=c.d||CD[c.id],sp=d.Type=='Spell';
   const pk=(m.pk||[]).map(o=>o&&o.h!=null?H(1-o.h):o?resolvePick(G,p,null,o):undefined);
   busy=true;
   await flyCard(c.id,heroFrom(),sp?centerRect():slotRect(1,ln),{out:sp,dur:sp?480:380,hold:300,fc:cost(G,p,c),ba:c.ba});
