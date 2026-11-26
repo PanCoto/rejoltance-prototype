@@ -193,6 +193,10 @@ function clownValid(effs) {
   });
 }
 
+// Allowed total stats (Attack + Health) by mana cost: [_, 1, 2, 3, 4, 5, 6]
+const CLOWN_MIN_STATS = [0, 2, 3, 4, 5, 6, 7];
+const CLOWN_MAX_STATS = [0, 6, 7, 9, 10, 11, 12];
+
 function clownRoll(base) {
   base = base || CD[CLOWN_ID];
   const tkeys = Object.keys(TRIG), tw = tkeys.flatMap((k) => Array(TRIG[k].w).fill(k)), akeys = Object.keys(ACT);
@@ -262,9 +266,13 @@ function clownRoll(base) {
       effs.push(eff);
     }
     if (!effs.length || !clownValid(effs)) continue;
-    const power = 2 * cost + cr(0, 2);                               // what a card of this mana cost is "worth"
+    const power = 1.6 * cost + 1 + cr(0, 2);                         // what a card of this mana cost is "worth" (close to the normal units' curve)
     if (value > power + 2 || value < -7) continue;                  // absurdly strong / hopeless: roll again
-    const tot = Math.max(1, Math.min(12, Math.round(power - value))), hp = Math.max(1, Math.min(tot, Math.round(tot / 2) + cr(-1, 1)));
+    // Stats are kept inside a window per mana cost, so a cheap card is never a 4/5 and an expensive one never a 0/1.
+    // A roll whose ability would push the stats outside the window is thrown away and rolled again (it is NOT clamped: the ability and the stats must still add up).
+    const want = Math.round(power - value);
+    if (want < CLOWN_MIN_STATS[cost] || want > CLOWN_MAX_STATS[cost]) continue;
+    const tot = want, hp = Math.max(1, Math.min(tot, Math.round(tot / 2) + cr(-1, 1)));
     return Object.assign({}, base, {
       Cost: cost, Attack: tot - hp, Health: hp,
       Name: genClownName(),              // <--- Procedural name
