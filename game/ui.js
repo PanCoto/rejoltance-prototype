@@ -113,8 +113,11 @@ const hideZoom=()=>{if(!stickyZoom)$('zoom').style.display='none'};
 const findLive=uid=>[...G.p[0].ln,...G.p[1].ln].find(v=>v&&v.uid==uid);
 const CARDSEL='[data-u],[data-c],[data-cid]';
 // Which card (live unit / hand card / plain card) does this element show?
+// data-ru = uid of a card shown in a pile / deck / Seek view / replay band: look it up in the CURRENT game state, so a Clownboy shows the version it really has (c.d)
+function findAny(uid){for(let s=0;s<2;s++){const p=G.p[s];for(const z of [p.hand,p.deck,p.disc]){const c=z.find(v=>v&&v.uid==uid);if(c)return{c,s}}}return null}
 function cardOf(t){let x=null,live=false;
- if(t.dataset.u&&G){x=findLive(t.dataset.u);live=!!x}
+ if(t.dataset.ru&&G){const f=findAny(t.dataset.ru);if(f){let fc;try{fc=cost(G,G.p[f.s],f.c)}catch(_){}x=Object.assign({},f.c,fc!=null?{fc}:{})}}
+ if(!x&&t.dataset.u&&G){x=findLive(t.dataset.u);live=!!x}
  if(!x&&t.dataset.c&&G)x=G.p[0].hand.find(v=>v.uid==t.dataset.c);
  if(!x&&t.dataset.cid)x={id:+t.dataset.cid,uid:0,ba:+t.dataset.ba||0};
  if(x&&!live&&t.dataset.fc!=null&&!t.dataset.u&&!t.dataset.c)x.fc=+t.dataset.fc;   // changelog cards: show the printed cost
@@ -127,13 +130,20 @@ function pinCard(t){const k=cardKey(t);
  if(stickyZoom&&pinKey===k){unpin();const c=cardOf(t);if(c)showZoom(c.x,c.live);return}   // click again: unpin (hover zoom resumes)
  const c=cardOf(t);if(!c)return;pinKey=k;stickyZoom=true;showZoom(c.x,c.live)}
 // Keep a pinned card up to date after the board changes; drop the pin when that card is gone.
-function refreshPin(){if(!stickyZoom||!pinKey)return;const id=pinKey.slice(1);let c=null;
+function refreshPin(){if(!stickyZoom){refreshHover();return}if(!pinKey)return;const id=pinKey.slice(1);let c=null;
  if(pinKey[0]=='u'){const x=G&&findLive(id);if(x)c={x,live:true}}
  else if(pinKey[0]=='c'){const x=G&&G.p[0].hand.find(v=>v.uid==id);if(x)c={x,live:false}}
  else{const el=document.querySelector(`[data-cid="${id}"]`);if(el)c=cardOf(el)}
  if(c)showZoom(c.x,c.live);else unpin()}
-document.addEventListener('mouseover',e=>{if(stickyZoom)return;const t=e.target.closest&&e.target.closest(CARDSEL);if(!t||t.closest('#zoom')||t.closest('.fly')||t.classList.contains('dying'))return;
+const hovTarget=t=>{const c=t&&t.closest&&t.closest(CARDSEL);return!c||c.closest('#zoom')||c.closest('.fly')||c.classList.contains('dying')?null:c};
+document.addEventListener('mouseover',e=>{if(stickyZoom)return;const t=hovTarget(e.target);if(!t)return;
  const c=cardOf(t);if(c)showZoom(c.x,c.live)});
+// The hover zoom always follows what is UNDER THE CURSOR right now: after every redraw (stats changed, hand re-rolled, card died / left) and after a pop-up closes,
+// it is re-read from the card below the pointer - so it can never keep showing an old version of a card or a card that is no longer there.
+let mX=-1,mY=-1;document.addEventListener('mousemove',e=>{mX=e.clientX;mY=e.clientY},{passive:true});
+function refreshHover(){if(stickyZoom||$('game').style.display!='block')return;
+ const t=mX<0?null:hovTarget(document.elementFromPoint(mX,mY)),c=t&&cardOf(t);
+ if(c)showZoom(c.x,c.live);else $('zoom').style.display='none'}
 document.addEventListener('mouseout',e=>{if(e.target.closest&&e.target.closest(CARDSEL))hideZoom()});
 const PH={U:'Units',B:'Unit and Actions',A:'Actions'};
 // ===== TURN TIMER (online games only) ==========================================================
@@ -208,7 +218,7 @@ function render(){
  $('enb').textContent=NET?(OPN||'Opponent'):(G.tut?'Training Bot':'Botzacy');$('pnb').textContent=DEMO?'Botzacy II':myName()||'Playerzacy';
  $('game').classList.toggle('et',G.act==1);$('enb').className='nbar'+(G.act==1?' act':'');$('pnb').className='nbar'+(G.act==0?' act':'');
  const hs=h=>RULES.fullHandRework?`${h.length}/${HAND_MAX}`:h.length;$('ecn').textContent=`hand ${hs(op.hand)} - deck ${op.deck.length}`;$('pcn').textContent=`hand ${hs(me.hand)} - deck ${me.deck.length}`;$('edots').innerHTML=dots(op);$('pdots').innerHTML=dots(me);
- const top=me.disc[me.disc.length-1];$('pile').className=top?'':'empty';$('pile').innerHTML=top?cardHTML(top,0):'';$('pc').textContent=me.disc.length+'x';$('dc').textContent=me.deck.length?me.deck.length+'x':'Fatigue '+((me.fat||0)+1);
+ const top=me.disc[me.disc.length-1];$('pile').className=top?'':'empty';$('pile').innerHTML=top?cardHTML(top,0,'',top.uid!=null?`data-ru="${top.uid}"`:''):'';$('pc').textContent=me.disc.length+'x';$('dc').textContent=me.deck.length?me.deck.length+'x':'Fatigue '+((me.fat||0)+1);
  const placing=mine()&&sel!=null&&!pend&&me.hand[sel]&&(me.hand[sel].d||CD[me.hand[sel].id]).Type=='Unit';
  for(const row of[1,0])for(let i=0;i<4;i++){const u=G.p[row].ln[i];const free=(placing&&!u&&row==0&&canPlay(G,me,sel,i))||(!u&&row==0&&tg.includes(i)&&pend&&!pend.pre&&kind()=='L')||(pend&&!pend.pre&&kind()=='P')||(pend&&pend.pre&&pend.mv&&row==0&&!u&&pend.mv.includes(i));
   h+=`<div class="slot ${free?'hl':''} ${flash==i?'fl':''}" data-r="${row}" data-i="${i}" style="left:${LX[i]}px;top:${LY[row?0:1]}px">${u?cardHTML(u,1,(row?'e ':'')+(tg.includes(u)?'tgt':'')+(pend&&pend.multi&&pend.multi.includes(u)?' msel':''),`data-u="${u.uid}"`):`<span class="num">${ROM(i+1)}</span>`}</div>`}
@@ -228,7 +238,7 @@ function render(){
  const pl=G.hist.filter(x=>x.t==G.turn).slice(-4);let s='';for(let i=0;i<4;i++){const x=pl[i-(4-pl.length)];s+=x&&i>=4-pl.length?`<div class="s"><img src="${artSrc(x.id)}" alt="" onerror="artErr(this,${x.id})"></div>`:'<div class="s"></div>'}
  $('strip').innerHTML=s+`<div class="w">${(G.log[G.log.length-1]||'').replace(/^— |—$/g,'').slice(0,16)}</div>`;
  const act=mine()&&!(pend&&pend.ext);$('end').disabled=!act;$('end').textContent=G.step>=3?'Combat…':act?'End Turn':'Enemy…';
- if(DEMO){if(window.WATCH)musicUpdate();return}refreshPin();musicUpdate();achPoll();tmSync();autoSkip();if(G.over)finish()}
+ if(DEMO){if(window.WATCH){musicUpdate();refreshPin()}return}refreshPin();musicUpdate();achPoll();tmSync();autoSkip();if(G.over)finish()}
 function info(x,live){showZoom(x,live)}
 // Pop-up banner for Endless Mode boss events (upgrades, new deck). Several in one round are shown one after another.
 const BPQ=[];let bpBusy=false;
@@ -301,8 +311,8 @@ function fxAoe(e){const[c,col]=AOEC(e),L=$('fx');
  e.us.slice().sort((a,b)=>a.l-b.l).forEach((x,i)=>{const sl=fxSlot(x.o,x.l),d=(i*.07).toFixed(2)+'s';
   sl.insertAdjacentHTML('beforeend',`<div class="fxe ${c}" style="animation-delay:${d}"></div><div class="fxr" style="--c:${col};animation-delay:${d}"></div>`);fxRm(sl,1300)})}
 function pickCard(title,cards,cb){$('mt').textContent=title;$('mok').style.display='none';
- $('mh').innerHTML=cards.map((c,i)=>`<div class="slot2" data-m="${i}">${cardHTML(c,0)}</div>`).join('');
- $('mh').onclick=e=>{const m=e.target.closest('[data-m]');if(!m)return;$('mul').style.display='none';$('mok').style.display='';cb(cards[+m.dataset.m])};
+ $('mh').innerHTML=cards.map((c,i)=>`<div class="slot2" data-m="${i}">${cardHTML(c,0,'',c.uid!=null?`data-ru="${c.uid}"`:'')}</div>`).join('');
+ $('mh').onclick=e=>{const m=e.target.closest('[data-m]');if(!m)return;$('mul').style.display='none';$('mok').style.display='';cb(cards[+m.dataset.m]);setTimeout(refreshHover,0)};
  $('mul').style.display='flex'}
 const scl=()=>$('stage').getBoundingClientRect().width/1920;
 function flyCard(id,from,to,o){o=o||{};if(o.out)sfx('spellCast');return new Promise(res=>{const f=document.createElement('div');f.className='fly';f.innerHTML=cardHTML({id,uid:0,fc:o.fc,ba:o.ba||0},0);
@@ -406,9 +416,8 @@ function selectHand(i){const me=G.p[0];pend=null;castMode=false;sel=sel==i?null:
 document.addEventListener('click',e=>{if(!G||G.over||$('game').style.display!='block')return;
  const t=e.target,hd=t.closest('[data-h]'),sl=t.closest('#board .slot'),me=G.p[0];
  if(t.dataset.cancel){if(pend&&pend.pre)return;cancel();return}
- const ct=t.closest(CARDSEL);
- if(!ct){if(stickyZoom)unpin()}
- else if(!ct.closest('#zoom')&&!ct.closest('#pile')&&!ct.closest('.fly')&&!(pend&&ct.closest('#board')))pinCard(ct);   // (a click that picks a target is not a zoom click)
+ // (no click-to-pin in a match: the zoom is hover-only, so it never stays on screen covering the HUD. Pinning exists only in the Card Collection.)
+ if(stickyZoom&&!(window.TUT&&TUT.active))unpin();
  if(pend&&pend.pre&&pend.mv){   // AI AL: pick a free lane to move to (or "Stay")
   if(t.dataset.nomove){const r=pendRes;pend=null;say('');r(null)}
   else if(sl&&+sl.dataset.r==0&&!G.p[0].ln[+sl.dataset.i]&&pend.mv.includes(+sl.dataset.i)){const r=pendRes,ln=+sl.dataset.i;pend=null;say('');r(ln)}
@@ -537,18 +546,18 @@ async function flow(){busy=true;const my=gid;
   await sleep(300);if(my!=gid)return;nextStep(G)}
  if(my==gid){render();netPush()}}
 function showHist(){const rows=G.hist.slice().reverse().map(h=>`<div class="hr" data-cid="${h.id}"><img src="${artSrc(h.id)}" alt="" onerror="artErr(this,${h.id})"><span><b>${CD[h.id].Name}</b> ${CD[h.id].Type=='Spell'?'cast':'played'} by ${h.p?'Enemy':'You'}${h.tg?' -> '+h.tg:''}<br><small>Round ${h.t}</small></span></div>`).join('')||'<small>No cards played yet.</small>';
- $('hist').innerHTML=`<div class="hb"><h3>Cards played</h3>${rows}<p><small>Hover or click a card to see what it does. Click anywhere else to close.</small></p></div>`;$('hist').style.display='flex'}
-$('hs').onclick=()=>{if(G)showHist()};$('strip').onclick=()=>{if(G)showHist()};$('hist').onclick=e=>{if(e.target.closest('.hr'))return;$('hist').style.display='none'};
+ $('hist').innerHTML=`<div class="hb"><h3>Cards played</h3>${rows}<p><small>Hover a card to see what it does. Click anywhere else to close.</small></p></div>`;$('hist').style.display='flex'}
+$('hs').onclick=()=>{if(G)showHist()};$('strip').onclick=()=>{if(G)showHist()};$('hist').onclick=e=>{if(e.target.closest('.hr'))return;$('hist').style.display='none';$('zoom').style.display='none';setTimeout(refreshHover,0)};
 let viewing=false;
 function viewPile(title,cards){if(!G||$('mul').style.display=='flex')return;viewing=true;
  $('mt').textContent=title;$('mok').style.display='';$('mok').textContent='Close';$('mok').onclick=closeMul;
- $('mh').innerHTML=cards.length?cards.map(c=>`<div class="slot2">${cardHTML(c,0)}</div>`).join(''):'<small style="font-size:30px">Empty</small>';
+ $('mh').innerHTML=cards.length?cards.map(c=>`<div class="slot2">${cardHTML(c,0,'',c.uid!=null?`data-ru="${c.uid}"`:'')}</div>`).join(''):'<small style="font-size:30px">Empty</small>';
  $('mh').style.setProperty('--cw',fitW(cards.length)+'px');$('mh').onclick=null;$('mul').style.display='flex'}
 function fitW(n){for(let w=190;w>=60;w-=2){const g=Math.round(w/9),cols=Math.max(1,Math.floor(1700/(w+g))),rows=Math.ceil(Math.max(n,1)/cols);if(rows*(w*368/260+g)<=760)return w}return 60}
 $('pile').onclick=()=>{if(G)viewPile('Your discard pile ('+G.p[0].disc.length+') - newest first',G.p[0].disc.slice().reverse())};
-$('deckb').onclick=()=>{if(G)viewPile('Your deck ('+G.p[0].deck.length+') - sorted by cost',G.p[0].deck.slice().sort((a,b)=>cmpC(CD[a.id],CD[b.id])))};
+$('deckb').onclick=()=>{if(G)viewPile('Your deck ('+G.p[0].deck.length+') - sorted by cost',G.p[0].deck.slice().sort((a,b)=>cmpC(a.d||CD[a.id],b.d||CD[b.id])))};
 $('pile').title='Click to view your discard pile';$('deckb').title='Click to view the cards left in your deck';
-function closeMul(){viewing=false;$('mh').style.removeProperty('--cw');$('mul').style.display='none';$('mok').textContent='Confirm';$('mok').onclick=mulOK}
+function closeMul(){viewing=false;$('mh').style.removeProperty('--cw');$('mul').style.display='none';$('zoom').style.display='none';setTimeout(refreshHover,0);$('mok').textContent='Confirm';$('mok').onclick=mulOK}
 function finish(){if(G.tut){if(window.TUT)TUT.finish();return}if($('ov').style.display=='flex')return;$('ovd').style.display=$('ovr').style.display=='none'?'none':'';$('ovdk').textContent=ovDeckLabel();$('ovt').textContent=G.over.left?'OPPONENT LEFT':G.over.draw?'DRAW':G.over.sur&&G.over.win==1?'SURRENDERED':G.over.win==0?'VICTORY':'DEFEAT';sfx(G.over.left||(!G.over.draw&&G.over.win==0)?'victory':'defeat',{pitch:0});endHook();$('ov').style.display='flex'}
 // Endless Mode: the run ends when you die (or surrender). Score = total damage dealt to the Boss; best score is saved locally.
 function endHook(){achEnd();if($('ovmm'))$('ovmm').textContent='';if(typeof mmEnd=='function')mmEnd();if(G.mir||G.en)$('ovd').style.display='none';

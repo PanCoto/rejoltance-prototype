@@ -205,7 +205,7 @@ const RPCW=128;
 function rpCard(c,p,w,st){
  if(!c||!c.id)return`<div class="rpc rpback" style="width:${w}px;${st||''}"></div>`;
  const fc=cost(G,p,c);
- return`<div class="rpc" style="width:${w}px;${st||''}" data-cid="${c.id}" data-ba="${c.ba||0}" data-fc="${fc}">${cardHTML(Object.assign({},c,{fc}),0)}</div>`}
+ return`<div class="rpc" style="width:${w}px;${st||''}" data-cid="${c.id}" data-ba="${c.ba||0}" data-fc="${fc}">${cardHTML(Object.assign({},c,{fc}),0,'',c.uid!=null?`data-ru="${c.uid}"`:'')}</div>`}
 /* The hand bands keep one element per card (keyed by uid), so a state change MOVES cards instead of redrawing them: a drawn card slides in from the
    draw pile, the rest of the hand re-fans, a card that leaves fades out (a played card is lifted off by rpFly first). RP.an = false (jumping with the
    slider / first frame) places everything instantly. */
@@ -240,7 +240,7 @@ function rpPiles(el,p,s){
 function rpReset(){['rpeh','rpmh'].forEach(k=>{const e=$(k);if(e)e.innerHTML=''});['rpep','rpmp'].forEach(k=>{const e=$(k);if(e){e._d=e._x=e._t=null;e.innerHTML=''}})}
 function rpPile(s,kind){
  if(!G)return;const p=G.p[s],who=s?(RP.d&&RP.d.meta&&RP.d.meta.opp||'Opponent')+"'s":'Your';
- const cards=kind=='deck'?p.deck.slice().sort((a,b)=>a.id&&b.id?cmpC(CD[a.id],CD[b.id]):0):p.disc.slice().reverse();
+ const cards=kind=='deck'?p.deck.slice().sort((a,b)=>a.id&&b.id?cmpC(a.d||CD[a.id],b.d||CD[b.id]):0):p.disc.slice().reverse();
  if(cards.some(c=>!c.id)){toast(RP.live?'Hidden while watching live':'The opponent\'s hidden cards were not shared for this match (it was recorded before replays could reveal them)',1);return}
  viewPile(who+(kind=='deck'?' deck ('+cards.length+') - sorted by cost':' discard pile ('+cards.length+') - newest first'),cards)}
 function rpBoard(){
