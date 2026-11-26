@@ -24,8 +24,7 @@ const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 /* =========================================================================================
    RANDOM NAME & IMAGE GENERATION (TMTRAINER style)
    ========================================================================================= */
-const CLOWN_IMAGES = Array.from({length: 10}, (_, i) => `img/clownboy/clown${i + 1}.webp`); // Adjust length if needed
-
+const CLOWN_IMAGES = Array.from({length: 13}, (_, i) => `img/clownboy/clown${i + 1}.webp`);
 const CLOWN_PRE = ["Clown", "Jester", "Fool", "Trick", "Chaos", "Buffoon", "Harlequin", "Mad", "Hollow", "Bloody", "Gag", "Phantom", "Mind", "Spawn", "King", "Wild", "Card", "Laughing"];
 const CLOWN_MID = ["", "", "", "-", "_", " the ", " of ", " O'"];
 const CLOWN_SUF = ["boy", "man", "face", "head", "card", "jester", "fool", "king", "toy", "goblin", "ling", "ster", "ness", "nik", "er"];
