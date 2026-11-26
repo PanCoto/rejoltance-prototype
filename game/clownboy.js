@@ -172,7 +172,7 @@ const ACT = {
   // hero / resource actions: the target is Your Hero or the Enemy Hero
   draw:      { kind: "hero", tag: "draw", mk: () => { const n = cr(1, 2); return { a: { Type: "DrawCard", Amount: n }, t: (o, s, pl, en) => (en ? "The Enemy Hero Draws " : "Draw ") + plural(n, "Card"), v: 2 * n }; } },
   loseBlood: { kind: "hero", mk: () => { const n = cr(1, 3); return { a: { Type: "LoseBlood", Amount: n }, t: (o, s, pl, en) => (en ? "The Enemy Hero loses " : "You lose ") + n + " Blood", v: -1.2 * n }; } },
-  maxHp:     { kind: "hero", mk: () => { const n = cr(1, 3); return { a: { Type: "IncreaseMaxHp", Amount: n }, t: (o) => cap(o) + " gets +" + n + " max HP", v: 1.5 * n }; } },
+  maxHp:     { kind: "hero", mk: () => { const n = cr(1, 3); return { a: { Type: "IncreaseMaxHp", Amount: n }, t: (o) => cap(o) + " gets +" + n + " max HP", v: 0.4 * n }; } },
   conjure:   { kind: "hero", tag: "add", mk: () => { const c = pick1(cards({ Token: 0 })); return c ? { a: { Type: "AddCardToHand", ValueParam: c.Id }, t: (o, s, pl, en) => (en ? "The Enemy Hero gains " + c.Name : "Conjure " + c.Name + " into Your Hand"), v: 0.4 * (c.Cost || 0) + 1.2 } : null; } },
   conjureAct:{ kind: "hero", tag: "add", mk: () => ({ a: { Type: "AddCardToHand", Filter: { Type: "Spell", Token: 0 } }, t: (o, s, pl, en) => (en ? "The Enemy Hero gains a random Action" : "Conjure a random Action"), v: 2.2 }) },
   blood:     { kind: "hero", onlyF: 1, mk: () => { const n = cr(1, 3); return { a: { Type: "AddResource", Amount: n }, t: () => "Gain " + n + " Blood", v: 1.2 * n }; } },
@@ -198,7 +198,7 @@ function clownValid(effs) {
 
 // Allowed total stats (Attack + Health) by mana cost: [_, 1, 2, 3, 4, 5, 6]
 const CLOWN_MIN_STATS = [0, 2, 3, 4, 5, 6, 7];
-const CLOWN_MAX_STATS = [0, 6, 7, 9, 10, 11, 12];
+const CLOWN_MAX_STATS = [0, 5, 7, 9, 10, 11, 12];
 
 function clownRoll(base) {
   base = base || CD[CLOWN_ID];
