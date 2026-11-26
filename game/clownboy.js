@@ -24,7 +24,8 @@ const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 /* =========================================================================================
    RANDOM NAME & IMAGE GENERATION (TMTRAINER style)
    ========================================================================================= */
-const CLOWN_IMAGES = Array.from({length: 13}, (_, i) => `img/clownboy/clown${i + 1}.webp`);
+const CLOWN_IMAGES = Array.from({length: 10}, (_, i) => `img/clownboy/clown${i + 1}.webp`); // Adjust length if needed
+
 const CLOWN_PRE = ["Clown", "Jester", "Fool", "Trick", "Chaos", "Buffoon", "Harlequin", "Mad", "Hollow", "Bloody", "Gag", "Phantom", "Mind", "Spawn", "King", "Wild", "Card", "Laughing"];
 const CLOWN_MID = ["", "", "", "-", "_", " the ", " of ", " O'"];
 const CLOWN_SUF = ["boy", "man", "face", "head", "card", "jester", "fool", "king", "toy", "goblin", "ling", "ster", "ness", "nik", "er"];
@@ -87,33 +88,33 @@ const CHOICE = {
 /* Triggers. flags: self (this unit is on the board), lane (it has a lane), it (the unit this hit), ev (an event unit exists),
    pick (can ask the player: "p" before playing, "d" when destroyed), ban = action tags that would loop or make no sense. m = value multiplier. */
 const TRIG = {
-  OnPlayed:               { txt: "When Played", w: 5, m: 1, f: ["self", "lane"], pick: "p" },
+  OnPlayed:               { txt: "When Played", w: 5, m: 1.08, f: ["self", "lane"], pick: "p" },
   OnDeath:                { txt: "When Destroyed", w: 3, m: 0.9, f: [], pick: "d", ban: ["sac"] },
   OnStartOfRound:         { txt: "Start of Round", w: 2, m: 1.4, f: ["self", "lane"] },
   OnEndOfRound:           { txt: "End of Round", w: 2, m: 1.4, f: ["self", "lane"] },
   OnPreCombatLine:        { txt: "Before Combat Here", w: 2, m: 1.3, f: ["self", "lane"] },
-  OnPostCombatLine:       { txt: "After Combat Here", w: 1, m: 1.2, f: ["self", "lane"] },
-  OnAttackDone:           { txt: "After this Attacks", w: 1, m: 1.2, f: ["self", "lane"], ban: ["bonus"] },
+  OnPostCombatLine:       { txt: "After Combat Here", w: 1, m: 1.0, f: ["self", "lane"] },
+  OnAttackDone:           { txt: "After this Attacks", w: 1, m: 1.0, f: ["self", "lane"], ban: ["bonus"] },
   OnDamagedEnemyUnit:     { txt: "When this deals Damage to an Enemy Unit", w: 2, m: 0.8, f: ["self", "lane", "it"], ban: ["bonus"] },
   OnDamagedEnemyHero:     { txt: "When this deals Damage to the Enemy Hero", w: 1, m: 0.8, f: ["self", "lane"], ban: ["bonus"] },
   OnKill:                 { txt: "When this Destroys a Unit", w: 1, m: 0.8, f: ["self", "lane"], ban: ["bonus"] },
-  OnFriendlyUnitDied:     { txt: "Whenever a Friendly Unit is Destroyed", w: 1, m: 1.2, f: ["self", "lane"], ban: ["sac"] },
-  OnFriendlyUnitDamaged:  { txt: "Whenever a Friendly Unit is Damaged", w: 1, m: 1.2, f: ["self", "lane"], ban: ["dmgF"] },
-  OnFriendlyUnitHpOne:    { txt: "Whenever a Friendly Unit drops to 1 HP", w: 1, m: 1.1, f: ["self", "lane", "ev"], ban: ["dmgF"] },
-  OnFriendlyCardDrawn:    { txt: "Whenever You Draw a Card", w: 1, m: 1.2, f: ["self", "lane"], ban: ["draw", "add", "ret"] },
-  OnFriendlyActionPlayed: { txt: "Whenever You play an Action", w: 1, m: 1.2, f: ["self", "lane"] },
-  OnEnemyUnitPlayed:      { txt: "Whenever the Enemy plays a Unit", w: 1, m: 1.2, f: ["self", "lane", "ev"] },
-  OnFriendlyUnitSummoned: { txt: "Whenever another Friendly Unit is Summoned", w: 1, m: 1.1, f: ["self", "lane", "ev"], ban: ["summon"] },
-  OnOtherUnitSacrificed:  { txt: "Whenever another Unit is Sacrificed", w: 1, m: 1.2, f: ["self", "lane"], ban: ["sac"] },
-  OnStatusApplied:        { txt: "Whenever another Unit gains a Status", w: 1, m: 1.1, f: ["self", "lane", "ev"], ban: ["status"] },
-  OnEnemyUnitGainedStats: { txt: "Whenever an Enemy Unit gains Stats", w: 1, m: 1.2, f: ["self", "lane"], ban: ["buff"] },
-  OnOpponentCardGained:   { txt: "Whenever the Enemy gains a Card", w: 1, m: 1.2, f: ["self", "lane"], ban: ["draw", "add", "ret"] },
-  OnEnemyUnitDied:        { txt: "Whenever an Enemy Unit is Destroyed", w: 1, m: 1.2, f: ["self", "lane"] },
-  OnFriendlyUnitPlayed:   { txt: "Whenever another Friendly Unit is Played", w: 1, m: 1.1, f: ["self", "lane", "ev"], ban: ["summon"] },
+  OnFriendlyUnitDied:     { txt: "Whenever a Friendly Unit is Destroyed", w: 1, m: 1.0, f: ["self", "lane"], ban: ["sac"] },
+  OnFriendlyUnitDamaged:  { txt: "Whenever a Friendly Unit is Damaged", w: 1, m: 1.0, f: ["self", "lane"], ban: ["dmgF"] },
+  OnFriendlyUnitHpOne:    { txt: "Whenever a Friendly Unit drops to 1 HP", w: 1, m: 1.0, f: ["self", "lane", "ev"], ban: ["dmgF"] },
+  OnFriendlyCardDrawn:    { txt: "Whenever You Draw a Card", w: 1, m: 0.6, f: ["self", "lane"], ban: ["draw", "add", "ret"] },
+  OnFriendlyActionPlayed: { txt: "Whenever You play an Action", w: 1, m: 1.0, f: ["self", "lane"] },
+  OnEnemyUnitPlayed:      { txt: "Whenever the Enemy plays a Unit", w: 1, m: 1.0, f: ["self", "lane", "ev"] },
+  OnFriendlyUnitSummoned: { txt: "Whenever another Friendly Unit is Summoned", w: 1, m: 1.0, f: ["self", "lane", "ev"], ban: ["summon"] },
+  OnOtherUnitSacrificed:  { txt: "Whenever another Unit is Sacrificed", w: 1, m: 1.0, f: ["self", "lane"], ban: ["sac"] },
+  OnStatusApplied:        { txt: "Whenever another Unit gains a Status", w: 1, m: 1.0, f: ["self", "lane", "ev"], ban: ["status"] },
+  OnEnemyUnitGainedStats: { txt: "Whenever an Enemy Unit gains Stats", w: 1, m: 1.0, f: ["self", "lane"], ban: ["buff"] },
+  OnOpponentCardGained:   { txt: "Whenever the Enemy gains a Card", w: 1, m: 0.6, f: ["self", "lane"], ban: ["draw", "add", "ret"] },
+  OnEnemyUnitDied:        { txt: "Whenever an Enemy Unit is Destroyed", w: 1, m: 1.0, f: ["self", "lane"] },
+  OnFriendlyUnitPlayed:   { txt: "Whenever another Friendly Unit is Played", w: 1, m: 1.0, f: ["self", "lane", "ev"], ban: ["summon"] },
   OnSacrificed:           { txt: "When this is Sacrificed", w: 1, m: 0.9, f: ["self", "lane"], ban: ["summon", "sac"] },
-  OnFriendlyCardGained:   { txt: "Whenever You gain a Card", w: 1, m: 1.2, f: ["self", "lane"], ban: ["draw", "add", "ret"] },
-  OnOpponentCardDrawn:    { txt: "Whenever the Enemy Draws a Card", w: 1, m: 1.2, f: ["self", "lane"], ban: ["draw", "add", "ret"] },
-  Passive:                { txt: "While in Play", w: 2, m: 1.6, f: ["self", "lane"], passive: 1 },
+  OnFriendlyCardGained:   { txt: "Whenever You gain a Card", w: 1, m: 0.6, f: ["self", "lane"], ban: ["draw", "add", "ret"] },
+  OnOpponentCardDrawn:    { txt: "Whenever the Enemy Draws a Card", w: 1, m: 0.6, f: ["self", "lane"], ban: ["draw", "add", "ret"] },
+  Passive:                { txt: "While in Play", w: 2, m: 2.0, f: ["self", "lane"], passive: 1 },
 };
 
 const STATUS = {   // keyword -> [verb text, value when it helps the target]
@@ -129,20 +130,20 @@ const PASSIVE_KW = { Deadly: 2, Flying: 1.5, Protected: 2, Unactionable: -1, Bur
 const cards = (f) => (typeof poolOf == "function" ? poolOf(f).filter((d) => d.Id != CLOWN_ID) : []);
 const ACT = {
   dmg:       { kind: "any", tag: "dmg", mk: () => { const n = cr(1, 5); return { a: { Type: "DealDamage", Amount: n }, t: (o) => "Deal " + n + " Damage to " + o, v: -1.3 * n }; } },
-  heal:      { kind: "any", mk: () => { const n = cr(2, 6); return { a: { Type: "Heal", Amount: n }, t: (o) => "Heal " + o + " for " + n, v: 0.6 * n }; } },
-  healFull:  { kind: "unit", mk: () => ({ a: { Type: "HealToFull" }, t: (o) => "Fully heal " + o, v: 2.5 }) },
+  heal:      { kind: "any", mk: () => { const n = cr(2, 6); return { a: { Type: "Heal", Amount: n }, t: (o) => "Heal " + o + " for " + n, v: 0.45 * n }; } },
+  healFull:  { kind: "unit", mk: () => ({ a: { Type: "HealToFull" }, t: (o) => "Fully heal " + o, v: 2 }) },
   buff:      { kind: "unit", tag: "buff", mk: () => { const x = cr(0, 3), y = cr(x ? 0 : 1, 4); return { a: { Type: "BuffStats", BuffAtk: x, BuffHp: y }, t: (o, s, pl) => s + (pl ? " get " : " gets ") + sg(x) + "/" + sg(y), v: 0.9 * (x + y) }; } },
   debuff:    { kind: "unit", tag: "buff", mk: () => { const x = cr(0, 3), y = cr(x ? 0 : 1, 3); return { a: { Type: "BuffStats", BuffAtk: -x, BuffHp: -y }, t: (o, s, pl) => s + (pl ? " get " : " gets ") + "-" + x + "/-" + y, v: -0.9 * (x + y) }; } },
   dbl:       { kind: "unit", tag: "buff", mk: () => ({ a: { Type: "DoubleStats" }, t: (o) => "Double the Stats of " + o, v: 3 }) },
   status:    { kind: "unit", tag: "status", mk: () => { const k = pick1(Object.keys(STATUS)); return { a: { Type: "ApplyStatus", StatusKeyword: k }, t: (o) => STATUS[k][0] + " " + o, v: STATUS[k][1] }; } },
   silence:   { kind: "unit", mk: () => ({ a: { Type: "Silence" }, t: (o) => "Silence " + o, v: -2 }) },
-  destroy:   { kind: "unit", mk: () => ({ a: { Type: "DestroyUnit" }, t: (o) => "Destroy " + o, v: -4 }) },
+  destroy:   { kind: "unit", mk: () => ({ a: { Type: "DestroyUnit" }, t: (o) => "Destroy " + o, v: -5.5 }) },
   bounce:    { kind: "unit", tag: "ret", mk: () => ({ a: { Type: "ReturnToHand" }, t: (o, s, pl) => "Return " + o + (pl ? " to their owners' Hands" : " to its owner's Hand"), v: -1 }) },
   bonus:     { kind: "unit", tag: "bonus", mk: () => ({ a: { Type: "BonusAttack" }, t: (o, s, pl) => s + (pl ? " do" : " does") + " a Bonus Attack", v: 2 }) },
   loseHp:    { kind: "any", mk: () => { const n = cr(1, 4); return { a: { Type: "LoseHealth", Amount: n }, t: (o, s, pl) => s + (pl ? " lose " : " loses ") + n + " HP", v: -1.1 * n }; } },
   atkDown:   { kind: "unit", mk: () => { const n = cr(1, 3); return { a: { Type: "LaneDebuff", Amount: n }, t: (o) => "Reduce the Attack of " + o + " by " + n, v: -0.8 * n }; } },
   // "free" actions take no target: they act on this unit / the players' decks. need = trigger flag required, only = the only triggers they make sense on
-  copySelf:  { kind: "free", tag: "summon", need: "self", mk: () => ({ a: { Type: "CopySelf" }, t: () => "Copy itself into a random empty lane", v: 3.5 }) },
+  copySelf:  { kind: "free", tag: "summon", need: "self", mk: () => ({ a: { Type: "CopySelf" }, t: () => "Copy itself into a random empty lane", v: 5 }) },
   respawn:   { kind: "free", tag: "summon", only: ["OnDeath"], mk: () => ({ a: { Type: "RespawnSelf", BuffHp: -1 }, t: () => "Return to play in its lane with -1 HP", v: 3 }) },
   moveRight: { kind: "free", need: "self", only: ["OnPlayed", "OnStartOfRound", "OnEndOfRound", "OnFriendlyActionPlayed", "OnEnemyUnitPlayed", "OnFriendlyCardDrawn", "OnFriendlyCardGained", "OnOpponentCardGained", "OnOpponentCardDrawn"],
              mk: () => { const th = clownRnd(2); return { a: th ? { Type: "MoveRight", ThenAttack: true } : { Type: "MoveRight" }, t: () => th ? "Move one lane to the right, then Attack" : "Move one lane to the right", v: th ? 1.5 : 0.3 }; } },
@@ -150,12 +151,12 @@ const ACT = {
   // --- player-prompt actions. On "When Played" the engine asks the player (Sacrifice target, lane, card from the deck...); on every other trigger it decides itself.
   sacrifice: { kind: "free", tag: "sac", need: "self", mk: (tk) => { const ab = clownRnd(2), pl = tk == "OnPlayed";
                return { as: [{ Type: "SacrificeUnit", Target: "TargetFriendlyUnit" }].concat(ab ? [{ Type: "AbsorbStats", Target: "Self" }] : []),
-                        t: () => (pl ? "Sacrifice a Friendly Unit" : "Sacrifice the weakest other Friendly Unit") + (ab ? ". This absorbs its Stats" : ""), v: ab ? 0.8 : -2.2 }; } },
+                        t: () => (pl ? "Sacrifice a Friendly Unit" : "Sacrifice the weakest other Friendly Unit") + (ab ? ". This absorbs its Stats" : ""), v: ab ? -0.7 : -4.5 }; } },
   // Sacrifice WITH A REWARD: "(You may) Sacrifice a Friendly Unit. If you do, <1-2 random actions>". The sacrifice itself is built in clownRoll(): the actions rolled after it
   // become its reward (flagged OnlyIfSacrificed - the engine only runs them when a unit really was sacrificed) and are rolled exactly like any other action (any target, chosen targets included).
   sacReward: { kind: "free", tag: "sac", need: "self", mk: () => null },
   sacMany:   { kind: "free", tag: "sac", need: "self", only: ["OnPlayed"], mk: () => ({ a: { Type: "SacrificeUnits", Target: "OtherFriendlyUnits", Absorb: true }, t: () => "Sacrifice any number of other Friendly Units. This absorbs their Stats", v: 1.5 }) },
-  reanimate: { kind: "free", tag: "summon", mk: () => { const n = cr(2, 5); return { a: { Type: "Reanimate", Filter: { MaxCost: n } }, t: () => "Summon a random Friendly Unit that costs " + n + " or less from Your Discard Pile", v: 0.5 * n + 1 }; } },
+  reanimate: { kind: "free", tag: "summon", mk: () => { const n = cr(2, 5); return { a: { Type: "Reanimate", Filter: { MaxCost: n } }, t: () => "Summon a random Friendly Unit that costs " + n + " or less from Your Discard Pile", v: 0.6 * n + 1 }; } },
   tutor:     { kind: "free", tag: "draw", mk: (tk) => ({ a: { Type: "TutorCard", Target: "Self" }, t: () => tk == "OnPlayed" ? "Choose a Card from Your Deck and add it to Your Hand" : "Add the most expensive Card from Your Deck to Your Hand", v: 2.5 }) },
   replay:    { kind: "free", tag: "summon", need: "self", only: ["OnPlayed"], mk: () => { const all = clownRnd(2);
                return { a: all ? { Type: "ReplayPlayed", Target: "Self" } : { Type: "ReplayPlayed", Target: "Self", Last: 1 },
@@ -163,7 +164,7 @@ const ACT = {
   morphSelf: { kind: "free", tag: "summon", need: "self", mk: () => {
                if (clownRnd(3) == 0) return { a: { Type: "Transform", Target: "Self", IntoFrom: "LastPlayed" }, t: () => "Transform into the last Unit You played", v: 1.5 };
                const c = pick1(cards({ Type: "Unit", MaxCost: 5, Token: 0 }));
-               return c ? { a: { Type: "Transform", Target: "Self", Into: c.Id }, t: () => "Transform into " + c.Name, v: 0.4 * ((c.Attack || 0) + (c.Health || 0)) + 1 } : null; } },
+               return c ? { a: { Type: "Transform", Target: "Self", Into: c.Id }, t: () => "Transform into " + c.Name, v: 0.3 * ((c.Attack || 0) + (c.Health || 0)) + 0.5 } : null; } },
   morph:     { kind: "unit", single: 1, noSelf: 1, tag: "summon", mk: () => {
                const c = pick1(cards({ Type: "Unit", MaxCost: 2, Token: 0 }));
                return c ? { a: { Type: "Transform", Into: c.Id, FirePlayed: false }, t: (o) => "Transform " + o + " into " + c.Name, v: 0.45 * ((c.Attack || 0) + (c.Health || 0)) - 4 } : null; } },
@@ -174,9 +175,9 @@ const ACT = {
   maxHp:     { kind: "hero", mk: () => { const n = cr(1, 3); return { a: { Type: "IncreaseMaxHp", Amount: n }, t: (o) => cap(o) + " gets +" + n + " max HP", v: 0.4 * n }; } },
   conjure:   { kind: "hero", tag: "add", mk: () => { const c = pick1(cards({ Token: 0 })); return c ? { a: { Type: "AddCardToHand", ValueParam: c.Id }, t: (o, s, pl, en) => (en ? "The Enemy Hero gains " + c.Name : "Conjure " + c.Name + " into Your Hand"), v: 0.4 * (c.Cost || 0) + 1.2 } : null; } },
   conjureAct:{ kind: "hero", tag: "add", mk: () => ({ a: { Type: "AddCardToHand", Filter: { Type: "Spell", Token: 0 } }, t: (o, s, pl, en) => (en ? "The Enemy Hero gains a random Action" : "Conjure a random Action"), v: 2.2 }) },
-  blood:     { kind: "hero", onlyF: 1, mk: () => { const n = cr(1, 3); return { a: { Type: "AddResource", Amount: n }, t: () => "Gain " + n + " Blood", v: 1.2 * n }; } },
+  blood:     { kind: "hero", onlyF: 1, mk: () => { const n = cr(1, 3); return { a: { Type: "AddResource", Amount: n }, t: () => "Gain " + n + " Blood", v: 0.9 * n }; } },
   spendAll:  { kind: "hero", onlyF: 1, mk: () => ({ a: { Type: "SpendBlood" }, t: () => "Spend all Your Blood", v: -3 }) },
-  summon:    { kind: "hero", onlyF: 1, tag: "summon", mk: () => { const c = pick1(cards({ Type: "Unit", MaxCost: 6, Token: 0 })); return c ? { a: { Type: "MakeAUnit", ValueParam: c.Id, Auto: true }, t: () => "Summon " + c.Name, v: 0.4 * ((c.Attack || 0) + (c.Health || 0)) + 1 } : null; } },
+  summon:    { kind: "hero", onlyF: 1, tag: "summon", mk: () => { const c = pick1(cards({ Type: "Unit", MaxCost: 6, Token: 0 })); return c ? { a: { Type: "MakeAUnit", ValueParam: c.Id, Auto: true }, t: () => "Summon " + c.Name, v: 0.7 * ((c.Attack || 0) + (c.Health || 0)) + 1.5 } : null; } },
 };
 const SIDE = { f: 1, e: -1, m: 0.25 };    // how a target's side turns "worth to the target" into "worth to you"
 
@@ -280,11 +281,11 @@ function clownRoll(base) {
       }
       if (rew) {
         // no reward could be rolled, or an AUTOMATIC sacrifice (it cannot be declined and may repeat every round) with a small reward: drop it all
-        if (!rew.items.length || (!rew.opt && rew.val < 3)) { actions.splice(rew.ai); parts.splice(rew.idx, 1); nAct -= 1 + rew.items.length; }
+        if (!rew.items.length || (!rew.opt && rew.val < 5)) { actions.splice(rew.ai); parts.splice(rew.idx, 1); nAct -= 1 + rew.items.length; }
         else {
           parts[rew.idx] = (rew.opt ? "You may Sacrifice a Friendly Unit" : "Sacrifice the weakest other Friendly Unit") + ". If you do, " + rew.items.join(" and ");
           // optional: you only do it when it pays, so it is worth (reward - cost) but never less than nothing; automatic: you always pay the cost
-          value += rew.opt ? Math.max(0, rew.val - 2.2) + 0.4 : rew.val - 2.2 * T.m;
+          value += rew.opt ? Math.max(0, rew.val - 2.5) + 0.4 : rew.val - 4.5 * T.m;
         }
       }
       if (!actions.length) continue;
@@ -297,7 +298,7 @@ function clownRoll(base) {
     if (value > power + 2 || value < -7) continue;                  // absurdly strong / hopeless: roll again
     // Stats are kept inside a window per mana cost, so a cheap card is never a 4/5 and an expensive one never a 0/1.
     // A roll whose ability would push the stats outside the window is thrown away and rolled again (it is NOT clamped: the ability and the stats must still add up).
-    const want = Math.round(power - value);
+    const want = Math.round(power - 0.6 - (value > 0 ? value * 0.75 : value));   // measured in bot-vs-bot games: stats are worth more than abilities of the same "price", so a positive ability counts 25% less (and the base is lowered to keep the average strength)
     if (want < CLOWN_MIN_STATS[cost] || want > CLOWN_MAX_STATS[cost]) continue;
     const tot = want, hp = Math.max(1, Math.min(tot, Math.round(tot / 2) + cr(-1, 1)));
     return Object.assign({}, base, {
