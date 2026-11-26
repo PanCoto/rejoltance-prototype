@@ -31,11 +31,11 @@ async function rpUnzip(p){
  return new TextDecoder().decode(await new Response(ds.readable).arrayBuffer())}
 const rpVer=()=>window.RJ_EXP?GAME_VERSION_EXP:'v'+GAME_VERSION;
 const rpFmt=t=>{const d=new Date(t);return d.toLocaleDateString()+' '+d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})};
-const RP_MODES={ranked:'Ranked',quick:'Quick Match',friend:'Friend',bot:'Bot',mirror:'Mirror Match',online:'Room'};
+const RP_MODES={ranked:'Ranked',quick:'Quick Match',friend:'Friend',bot:'Bot',mirror:'Mirror Match',rgb:'RGB',online:'Room'};
 
 /* ---------- settings (Settings > Replays) ---------- */
 const RPS_KEYS={on:'rj_rp_on',keep:'rj_rp_keep',m:g=>'rj_rp_m_'+g},RP_KEEP_OPTS=[5,10,20,30,50];
-const RP_GRP={bot:'bot',mirror:'mirror',ranked:'ranked',quick:'quick',friend:'friend',online:'friend'};   // game mode -> the checkbox that controls it
+const RP_GRP={bot:'bot',rgb:'bot',mirror:'mirror',ranked:'ranked',quick:'quick',friend:'friend',online:'friend'};   // game mode -> the checkbox that controls it
 const rpsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}},rpsSet=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
 const rpOn=()=>rpsGet(RPS_KEYS.on)!=='0';
 const rpModeOn=m=>rpsGet(RPS_KEYS.m(RP_GRP[m]||m))!=='0';
@@ -72,11 +72,11 @@ function rpSnap(G){
  // both hands and both decks are kept as they are: when this client runs the game (vs bot / as host) the opponent's cards are real, when it was only a guest they are already hidden (id 0)
  const side=p=>({ac:{un:[]},fk:p.ac?p.ac.fk:0,i:p.i,hp:p.hp,mhp:p.mhp,fr:p.fr,mb:p.mb,b:p.b,gb:p.gb,sp:p.sp,sc:p.sc,fat:p.fat||0,
   hand:p.hand.map(cp),deck:p.deck.map(cp),disc:p.disc.map(cp),ln:p.ln.map(uc)});
- return JSON.parse(JSON.stringify({mir:G.mir,turn:G.turn,step:G.step,allow:G.allow,act:G.act==null?null:G.act,start:G.start,
+ return JSON.parse(JSON.stringify({mir:G.mir,rgb:G.rgb,turn:G.turn,step:G.step,allow:G.allow,act:G.act==null?null:G.act,start:G.start,
   over:G.over?{win:G.over.win,draw:G.over.draw,sur:G.over.sur,left:G.over.left}:null,
   log:G.log.slice(-40),hn:G.hist.length,hist:G.hist.slice(-80).map(h=>({p:h.p,t:h.t,id:h.id,tg:h.tg,uid:h.uid,tf:h.tf})),
   p:[side(G.p[0]),side(G.p[1])]}))}
-const rpMode=()=>{try{if(window.MM&&MM.cur&&MM.cur.mode)return MM.cur.mode}catch(e){}return NET?'online':(typeof MODE!='undefined'&&MODE=='mirror'?'mirror':'bot')};
+const rpMode=()=>{try{if(window.MM&&MM.cur&&MM.cur.mode)return MM.cur.mode}catch(e){}return NET?'online':(typeof MODE!='undefined'&&MODE=='mirror'?'mirror':MODE=='rgb'?'rgb':'bot')};
 function rpCap(ev){
  if(RP.on||typeof DEMO!='undefined'&&DEMO||!G||!G.p||G.tut||G.en||$('game').style.display!='block'||G.turn<1)return;
  if(!REC||REC.gid!==gid){

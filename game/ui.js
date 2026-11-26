@@ -1,6 +1,6 @@
 const $=id=>document.getElementById(id),sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let G,sel=null,pend=null,busy=false,flash=-1,mulSel=new Set(),castMode=false,pendRes=null,stickyZoom=false;
-let ALL=[],gid=0,NET=null,MODE='bot';// MODE: 'bot' | 'mirror' | 'endless' (online games use NET)
+let ALL=[],gid=0,NET=null,MODE='bot';// MODE: 'bot' | 'mirror' | 'rgb' | 'endless' (online games use NET)
 function fit(){const s=Math.min(innerWidth/1920,innerHeight/1080);$('stage').style.transform=`translate(-50%,-50%) scale(${s})`}
 addEventListener('resize',fit);fit();
 var DEMO=false;
@@ -151,7 +151,7 @@ const PH={U:'Units',B:'Unit and Actions',A:'Actions'};
 // (same as pressing End Turn; anything half-selected is cancelled). The host is the referee: it also skips the GUEST's phase if the guest's own client has not
 // done it after TM_GRACE more seconds (lag, animations, a frozen tab). The countdown shows next to "Phase :" and turns red for the last 5 seconds.
 // Choosing a target before combat (Occultist etc.) has its own, shorter limit PRE_SEC; when it runs out the engine picks the target itself, exactly like it does for the bot.
-// There is no timer against the bot, in Endless Mode, or in Mirror Match vs the bot.
+// There is no timer against the bot, in Endless Mode, or in Mirror Match vs the bot. RGB (G.rgb) has no timers at all, not even online.
 const PHASE_SEC=60,PRE_SEC=10,TM_GRACE=4,MULL_SEC=30,ORDER_SEC=15;   // MULL_SEC: swap cards, ORDER_SEC: go first / second
 const TM={key:'',end:0,iv:0,wd:0};
 function tmStop(){clearInterval(TM.iv);clearTimeout(TM.wd);TM.iv=TM.wd=0;TM.key='';const p=$('phase');if(p)p.style.color=''}
@@ -159,7 +159,7 @@ const tmLeft=()=>TM.key?Math.max(0,Math.ceil((TM.end-Date.now())/1000)):0;
 function tmTick(){if(!NET||!G||G.over){tmStop();return}if(!TM.key)return;
  const s=tmLeft(),p=$('phase');p.textContent='Phase : '+PH[G.allow]+'  -  '+s+'s';p.style.color=s<=5?'#e3242b':''}
 function tmSync(){   // called at the end of every render(): starts a fresh countdown whenever the phase changes
- if(!NET||!G||G.over||G.turn<1||G.step>=3||G.act==null){if(TM.key)tmStop();return}
+ if(!NET||!G||G.over||G.rgb||G.turn<1||G.step>=3||G.act==null){if(TM.key)tmStop();return}
  const k=G.turn+':'+G.step+':'+gid;
  if(TM.key!==k){tmStop();TM.key=k;TM.end=Date.now()+PHASE_SEC*1000;TM.iv=setInterval(tmTick,250);
   TM.wd=setTimeout(()=>tmExpire(k,0),(PHASE_SEC+(G.act==0?0:TM_GRACE))*1000)}
@@ -173,7 +173,7 @@ function tmExpire(k,tries){
 // time up on first/second -> random. The host does the same for a silent guest (see hostForceMull / armPref in net.js).
 let mtI=0;
 function mtStop(){clearInterval(mtI);mtI=0;const t=$('mt');if(t)t.style.color=''}
-function mtRun(base,secs,onEnd){mtStop();if(!NET)return;let left=secs;
+function mtRun(base,secs,onEnd){mtStop();if(!NET||(G&&G.rgb))return;let left=secs;
  const show=()=>{$('mt').textContent=base+'  -  '+left+'s';$('mt').style.color=left<=5?'#e3242b':''};show();
  mtI=setInterval(()=>{if(!NET||!G){mtStop();return}if(--left<=0){mtStop();onEnd()}else show()},1000)}
 // ===== END TURN TIMER =====
@@ -503,15 +503,15 @@ document.addEventListener('pointercancel',e=>endDrag(e,false));
 function choosePre(u){return new Promise(r=>{   // online: PRE_SEC seconds, then resolves null -> the engine picks a target itself (lane(): botPick)
  let left=PRE_SEC,iv=0,done=false;
  const fin=v=>{if(done)return;done=true;clearInterval(iv);pendRes=null;r(v)};
- const show=()=>say(`<b>${u.d.Name}</b> - before combat: choose an enemy unit (red outline)`+(NET?` - <b style="color:#e3242b">${left}s</b>`:''));
+ const show=()=>say(`<b>${u.d.Name}</b> - before combat: choose an enemy unit (red outline)`+(NET&&!G.rgb?` - <b style="color:#e3242b">${left}s</b>`:''));
  pendRes=fin;pend={ks:['e'],got:[],pre:true};render();show();
- if(NET)iv=setInterval(()=>{if(done||!pend||!pend.pre){clearInterval(iv);return}if(--left<=0){pend=null;say('');render();fin(null)}else show()},1000)})}
+ if(NET&&!G.rgb)iv=setInterval(()=>{if(done||!pend||!pend.pre){clearInterval(iv);return}if(--left<=0){pend=null;say('');render();fin(null)}else show()},1000)})}
 function chooseMove(u,opts){return new Promise(r=>{   // "Before Combat: you may move to a different lane" - click a free lane or Stay
  let left=PRE_SEC,iv=0,done=false;
  const fin=v=>{if(done)return;done=true;clearInterval(iv);pendRes=null;r(v)};
- const show=()=>say(`<b>${u.d.Name}</b> - before combat: move to another lane? (white outline) <button data-nomove="1">Stay</button>`+(NET?` - <b style="color:#e3242b">${left}s</b>`:''));
+ const show=()=>say(`<b>${u.d.Name}</b> - before combat: move to another lane? (white outline) <button data-nomove="1">Stay</button>`+(NET&&!G.rgb?` - <b style="color:#e3242b">${left}s</b>`:''));
  pendRes=fin;pend={ks:['L'],got:[],pre:true,mv:opts};render();show();
- if(NET)iv=setInterval(()=>{if(done||!pend||!pend.pre){clearInterval(iv);return}if(--left<=0){pend=null;say('');render();fin(null)}else show()},1000)})}
+ if(NET&&!G.rgb)iv=setInterval(()=>{if(done||!pend||!pend.pre){clearInterval(iv);return}if(--left<=0){pend=null;say('');render();fin(null)}else show()},1000)})}
 let LUN=[];
 function strikeLane(i){LUN=[];const A=G.p[0].ln[i],B=G.p[1].ln[i],both=!!(A&&B);
  [[0,A],[1,B]].forEach(([r,u])=>{if(!u||u.atk<=0||u.kw.has('Stunned'))return;
@@ -560,7 +560,7 @@ $('pile').title='Click to view your discard pile';$('deckb').title='Click to vie
 function closeMul(){viewing=false;$('mh').style.removeProperty('--cw');$('mul').style.display='none';$('zoom').style.display='none';setTimeout(refreshHover,0);$('mok').textContent='Confirm';$('mok').onclick=mulOK}
 function finish(){if(G.tut){if(window.TUT)TUT.finish();return}if($('ov').style.display=='flex')return;$('ovd').style.display=$('ovr').style.display=='none'?'none':'';$('ovdk').textContent=ovDeckLabel();$('ovt').textContent=G.over.left?'OPPONENT LEFT':G.over.draw?'DRAW':G.over.sur&&G.over.win==1?'SURRENDERED':G.over.win==0?'VICTORY':'DEFEAT';sfx(G.over.left||(!G.over.draw&&G.over.win==0)?'victory':'defeat',{pitch:0});endHook();$('ov').style.display='flex'}
 // Endless Mode: the run ends when you die (or surrender). Score = total damage dealt to the Boss; best score is saved locally.
-function endHook(){achEnd();if($('ovmm'))$('ovmm').textContent='';if(typeof mmEnd=='function')mmEnd();if(G.mir||G.en)$('ovd').style.display='none';
+function endHook(){achEnd();if($('ovmm'))$('ovmm').textContent='';if(typeof mmEnd=='function')mmEnd();if(G.mir||G.rgb||G.en)$('ovd').style.display='none';
  if(G.en){const sc=G.en.dealt,b=Math.max(sc,+lsGet('rj_endless_best')||0);lsSet('rj_endless_best',b);$('ovt').textContent='RUN OVER';$('ovdk').textContent='Score: '+sc+'  -  Best: '+b+(sc>=b&&sc>0?'  (new record!)':'');$('ovr').textContent='New run'}}
 function endNow(timeout){sfx('endTurn');sel=pend=null;castMode=false;say('');
  if(NET&&!NET.host){busy=true;netSend(timeout?{t:'end',to:1}:{t:'end'});armSync();return}
@@ -570,7 +570,7 @@ $('sur').onclick=()=>{if(G&&!G.over)$('modal').style.display='flex'};$('mno').on
 $('myes').onclick=()=>{$('modal').style.display='none';if(!G||G.over)return;if(NET&&!NET.host){netSend({t:'sur'});return}
  G.over={win:1,sur:1};L(G,'You surrendered');pend=null;sel=null;castMode=false;say('');$('mul').style.display='none';$('hist').style.display='none';render();netPush()};
 $('ovr').onclick=()=>NET?rematch():start();
-const ovDeckLabel=()=>G&&G.mir?'Mirror Match UP - same deck and draw order':PKR.d0?'Your deck: Random':ALL[$('d0').value]?'Your deck: '+ALL[$('d0').value].n:'';
+const ovDeckLabel=()=>G&&G.rgb?'RGB - 30 Clownboys each, 50 HP':G&&G.mir?'Mirror Match UP - same deck and draw order':PKR.d0?'Your deck: Random':ALL[$('d0').value]?'Your deck: '+ALL[$('d0').value].n:'';
 let pkPrev=0;
 $('ovd').onclick=()=>{pkPrev=$('d0').selectedIndex;pkPrevR=PKR.d0;$('dkpick').style.display='flex';pkReveal('pk2')};
 $('dkok').onclick=()=>{$('dkpick').style.display='none';$('ovdk').textContent=ovDeckLabel()};
@@ -596,7 +596,7 @@ const mulOK=()=>{mtStop();const ids=[...mulSel];
  askOrder(v=>{decideStart(G,v,'first');startRound(G);flow()})};
 $('mok').onclick=mulOK;
 function start(){if(window.TUT&&TUT.active)TUT.stop();if(extRes)extRes();unpin();bpClear();pkResolve();musicNewGame();if(NET)netLeave();$('ovr').style.display='';$('ovr').textContent='Rematch';gid++;
- if(MODE=='mirror'){const m=mirrorDeck();G=newGame(m,m,{mir:1})}else if(MODE=='endless')G=newGame(ALL[$('d0').value].c,mirrorDeck(BOSS_BAN),{endless:1}); // the Boss always plays a random deck - it can't be rigged
+ if(MODE=='rgb'){G=newGame(rgbDeck(),rgbDeck(),{rgb:1})}else if(MODE=='mirror'){const m=mirrorDeck();G=newGame(m,m,{mir:1})}else if(MODE=='endless')G=newGame(ALL[$('d0').value].c,mirrorDeck(BOSS_BAN),{endless:1}); // the Boss always plays a random deck - it can't be rigged
  else G=newGame(ALL[$('d0').value].c,ALL[$('d1').value].c);busy=true;sel=pend=null;castMode=false;stickyZoom=false;
  show('game');$('ov').style.display='none';say('');render();showMul()}
 function toMenu(){if(window.TUT&&TUT.active)TUT.stop();if(extRes)extRes();unpin();bpClear();$('dkpick').style.display='none';if(NET)netLeave();$('ovr').style.display='';$('ovr').textContent='Rematch';gid++;$('ov').style.display='none';$('mul').style.display='none';$('hist').style.display='none';show('menu');$('zoom').style.display='none';G=null;musicUpdate()}

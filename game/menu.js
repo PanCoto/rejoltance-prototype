@@ -1,4 +1,4 @@
-const PANELS=['tutmenu','frmenu','botmenu','setmenu','mirmenu','achmenu','rkmenu','acctmenu','avpick','fdmenu','clmenu','rplmenu'];
+const PANELS=['tutmenu','frmenu','botmenu','setmenu','mirmenu','rgbmenu','achmenu','rkmenu','acctmenu','avpick','fdmenu','clmenu','rplmenu'];
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}},lsSet=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
 const openPanel=id=>{PANELS.forEach(k=>$(k).style.display=k==id?'flex':'none')},closePanels=()=>openPanel('');
 const botPanel=m=>{MODE=m;const en=m=='endless';$('botmenu').classList.toggle('endless',en);$('ebest').textContent=en?'Best score: '+(+lsGet('rj_endless_best')||0):'';$('bott').textContent=en?'Endless Mode':'Play with the bot';$('pk1').closest('.pkcol').style.display=en?'none':'';document.querySelector('#botmenu .pkcols').style.gridTemplateColumns=en?'1fr':'';
@@ -9,6 +9,11 @@ $('tmirror').onclick=()=>{MODE='mirror';$('mirbot').click()};   // offline: stra
 $('tmirroron').onclick=()=>{MODE='mirror';openPanel('mirmenu')};$('mirbot').style.display='none';   // online: host / join
 $('tquick').onclick=()=>{MODE='online';$('mquick').click()};
 $('mirbot').onclick=()=>{MODE='mirror';closePanels();start();musicStart()};
+// RGB (Extras): Clownboy-only chaos. Clownboy does not exist in the Legacy card set, so the mode is removed there.
+if(window.RJ_EXP)$('trgb').remove();
+else{$('trgb').onclick=()=>{MODE='rgb';openPanel('rgbmenu')};
+ $('rgbbot').onclick=()=>{MODE='rgb';closePanels();start();musicStart()};
+ $('rgbhost').onclick=()=>{LB='rgbmenu';startAudio();hostRoom(false,true)};$('rgbjoin').onclick=()=>{LB='rgbmenu';joinLobby('',true)}}
 $('mirhost').onclick=()=>{LB='mirmenu';startAudio();hostRoom(true)};$('mirjoin').onclick=()=>{LB='mirmenu';joinLobby('',true)};
 const setTab=t=>{document.querySelectorAll('#setmenu .stabs button').forEach(b=>b.classList.toggle('on',b.dataset.st==t));
  $('set-gen').hidden=t!='gen';$('set-rpl').hidden=t!='rpl';if(t=='rpl'&&window.rpsRefresh)rpsRefresh()};
@@ -16,7 +21,7 @@ document.querySelectorAll('#setmenu .stabs button').forEach(b=>b.onclick=()=>set
 const openSet=()=>{$('setmenu').classList.toggle('ig',$('game').style.display=='block');
  setTab('gen');openPanel('setmenu')};
 $('sopen').onclick=openSet;$('mu').onclick=openSet;
-['tutback','frback','botback','setclose','mirback','achback','pfback','fdback','clback','rplback'].forEach(i=>$(i).onclick=closePanels);
+['tutback','frback','botback','setclose','mirback','rgbback','achback','pfback','fdback','clback','rplback'].forEach(i=>$(i).onclick=closePanels);
 addEventListener('keydown',e=>{if(e.key!='Escape')return;if($('game').style.display=='block'){if($('setmenu').style.display=='flex')closePanels();return}
  if($('lobby').style.display=='flex')$('lcancel').click();else closePanels()});
 $('rndprem').checked=lsGet('rj_rndpool')!=='mine';
@@ -163,7 +168,7 @@ demoStart();
 
 
 /* ---- full-screen views: every menu pop-up becomes its own screen like the Card Collection (Back top-left, title in the header bar) ---- */
-{const VW={tutmenu:'tutback',frmenu:'frback',mirmenu:'mirback',botmenu:'botback',achmenu:'achback',rkmenu:'rkback',acctmenu:'pfback',fdmenu:'fdback',avpick:'avback',clmenu:'clback',rplmenu:'rplback',setmenu:'setclose',lobby:'lcancel'};
+{const VW={tutmenu:'tutback',frmenu:'frback',mirmenu:'mirback',rgbmenu:'rgbback',botmenu:'botback',achmenu:'achback',rkmenu:'rkback',acctmenu:'pfback',fdmenu:'fdback',avpick:'avback',clmenu:'clback',rplmenu:'rplback',setmenu:'setclose',lobby:'lcancel'};
  Object.keys(VW).forEach(id=>{const o=$(id),orig=$(VW[id]),h2=o.querySelector('.panel>h2');o.classList.add('vw');
   const hd=document.createElement('div');hd.className='vhead';
   const b=document.createElement('button');b.className='ghost vback';b.innerHTML='&lsaquo; Back';b.onclick=()=>orig.click();hd.appendChild(b);

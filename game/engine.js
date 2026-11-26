@@ -30,11 +30,11 @@ const acNew = () => ({
   fk: 0,
 });
 function acu(G, p, id) {
-  if (G.sim || !p.ac) return;
+  if (G.sim || G.rgb || !p.ac) return; // no achievements in RGB
   if (!p.ac.un.includes(id)) p.ac.un.push(id);
 }
 function acn(G, p, k, n, lim, id) {
-  if (G.sim || !p.ac) return;
+  if (G.sim || G.rgb || !p.ac) return; // no achievements in RGB
   p.ac[k] = (p.ac[k] || 0) + n;
   if (lim && p.ac[k] >= lim) acu(G, p, id);
 }
@@ -251,6 +251,11 @@ function fairOpen(G, p) {
   }
   draw(G, p, 1);
 }
+// RGB ("random go bullshit"): 50 HP (max 50), 30 Clownboys in each deck, no timers (see ui.js / net.js).
+const RGB_MAX_HP = 50;
+function rgbDeck() {
+  return Array(30).fill(CLOWN_ID);
+}
 function newGame(a, b, opts) {
   opts = opts || {};
   const G = {
@@ -265,10 +270,11 @@ function newGame(a, b, opts) {
     start: 0,
     fp: R(2),
     mir: opts.mir ? 1 : 0,
+    rgb: opts.rgb ? 1 : 0,
     p: [a, b].map((dk, i) => ({
       i,
-      hp: 20,
-      mhp: 20,
+      hp: opts.rgb ? 50 : 20,
+      mhp: opts.rgb ? 50 : 20,
       mb: 0,
       b: 0,
       hand: [],
@@ -287,7 +293,7 @@ function newGame(a, b, opts) {
   if (opts.endless)
     G.en = { dealt: 0, tier: 0, mod: { conj: 0, draw: 0, stat: 0, mana: 0, pulse: 0 }, log: [] };
   G.p.forEach((p) => {
-    if (opts.mir || !FAIR_HAND) for (let k = 0; k < 4; k++) draw(G, p, 1);
+    if (opts.mir || opts.rgb || !FAIR_HAND) for (let k = 0; k < 4; k++) draw(G, p, 1);
     else fairOpen(G, p);
   });
   return G;
@@ -320,6 +326,7 @@ function nextStep(G) {
 }
 function mulligan(G, p, ids) {
   const out = p.hand.filter((c) => ids.includes(c.uid));
+  if (G.rgb) out.forEach((c) => delete c.d); // RGB: a Clownboy that is swapped away forgets its roll
   p.hand = p.hand.filter((c) => !ids.includes(c.uid));
   for (let i = 0; i < out.length && p.deck.length; i++) p.hand.push(p.deck.shift());
   p.deck.push(...out);
@@ -1473,6 +1480,7 @@ function act(G, a, s, c) {
         if (!t.h) return;
         const hp = G.p[t.p];
         hp.mhp = (hp.mhp || 20) + a.Amount;
+        if (G.rgb) hp.mhp = Math.min(RGB_MAX_HP, hp.mhp); // RGB: hero max HP is capped
         L(G, (t.p ? "Enemy" : "You") + " hero max HP is now " + hp.mhp);
       });
       break;
@@ -2006,6 +2014,9 @@ function act(G, a, s, c) {
           if (v && !v.gone && v.hp > 0 && engage(v, s)) strike(G, s);
         }
       }
+      // Clownboy's "Move one lane to the right, then do a Bonus Attack": the attack always happens (enemy unit in that lane, otherwise the enemy
+      // hero), also when the unit could not move (last lane / lane taken) - it then attacks from where it stands.
+      if (a.AlwaysAttack && !s.gone && s.hp > 0 && me.ln[s.lane] == s) strike(G, s);
       break;
     }
     case "SpendBlood":

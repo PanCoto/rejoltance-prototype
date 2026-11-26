@@ -45,7 +45,7 @@ function achUnlock(id){const a=ACHBY[id];if(!a||AST.u[id])return false;AST.u[id]
 // Called after every render: pick up what the engine recorded for YOU (works for online guests too: the host sends your own list).
 function achPoll(){if(!G||!G.p||!G.p[0].ac)return;G.p[0].ac.un.forEach(achUnlock)}
 // Called once when a game ends: everything that needs "and you won".
-function achEnd(){if(!G||G.achDone||!G.over)return;G.achDone=1;
+function achEnd(){if(!G||G.achDone||!G.over||G.rgb)return;G.achDone=1;
  const o=G.over,me=G.p[0],op=G.p[1];if(G.en||o.left)return;
  const win=o.win==0&&!o.draw;
  if(G.mir){AST.ms=win?AST.ms+1:0;achSave()}

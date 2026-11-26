@@ -43,7 +43,7 @@ function snap(G){
   hand:own?p.hand.map(cp):p.hand.map(hid),
   deck:own?shuf(p.deck.map(cp)):p.deck.map(hid),
   disc:p.disc.map(cp),ln:p.ln.map(uc)});
- return JSON.parse(JSON.stringify({mir:G.mir,turn:G.turn,step:G.step,allow:G.allow,act:G.act==null?null:1-G.act,start:1-G.start,
+ return JSON.parse(JSON.stringify({mir:G.mir,rgb:G.rgb,turn:G.turn,step:G.step,allow:G.allow,act:G.act==null?null:1-G.act,start:1-G.start,
   over:G.over?{win:G.over.draw?-1:1-G.over.win,draw:G.over.draw,sur:G.over.sur,left:G.over.left}:null,
   log:G.log.slice(-60).map(flipLog),hist:G.hist.slice(-80).map(h=>({p:1-h.p,t:h.t,id:h.id,tg:h.tg,uid:h.uid,tf:h.tf})),
   p:[side(G.p[1],1),side(G.p[0],0)]}))}
@@ -76,14 +76,14 @@ function askRemote(it){return new Promise(res=>{
    pk.push(v)}
   fin(pk)}};
  NET.asking=1;say('Opponent is choosing a target...');
- t=setTimeout(()=>{if(NET&&NET.ask)fin([])},(15+TM_GRACE+2)*1000);
+ if(!G.rgb)t=setTimeout(()=>{if(NET&&NET.ask)fin([])},(15+TM_GRACE+2)*1000);
  netSend({t:'ask',d,xu})})}
 function askPre(i,opts){return new Promise(res=>{NET.pre={opts,res};netSend({t:'pre',i});
- setTimeout(()=>{if(NET&&NET.pre&&NET.pre.res===res){NET.pre=null;res(null)}},(PRE_SEC+TM_GRACE)*1000)})}   // no answer in time -> null -> the engine picks the target itself
+ if(!(G&&G.rgb))setTimeout(()=>{if(NET&&NET.pre&&NET.pre.res===res){NET.pre=null;res(null)}},(PRE_SEC+TM_GRACE)*1000)})}   // no answer in time -> null -> the engine picks the target itself
 
 function syncDecks(){syncPickers();pkReveal('pkl')}
 let LB='frmenu';// panel that Cancel returns to
-function lobby(title,o){o=o||{};['frmenu','mirmenu','rkmenu','botmenu','setmenu','achmenu','acctmenu','avpick','fdmenu'].forEach(k=>{const e=$(k);if(e)e.style.display='none'});$('lt').textContent=title;$('lcode').textContent=o.code||'';$('lcode').style.display=o.code?'block':'none';
+function lobby(title,o){o=o||{};['frmenu','mirmenu','rgbmenu','rkmenu','botmenu','setmenu','achmenu','acctmenu','avpick','fdmenu'].forEach(k=>{const e=$(k);if(e)e.style.display='none'});$('lt').textContent=title;$('lcode').textContent=o.code||'';$('lcode').style.display=o.code?'block':'none';
  $('lin').style.display=o.join?'block':'none';$('lgo').style.display=o.join?'':'none';$('lcopy').style.display=o.code?'':'none';
  $('ldrow').style.display=o.nodeck?'none':'flex';$('ls').textContent=o.status||'';
  $('lmatch').style.display=o.match?'flex':'none';$('lready').style.display=o.match?'':'none';$('lobby').classList.toggle('mm',!!o.match);$('lobby').style.display='flex'}
@@ -101,13 +101,13 @@ function wire(N,c){
  c.on('open',()=>{if(NET!==N)return;if(!N.host){clearTimeout(N.to);N.up=1;if(N.mm&&!N.lr)return;guestHello(N)}});
  c.on('data',m=>{if(NET!==N||!m||!m.t)return;N.host?hostMsg(m):guestMsg(m)});
  c.on('close',()=>onClose(N));c.on('error',()=>onClose(N))}
-async function hostRoom(mirror){mirror=!!mirror;
+async function hostRoom(mirror,rgb){mirror=!!mirror;rgb=!!rgb;
  if(!PeerC())return lobby('Online play unavailable',{nodeck:1,status:'The networking library did not load. Reload the page and try again.'});
- netLeave();syncDecks();lobby('Creating room...',{nodeck:mirror,status:'Contacting the matchmaking server...'});
+ netLeave();syncDecks();lobby('Creating room...',{nodeck:mirror||rgb,status:'Contacting the matchmaking server...'});
  const tk=NETTK,PEEROPT=await peerOpt();if(tk!==NETTK)return;
  const open=n=>{const code=newCode(),peer=new(PeerC())(NETPRE+code,PEEROPT);
-  const N=NET={host:true,mirror,peer,code,conn:null,ev:[],mull:[0,0],pref:[null,null],rm:[0,0],pre:null,dead:false};
-  peer.on('open',()=>{if(NET!==N)return;const st='Waiting for your opponent... send them the code or the invite link.';lobby('Your room code',{code,nodeck:mirror,status:st});
+  const N=NET={host:true,mirror,rgb,peer,code,conn:null,ev:[],mull:[0,0],pref:[null,null],rm:[0,0],pre:null,dead:false};
+  peer.on('open',()=>{if(NET!==N)return;const st='Waiting for your opponent... send them the code or the invite link.';lobby('Your room code',{code,nodeck:mirror||rgb,status:st});
    probeRelay(PEEROPT.config.iceServers).then(r=>{if(NET===N&&!N.conn&&!r.relay&&$('ls').textContent==st)$('ls').textContent=st+NORELAY})});
   peer.on('connection',c=>{if(NET!==N)return;
    if(c.metadata&&c.metadata.spec){spAccept(N.sp||(N.sp=spNode(true)),c);return}   // a spectator (spectate.js), not the opponent
@@ -139,7 +139,7 @@ function onClose(N){if(NET!==N||N.dead)return;N.dead=true;clearTimeout(N.syncT);
   $('ovr').style.display='none';busy=false;render();finish();return}
  if(N.mm){mmLost(N);return}
  if(N.qm){qmAgain();return}
- if(N.host){N.conn=null;N.dead=false;lobby('Your room code',{code:N.code,nodeck:N.mirror,status:'Your opponent left. Waiting for someone to join...'})}
+ if(N.host){N.conn=null;N.dead=false;lobby('Your room code',{code:N.code,nodeck:N.mirror||N.rgb,status:'Your opponent left. Waiting for someone to join...'})}
  else{netLeave(1);lobby('Disconnected',{join:1,status:'The connection to the host was lost.'})}}
 const okDeck=dk=>Array.isArray(dk)&&dk.length>=10&&dk.length<=60&&dk.every(id=>CD[id]&&id<900)&&(window.RJ_MAXC>=3||okCopies(dk));
 // Max-copies rule: a deck passes if no card exceeds RJ_MAXC copies, or if it is exactly a premade deck (premades are exempt).
@@ -159,15 +159,16 @@ function hostGo(){if(!NET||!NET.host||!NET.deckG)return;NET.hp=0;NET.deckH=ALL[$
 function hostStart(){
  pkResolve();musicNewGame();
  NET.deckH=ALL[$('d0').value].c.slice();
- let go=null;if(NET.mirror){const m=mirrorDeck();NET.deckH=m.slice();NET.deckG=m.slice();go={mir:1}}
+ let go=null;if(NET.mirror){const m=mirrorDeck();NET.deckH=m.slice();NET.deckG=m.slice();go={mir:1}}else if(NET.rgb){NET.deckH=rgbDeck();NET.deckG=rgbDeck();go={rgb:1}}
  gid++;G=newGame(NET.deckH,NET.deckG,go);busy=true;sel=pend=null;castMode=false;stickyZoom=false;
  NET.mull=[0,0];NET.pref=[null,null];NET.rm=[0,0];NET.ev=[];NET.pre=null;NET.ask=null;NET.asking=0;
  ['lobby','ov','hist','modal'].forEach(k=>$(k).style.display='none');$('ovr').style.display='';$('ovr').textContent='Rematch';
  show('game');say('');render();showMul();netSend({t:'start',name:myName(),s:snap(G)});
- clearTimeout(NET.mT);clearTimeout(NET.pT);NET.mT=setTimeout(hostForceMull,(MULL_SEC+TM_GRACE)*1000)}
+ clearTimeout(NET.mT);clearTimeout(NET.pT);if(!G.rgb)NET.mT=setTimeout(hostForceMull,(MULL_SEC+TM_GRACE)*1000)}
 // A guest that stays silent on the mulligan screen: keep their hand / pick first or second at random, so the game cannot be stalled there.
 function hostForceMull(){if(!NET||!NET.host||!G||G.turn!=0||NET.mull[1])return;mulligan(G,G.p[1],[]);NET.mull[1]=1;netPush();armPref();tryBegin()}
 function armPref(){if(!NET||!NET.host)return;clearTimeout(NET.pT);
+ if(G&&G.rgb)return;
  NET.pT=setTimeout(()=>{if(!NET||!NET.host||!G||G.turn!=0||NET.pref[1])return;NET.pref[1]=Math.random()<.5?'first':'second';tryBegin()},(ORDER_SEC+TM_GRACE)*1000)}
 function tryBegin(){if(!NET.mull[0]||!NET.mull[1]||!NET.pref[0]||!NET.pref[1])return;decideStart(G,NET.pref[0],NET.pref[1]);startRound(G);render();anim();flow()}
 async function hostHandle(m){

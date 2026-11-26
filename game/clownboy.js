@@ -146,7 +146,7 @@ const ACT = {
   copySelf:  { kind: "free", tag: "summon", need: "self", mk: () => ({ a: { Type: "CopySelf" }, t: () => "Copy itself into a random empty lane", v: 5 }) },
   respawn:   { kind: "free", tag: "summon", only: ["OnDeath"], mk: () => ({ a: { Type: "RespawnSelf", BuffHp: -1 }, t: () => "Return to play in its lane with -1 HP", v: 3 }) },
   moveRight: { kind: "free", need: "self", only: ["OnPlayed", "OnStartOfRound", "OnEndOfRound", "OnFriendlyActionPlayed", "OnEnemyUnitPlayed", "OnFriendlyCardDrawn", "OnFriendlyCardGained", "OnOpponentCardGained", "OnOpponentCardDrawn"],
-             mk: () => { const th = clownRnd(2); return { a: th ? { Type: "MoveRight", ThenAttack: true } : { Type: "MoveRight" }, t: () => th ? "Move one lane to the right, then Attack" : "Move one lane to the right", v: th ? 1.5 : 0.3 }; } },
+             mk: () => { const th = clownRnd(2); return { a: th ? { Type: "MoveRight", AlwaysAttack: true } : { Type: "MoveRight" }, t: () => th ? "Move one lane to the right (if it can), then do a Bonus Attack" : "Move one lane to the right", v: th ? 1.5 : 0.3 }; } },
   curseEnemy:{ kind: "free", mk: () => { const ash = typeof CD != "undefined" && CD[914]; return ash ? { a: { Type: "AddCardToEnemyDeck", ValueParam: 914 }, t: () => "Shuffle a " + ash.Name + " into the Enemy's Deck", v: 1.5 } : { a: { Type: "AddCardToEnemyDeck", Filter: { Token: 0 } }, t: () => "Shuffle a random card into the Enemy's Deck", v: -0.5 }; } },
   // --- player-prompt actions. On "When Played" the engine asks the player (Sacrifice target, lane, card from the deck...); on every other trigger it decides itself.
   sacrifice: { kind: "free", tag: "sac", need: "self", mk: (tk) => { const ab = clownRnd(2), pl = tk == "OnPlayed";
