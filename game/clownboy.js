@@ -152,6 +152,9 @@ const ACT = {
   sacrifice: { kind: "free", tag: "sac", need: "self", mk: (tk) => { const ab = clownRnd(2), pl = tk == "OnPlayed";
                return { as: [{ Type: "SacrificeUnit", Target: "TargetFriendlyUnit" }].concat(ab ? [{ Type: "AbsorbStats", Target: "Self" }] : []),
                         t: () => (pl ? "Sacrifice a Friendly Unit" : "Sacrifice the weakest other Friendly Unit") + (ab ? ". This absorbs its Stats" : ""), v: ab ? 0.8 : -2.2 }; } },
+  // Sacrifice WITH A REWARD: "(You may) Sacrifice a Friendly Unit. If you do, <1-2 random actions>". The sacrifice itself is built in clownRoll(): the actions rolled after it
+  // become its reward (flagged OnlyIfSacrificed - the engine only runs them when a unit really was sacrificed) and are rolled exactly like any other action (any target, chosen targets included).
+  sacReward: { kind: "free", tag: "sac", need: "self", mk: () => null },
   sacMany:   { kind: "free", tag: "sac", need: "self", only: ["OnPlayed"], mk: () => ({ a: { Type: "SacrificeUnits", Target: "OtherFriendlyUnits", Absorb: true }, t: () => "Sacrifice any number of other Friendly Units. This absorbs their Stats", v: 1.5 }) },
   reanimate: { kind: "free", tag: "summon", mk: () => { const n = cr(2, 5); return { a: { Type: "Reanimate", Filter: { MaxCost: n } }, t: () => "Summon a random Friendly Unit that costs " + n + " or less from Your Discard Pile", v: 0.5 * n + 1 }; } },
   tutor:     { kind: "free", tag: "draw", mk: (tk) => ({ a: { Type: "TutorCard", Target: "Self" }, t: () => tk == "OnPlayed" ? "Choose a Card from Your Deck and add it to Your Hand" : "Add the most expensive Card from Your Deck to Your Hand", v: 2.5 }) },
@@ -199,7 +202,7 @@ const CLOWN_MAX_STATS = [0, 6, 7, 9, 10, 11, 12];
 
 function clownRoll(base) {
   base = base || CD[CLOWN_ID];
-  const tkeys = Object.keys(TRIG), tw = tkeys.flatMap((k) => Array(TRIG[k].w).fill(k)), akeys = Object.keys(ACT);
+  const tkeys = Object.keys(TRIG), tw = tkeys.flatMap((k) => Array(TRIG[k].w).fill(k)), akeys = Object.keys(ACT).concat("sacReward");   // sacReward is listed twice: twice as likely as an average action
   for (let tries = 0; tries < 80; tries++) {
     const cost = cr(1, 6), used = new Set(), effs = [];
     let value = 0, nAct = 0, asked = false;                          // asked = the card already asks the player for its one target
@@ -216,11 +219,23 @@ function clownRoll(base) {
       }
       const parts = [], actions = [];
       let ch = null;                                                // the player-chosen target of THIS effect, if any
+      let rew = null, hasSac = false;                               // rew = the sacrifice reward being built in this effect (see ACT.sacReward)
       const nA = Math.min(3 - nAct, 1 + (clownRnd(10) < 3 ? 1 : 0));
-      for (let k = 0; k < nA; k++) {
+      // once a sacrifice is rolled, the loop only rolls its REWARD actions (up to rew.want, with a few retries for rolls that fail a check)
+      for (let k = 0; rew ? rew.items.length < rew.want && rew.tries++ < 10 : k < nA; k++) {
         const id = pick1(akeys), A = ACT[id];
         if ((T.ban || []).includes(A.tag)) continue;
         if ((A.need && !T.f.includes(A.need)) || (A.only && !A.only.includes(tk))) continue;
+        if (A.tag == "sac" && (hasSac || rew)) continue;            // one sacrifice per effect
+        if (id == "sacReward") {
+          if (nAct >= 2) continue;                                   // needs room for the sacrifice AND at least one reward (3 actions per card)
+          const opt = tk == "OnPlayed";                              // when played the player may decline; on every other trigger it is automatic (weakest other unit)
+          actions.push(Object.assign({ Type: "SacrificeUnit", Target: "TargetFriendlyUnit" }, opt ? { Optional: true } : {}));
+          rew = { idx: parts.length, ai: actions.length - 1, opt, want: Math.min(1 + (clownRnd(10) < 3 ? 1 : 0), 3 - nAct - 1), items: [], val: 0, tries: 0 };
+          parts.push("");
+          hasSac = true; nAct++;
+          continue;
+        }
         let Tname, side, obj, subj, pl = 0, en = 0;
         if (A.kind == "free") {
           Tname = null; side = "f"; obj = ""; subj = "";
@@ -251,14 +266,27 @@ function clownRoll(base) {
         }
         const made = A.mk(tk);
         if (!made) continue;
+        const val = (A.abs ? made.v : made.v * SIDE[side] * (pl ? 1.8 : 1)) * T.m;
+        if (rew && val <= 0) continue;                              // a reward must be a reward: nothing that hurts you / helps the enemy
         const key = id + ":" + Tname + ":" + JSON.stringify(made.a);
         if (used.has(key)) continue;
         used.add(key);
         const base = A.onlyF || A.kind == "free" ? {} : { Target: Tname };
-        (made.as || [made.a]).forEach((x) => actions.push(Object.assign({}, base, x)));
-        parts.push(made.t(obj, subj, pl, en));
-        value += (A.abs ? made.v : made.v * SIDE[side] * (pl ? 1.8 : 1)) * T.m;
+        (made.as || [made.a]).forEach((x) => actions.push(Object.assign({}, base, x, rew ? { OnlyIfSacrificed: true } : {})));
+        const txt = made.t(obj, subj, pl, en);
+        if (rew) { rew.items.push(txt.charAt(0).toLowerCase() + txt.slice(1)); rew.val += val; }
+        else { parts.push(txt); value += val; }
+        if (A.tag == "sac") hasSac = true;
         nAct++;
+      }
+      if (rew) {
+        // no reward could be rolled, or an AUTOMATIC sacrifice (it cannot be declined and may repeat every round) with a small reward: drop it all
+        if (!rew.items.length || (!rew.opt && rew.val < 3)) { actions.splice(rew.ai); parts.splice(rew.idx, 1); nAct -= 1 + rew.items.length; }
+        else {
+          parts[rew.idx] = (rew.opt ? "You may Sacrifice a Friendly Unit" : "Sacrifice the weakest other Friendly Unit") + ". If you do, " + rew.items.join(" and ");
+          // optional: you only do it when it pays, so it is worth (reward - cost) but never less than nothing; automatic: you always pay the cost
+          value += rew.opt ? Math.max(0, rew.val - 2.2) + 0.4 : rew.val - 2.2 * T.m;
+        }
       }
       if (!actions.length) continue;
       const eff = { Trigger: tk, Actions: actions, _t: T.txt + ": " + parts.join(". ") + "." };
