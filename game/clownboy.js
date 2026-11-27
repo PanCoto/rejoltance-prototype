@@ -73,6 +73,7 @@ function clownArt(spell) {
   return "tmt|" + cr(1, 2000000000) + "|" + ids.join("|");
 }
 const _tmtOut = {}, _tmtBusy = {}, _tmtImgs = {};
+if (typeof document != "undefined" && document.head) { const st = document.createElement("style"); st.textContent = "img[data-tmt]{filter:grayscale(1)}"; document.head.appendChild(st); }   // the base art shown while painting / as fallback is grey too
 const tmtFile = (id) => (window.RJ_ART && window.RJ_ART[id]) || "img/" + ((window.RJ_IMG || {})[id] || id + ".webp");   // data URI first: a canvas fed from file:// would be "tainted"
 const tmtBase = (rec) => tmtFile(rec.split("|")[2]);
 function tmtLoad(id) {
@@ -138,17 +139,15 @@ async function tmtPaint(rec) {
   // 2) pixels: wrong colour channels, inverted patches, shifted rows, dead pixels, bad palette
   const im = g.getImageData(0, 0, W, H), d = im.data, src = new Uint8ClampedArray(d);
   const rect = () => { const w = ri(W / 8, W / 2), h = ri(H / 8, H / 2); return [ri(0, W - w), ri(0, H - h), w, h]; };
-  for (let r = ri(0, 3); r > 0; r--) {                           // colour channels swapped in a patch
-    const [x0, y0, w, h] = rect(), pm = rp([[1, 2, 0], [2, 0, 1], [2, 1, 0], [1, 0, 2], [0, 2, 1]]);
-    for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) { const i = (y * W + x) * 4, a = d[i], b = d[i + 1], c = d[i + 2], v = [a, b, c]; d[i] = v[pm[0]]; d[i + 1] = v[pm[1]]; d[i + 2] = v[pm[2]]; }
-  }
+  for (let i = 0; i < d.length; i += 4) { const y = Math.round(0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]); d[i] = d[i + 1] = d[i + 2] = y; }   // GREYSCALE ONLY: everything below works on brightness
+  src.set(d);
   for (let r = ri(0, 2); r > 0; r--) {                           // inverted patch
     const [x0, y0, w, h] = rect();
     for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) { const i = (y * W + x) * 4; d[i] = 255 - d[i]; d[i + 1] = 255 - d[i + 1]; d[i + 2] = 255 - d[i + 2]; }
   }
-  if (chance(0.7)) {                                             // red / blue ghost (chromatic shift)
+  if (chance(0.7)) {                                             // ghost: a shifted copy of the picture mixed in
     const sh = ri(2, 9), cp = new Uint8ClampedArray(d);
-    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = (y * W + x) * 4; d[i] = cp[(y * W + Math.min(W - 1, x + sh)) * 4]; d[i + 2] = cp[(y * W + Math.max(0, x - sh)) * 4 + 2]; }
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = (y * W + x) * 4, v = Math.max(cp[i], cp[(y * W + Math.min(W - 1, x + sh)) * 4] * 0.85); d[i] = d[i + 1] = d[i + 2] = v; }
   }
   for (let y = 0; y < H; y++) if (chance(0.05)) {                // rows torn sideways (wrapped)
     const sh = ri(-24, 24), row = new Uint8ClampedArray(d.subarray(y * W * 4, (y + 1) * W * 4));
@@ -156,7 +155,7 @@ async function tmtPaint(rec) {
   }
   for (let n = Math.floor(W * H * 0.004); n > 0; n--) { const i = ri(0, W * H - 1) * 4, j = ri(0, W * H - 1) * 4; d[i] = src[j]; d[i + 1] = src[j + 1]; d[i + 2] = src[j + 2]; }
   if (chance(0.2)) { const lv = rp([3, 4, 6]), st = 255 / (lv - 1); for (let i = 0; i < d.length; i += 4) for (let c = 0; c < 3; c++) d[i + c] = Math.round(Math.round(d[i + c] / st) * st); }
-  if (chance(0.35)) { const k = [0.6 + rnd() * 0.8, 0.6 + rnd() * 0.8, 0.6 + rnd() * 0.8]; for (let i = 0; i < d.length; i += 4) for (let c = 0; c < 3; c++) d[i + c] = Math.min(255, d[i + c] * k[c]); }
+  if (chance(0.4)) { const k = 0.8 + rnd() * 1.0; for (let i = 0; i < d.length; i += 4) { const v = Math.max(0, Math.min(255, (d[i] - 128) * k + 128)); d[i] = d[i + 1] = d[i + 2] = v; } }   // contrast
   if (chance(0.5)) for (let y = 0; y < H; y += 2) for (let x = 0; x < W * 4; x++) if (x % 4 < 3) d[y * W * 4 + x] *= 0.82;   // scanlines
   g.putImageData(im, 0, 0);
   return await new Promise((ok, no) => cv.toBlob((b) => (b ? ok(URL.createObjectURL(b)) : no(new Error("toBlob"))), "image/webp", 0.9));
