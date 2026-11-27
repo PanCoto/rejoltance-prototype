@@ -74,7 +74,7 @@ function rpSnap(G){
   hand:p.hand.map(cp),deck:p.deck.map(cp),disc:p.disc.map(cp),ln:p.ln.map(uc)});
  return JSON.parse(JSON.stringify({mir:G.mir,rgb:G.rgb,turn:G.turn,step:G.step,allow:G.allow,act:G.act==null?null:G.act,start:G.start,
   over:G.over?{win:G.over.win,draw:G.over.draw,sur:G.over.sur,left:G.over.left}:null,
-  log:G.log.slice(-40),hn:G.hist.length,hist:G.hist.slice(-80).map(h=>({p:h.p,t:h.t,id:h.id,tg:h.tg,uid:h.uid,tf:h.tf})),
+  log:G.log.slice(-40),hn:G.hist.length,hist:G.hist.slice(-80).map(h=>({p:h.p,t:h.t,id:h.id,tg:h.tg,uid:h.uid,tf:h.tf,d:h.d})),
   p:[side(G.p[0]),side(G.p[1])]}))}
 const rpMode=()=>{try{if(window.MM&&MM.cur&&MM.cur.mode)return MM.cur.mode}catch(e){}return NET?'online':(typeof MODE!='undefined'&&MODE=='mirror'?'mirror':MODE=='rgb'?'rgb':'bot')};
 function rpCap(ev){

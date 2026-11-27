@@ -64,6 +64,9 @@ const artErr=(el,id)=>{id=+id;if(isCl(id)&&CLFB&&!FBMAIN.has(id)&&(el.getAttribu
 const stageN=(id,dc)=>{const s=(CD[id]&&CD[id].Stages)||[];let n=0;s.forEach((t,i)=>{if((dc||0)>=t)n=i+1});return n};
 const artStage=(id,dc)=>{const n=stageN(id,dc);return n?(isCl(id)?CLDIR+'stages/':'img/stages/')+id+'_'+n+'.webp':artSrc(id)};
 const artStageErr=(el,id)=>{el.onerror=()=>artErr(el,id);el.src=artSrc(id)};
+// Clownboy / Party Trick art is a recipe ("tmt|seed|ids", see clownboy.js): the <img> is marked so clownPaint() can swap in the finished picture
+const tmtAttr=s=>typeof s=='string'&&s.indexOf('tmt|')==0?` data-tmt="${s}"`:'';
+const hSrc=h=>h.d&&h.d.Sprite?clownSrc(h.d.Sprite):artSrc(h.id);   // art of a played card (the rolled one when it has its own)
 function cardHTML(x,live,cls,data){
  if(!x.d&&!CD[x.id])return`<div class="cardback" ${data||''}></div>`;   // hidden card (spectator frames: id 0) - never crash on it
  const d=x.d||CD[x.id],unit=d.Type=='Unit';
@@ -74,7 +77,7 @@ function cardHTML(x,live,cls,data){
  const kl=ks.map(k=>`<i class="${BAD.has(k)?'r':''}">${kwLabel(d,k,live?x:null)}</i>`).join(' ');
  const nf=d.Name.length>18?.62:d.Name.length>14?.75:d.Name.length>11?.88:1;
  const sub=unit?(d.Subtypes||[]).join(' '):'Action';
- return`<div class="card ${cls||''}" ${data||''} data-cid="${x.id}" data-ba="${x.ba||0}" style="--nf:${nf}"><img class="art" src="${d.Sprite || (live?artStage(x.id,x.dc):artSrc(x.id))}" alt="" draggable="false" onerror="${d.Sprite ? 'this.onerror=null' : (live&&stageN(x.id,x.dc)?`artStageErr(this,${x.id})`:`artErr(this,${x.id})`)}"><i class="fr"></i><span class="nm">${d.Name}</span><span class="st">- ${sub} -</span><span class="co${cc}">${ROM(co)}</span>`+
+ return`<div class="card ${cls||''}" ${data||''} data-cid="${x.id}" data-ba="${x.ba||0}" style="--nf:${nf}"><img class="art" src="${d.Sprite ? clownSrc(d.Sprite) : (live?artStage(x.id,x.dc):artSrc(x.id))}"${tmtAttr(d.Sprite)} alt="" draggable="false" onerror="${d.Sprite ? 'this.onerror=null' : (live&&stageN(x.id,x.dc)?`artStageErr(this,${x.id})`:`artErr(this,${x.id})`)}"><i class="fr"></i><span class="nm">${d.Name}</span><span class="st">- ${sub} -</span><span class="co${cc}">${ROM(co)}</span>`+
  (unit?`<div class="bx a${au}">${atk}</div><div class="bx h${hc}">${hp}</div>`:'')+
  `<div class="tx">${kl?`<span class="kwl">${kl}</span>`:''}${live&&x.sil?'':`<span>${hl(d.Description)}</span>`}</div></div>`}
 // Cards a card makes, gives or merges into (Bone Baronet -> The Tempting Goblet, Collector -> The Collection...). Used by the hover glossary.
@@ -119,10 +122,11 @@ function cardOf(t){let x=null,live=false;
  if(t.dataset.ru&&G){const f=findAny(t.dataset.ru);if(f){let fc;try{fc=cost(G,G.p[f.s],f.c)}catch(_){}x=Object.assign({},f.c,fc!=null?{fc}:{})}}
  if(!x&&t.dataset.u&&G){x=findLive(t.dataset.u);live=!!x}
  if(!x&&t.dataset.c&&G)x=G.p[0].hand.find(v=>v.uid==t.dataset.c);
+ if(!x&&t.dataset.hi!=null&&G){const h=G.hist[+t.dataset.hi];if(h&&h.d)x={id:h.id,uid:0,ba:0,d:h.d}}   // card from the played-cards list: show the version that was really played
  if(!x&&t.dataset.cid)x={id:+t.dataset.cid,uid:0,ba:+t.dataset.ba||0};
  if(x&&!live&&t.dataset.fc!=null&&!t.dataset.u&&!t.dataset.c)x.fc=+t.dataset.fc;   // changelog cards: show the printed cost
  return x?{x,live}:null}
-const cardKey=t=>t.dataset.u?'u'+t.dataset.u:t.dataset.c?'c'+t.dataset.c:'i'+t.dataset.cid;
+const cardKey=t=>t.dataset.u?'u'+t.dataset.u:t.dataset.c?'c'+t.dataset.c:t.dataset.hi!=null?'i'+t.dataset.cid+'h'+t.dataset.hi:'i'+t.dataset.cid;
 // Click-to-pin: a clicked card stays zoomed until it is clicked again, another card is clicked, or the board is clicked.
 let pinKey=null;
 function unpin(){pinKey=null;stickyZoom=false;$('zoom').style.display='none';document.querySelectorAll('#gcards .bc.pinned').forEach(b=>b.classList.remove('pinned'))}
@@ -133,7 +137,7 @@ function pinCard(t){const k=cardKey(t);
 function refreshPin(){if(!stickyZoom){refreshHover();return}if(!pinKey)return;const id=pinKey.slice(1);let c=null;
  if(pinKey[0]=='u'){const x=G&&findLive(id);if(x)c={x,live:true}}
  else if(pinKey[0]=='c'){const x=G&&G.p[0].hand.find(v=>v.uid==id);if(x)c={x,live:false}}
- else{const el=document.querySelector(`[data-cid="${id}"]`);if(el)c=cardOf(el)}
+ else{const m=id.split('h'),el=document.querySelector(m[1]!=null?`[data-hi="${m[1]}"]`:`[data-cid="${m[0]}"]`);if(el)c=cardOf(el)}
  if(c)showZoom(c.x,c.live);else unpin()}
 const hovTarget=t=>{const c=t&&t.closest&&t.closest(CARDSEL);return!c||c.closest('#zoom')||c.closest('.fly')||c.classList.contains('dying')?null:c};
 document.addEventListener('mouseover',e=>{if(stickyZoom)return;const t=hovTarget(e.target);if(!t)return;
@@ -235,7 +239,7 @@ function render(){
   if(fresh)el.getBoundingClientRect();
   el.style.setProperty('--x',dx+'px');el.style.setProperty('--y',dy+'px');el.style.setProperty('--r',rot+'deg')});
  Object.values(ex).forEach(e=>e.remove());
- const pl=G.hist.filter(x=>x.t==G.turn).slice(-4);let s='';for(let i=0;i<4;i++){const x=pl[i-(4-pl.length)];s+=x&&i>=4-pl.length?`<div class="s"><img src="${artSrc(x.id)}" alt="" onerror="artErr(this,${x.id})"></div>`:'<div class="s"></div>'}
+ const pl=G.hist.filter(x=>x.t==G.turn).slice(-4);let s='';for(let i=0;i<4;i++){const x=pl[i-(4-pl.length)];s+=x&&i>=4-pl.length?`<div class="s"><img src="${hSrc(x)}"${x.d?tmtAttr(x.d.Sprite):''} alt="" onerror="${x.d&&x.d.Sprite?'this.onerror=null':`artErr(this,${x.id})`}"></div>`:'<div class="s"></div>'}
  $('strip').innerHTML=s+`<div class="w">${(G.log[G.log.length-1]||'').replace(/^— |—$/g,'').slice(0,16)}</div>`;
  const act=mine()&&!(pend&&pend.ext);$('end').disabled=!act;$('end').textContent=G.step>=3?'Combat…':act?'End Turn':'Enemy…';
  if(DEMO){if(window.WATCH){musicUpdate();refreshPin()}return}refreshPin();musicUpdate();achPoll();tmSync();autoSkip();if(G.over)finish()}
@@ -545,7 +549,7 @@ async function flow(){busy=true;const my=gid;
   if(G.pq&&G.pq.length){await askPending(my);if(my!=gid)return}
   await sleep(300);if(my!=gid)return;nextStep(G)}
  if(my==gid){render();netPush()}}
-function showHist(){const rows=G.hist.slice().reverse().map(h=>`<div class="hr" data-cid="${h.id}"><img src="${artSrc(h.id)}" alt="" onerror="artErr(this,${h.id})"><span><b>${CD[h.id].Name}</b> ${CD[h.id].Type=='Spell'?'cast':'played'} by ${h.p?'Enemy':'You'}${h.tg?' -> '+h.tg:''}<br><small>Round ${h.t}</small></span></div>`).join('')||'<small>No cards played yet.</small>';
+function showHist(){const rows=G.hist.map((h,i)=>({h,i})).reverse().map(({h,i})=>{const dd=h.d||CD[h.id];return`<div class="hr" data-cid="${h.id}" data-hi="${i}"><img src="${hSrc(h)}"${h.d?tmtAttr(h.d.Sprite):''} alt="" onerror="${h.d&&h.d.Sprite?'this.onerror=null':`artErr(this,${h.id})`}"><span><b>${dd.Name}</b> ${dd.Type=='Spell'?'cast':'played'} by ${h.p?'Enemy':'You'}${h.tg?' -> '+h.tg:''}<br><small>Round ${h.t}</small></span></div>`}).join('')||'<small>No cards played yet.</small>';
  $('hist').innerHTML=`<div class="hb"><h3>Cards played</h3>${rows}<p><small>Hover a card to see what it does. Click anywhere else to close.</small></p></div>`;$('hist').style.display='flex'}
 $('hs').onclick=()=>{if(G)showHist()};$('strip').onclick=()=>{if(G)showHist()};$('hist').onclick=e=>{if(e.target.closest('.hr'))return;$('hist').style.display='none';$('zoom').style.display='none';setTimeout(refreshHover,0)};
 let viewing=false;

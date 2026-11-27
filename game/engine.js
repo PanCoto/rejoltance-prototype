@@ -100,6 +100,9 @@ function cardOK(d, f) {
   if (f.Type && d.Type != (f.Type == "Action" ? "Spell" : f.Type)) return false;
   if (f.Ids && !f.Ids.includes(d.Id)) return false;
   if (f.Subtype && !hasSub(d, f.Subtype)) return false;
+  if (f.Types && !f.Types.includes(d.Type)) return false; // any of several card types (Unit / Spell)
+  if (f.NotIds && f.NotIds.includes(d.Id)) return false; // never these cards (e.g. Clownboy itself)
+  if (f.NotSubtype && hasSub(d, f.NotSubtype)) return false; // never this subtype (e.g. Boss)
   const cs = d.Cost || 0;
   if (f.Cost != null && cs != f.Cost) return false;
   if (f.MinCost != null && cs < f.MinCost) return false;
@@ -173,6 +176,8 @@ function countOf(G, s, sp, c) {
       return c.last ? Math.max(0, c.last.hp) : 0;
     case "Sacrificed":
       return c.sacd ? 1 : 0;
+    case "Round":
+      return G.turn;
   }
   return 0;
 }
@@ -253,9 +258,18 @@ function fairOpen(G, p) {
 }
 // RGB ("random go bullshit"): 50 HP (max 50), 30 Clownboys in each deck, no timers (see ui.js / net.js).
 const RGB_MAX_HP = 50;
+const RGB_ACTIONS = 8; // how many of the 30 cards are wild Actions (Clownspell); the rest are Clownboys
 function rgbDeck() {
-  return Array(30).fill(CLOWN_ID);
+  const na = typeof CLOWN_SPELL_ID != "undefined" && typeof CD != "undefined" && CD[CLOWN_SPELL_ID] ? RGB_ACTIONS : 0;
+  return Array(30 - na).fill(CLOWN_ID).concat(Array(na).fill(typeof CLOWN_SPELL_ID != "undefined" ? CLOWN_SPELL_ID : CLOWN_ID));
 }
+// which generator rolls a given wild card (Clownboy = unit, Clownspell = Action)
+const rollerOf = (id) =>
+  id == CLOWN_ID && typeof clownRoll == "function"
+    ? clownRoll
+    : typeof CLOWN_SPELL_ID != "undefined" && id == CLOWN_SPELL_ID && typeof clownSpellRoll == "function"
+      ? clownSpellRoll
+      : null;
 function newGame(a, b, opts) {
   opts = opts || {};
   const G = {
@@ -401,14 +415,18 @@ function regainAtk(G) {
 }
 // Cards with a random ability (Clownboy) get it the moment they enter a hand, before anyone sees them; see clownboy.js.
 function rollHand(p) {
-  if (typeof clownRoll != "function") return;
-  for (const c of p.hand) if (c.id == CLOWN_ID && !c.d) c.d = clownRoll(CD[c.id]);
+  for (const c of p.hand) {
+    const r = rollerOf(c.id);
+    if (r && !c.d) c.d = r(CD[c.id]);
+  }
 }
 // ...and it is rewritten again at the start of every Round while it waits in a hand (Cost, Stats and ability all change).
 function rerollHand(G, p) {
-  if (typeof clownRoll != "function") return;
   let n = 0;
-  for (const c of p.hand) if (c.id == CLOWN_ID) { c.d = clownRoll(CD[c.id]); n++; }
+  for (const c of p.hand) {
+    const r = rollerOf(c.id);
+    if (r) { c.d = r(CD[c.id]); n++; }
+  }
   if (n) L(G, (p.i ? "Enemy's" : "Your") + " Clownboy changes...");
 }
 function draw(G, p, quiet, idx) {
@@ -591,6 +609,25 @@ function cond(c, u, x, G) {
       return !!x.u && x.u.o == u.o;
     case "HasSubtypeOnBoard":
       return G.p[u.o].ln.some((w) => w && w !== u && hasSub(w.d, P));
+    // --- conditions added for Clownboy (lane numbers are shown as I-IV, so "even" lanes are II and IV = index 1 and 3)
+    case "LaneParity":
+      return u.lane >= 0 && ((u.lane + 1) % 2 == 0) == (c.Parity == "Even");
+    case "LaneEdge":
+      return u.lane >= 0 && (u.lane == 0 || u.lane == 3) == (c.Edge !== false);
+    case "OppositeEnemy":
+      return u.lane >= 0 && !!G.p[1 - u.o].ln[u.lane] == (c.Present !== false);
+    case "NoNeighbors":
+      return u.lane >= 0 && !G.p[u.o].ln.some((w, i) => w && !w.gone && Math.abs(i - u.lane) == 1);
+    case "RoundParity":
+      return (G.turn % 2 == 0) == (c.Parity == "Even");
+    case "HeroHpHalf": {
+      const q = G.p[c.Side == "Enemy" ? 1 - u.o : u.o];
+      return (q.hp * 2 < (q.mhp || 20)) == (c.Below !== false);
+    }
+    case "SelfDamaged":
+      return !!u.kw && u.hp < u.mx;
+    case "SelfHasStatus":
+      return !!u.kw && u.kw.has(P);
     case "FromHistory":
       return !!x.u && G.hist.some((h) => h.uid === x.u.uid);
     case "NotFromHistory":
@@ -824,6 +861,10 @@ function bestLane(G, o) {
 }
 // Rolled cards can build self-feeding loops (e.g. "when a Friendly Unit is damaged: deal 1 damage to a Friendly Unit"): cap the nesting so it can never hang or overflow the stack.
 let FIRE_DEPTH = 0;
+// Triggers added for Clownboy are fired on ROLLED units only (u.d.Rolled), so no hand-made card can ever change behaviour because of them.
+function fireR(G, trig, list, ctx) {
+  list.slice().forEach((w) => w && !w.gone && w.d && w.d.Rolled && fire(G, trig, w, Object.assign({}, ctx)));
+}
 function fire(G, trig, u, ctx) {
   if (!u || u.sil || G.over) return;
   if (u.d && u.d.Rolled && FIRE_DEPTH >= 6) return;
@@ -868,10 +909,10 @@ function fire0(G, trig, u, ctx) {
 // What the engine can actually execute. The Clownboy generator checks every rolled effect against this list (clownValid in clownboy.js),
 // so a card can never be rolled with an action / target / trigger that would silently do nothing. KEEP IN SYNC when you add a case to act(), tg0() or fire().
 const ENGINE_CAPS = {
-  actions: new Set(["AbsorbStats", "AddCardToDeck", "AddCardToEnemyDeck", "AddCardToHand", "AddResource", "ApplyStatus", "BonusAttack", "BottomFromHand", "BuffStats", "CopyDestroyed", "CopyLastEnemyCard", "CopySelf", "CopyUnit", "DealDamage", "DestroyUnit", "DoubleStats", "DrawCard", "DrawFromDiscard", "DrawKilledLastRound", "GiveToOpponent", "GrantActionPlay", "GrantRule", "Heal", "HealToFull", "IncreaseMaxHp", "LaneDebuff", "LoseBlood", "LoseHealth", "MakeAUnit", "Merge", "ModifyGlobalBuff", "MoveRight", "MoveToSourceLane", "PlayNextTwice", "Reanimate", "ReplayPlayed", "RespawnSelf", "ReturnToHand", "SacrificeUnit", "SacrificeUnits", "ShuffleDeck", "Silence", "SpendBlood", "SummonUnit", "Transform", "TutorCard"]),
+  actions: new Set(["AbsorbStats", "AddCardToDeck", "AddCardToEnemyDeck", "AddCardToHand", "AddResource", "ApplyStatus", "BonusAttack", "BottomFromHand", "BuffStats", "CopyDestroyed", "CopyLastEnemyCard", "CopySelf", "CopyToDeck", "CopyUnit", "DealDamage", "DestroyUnit", "DoubleStats", "DrawCard", "DrawFromDiscard", "DrawKilledLastRound", "GiveHandCard", "GiveToOpponent", "GrantActionPlay", "GrantRule", "Heal", "HealToFull", "IncreaseMaxHp", "LaneDebuff", "LoseBlood", "LoseHealth", "MakeAUnit", "Merge", "ModifyGlobalBuff", "MoveRight", "MoveToSourceLane", "PlayNextTwice", "Reanimate", "ReplayPlayed", "RespawnSelf", "ReturnToHand", "SacrificeUnit", "SacrificeUnits", "SetHpOne", "ShuffleDeck", "ShuffleLanes", "Silence", "SpendBlood", "SummonUnit", "SwapStats", "SwapWithOpposite", "TakeControl", "Transform", "TutorCard"]),
   passiveActions: new Set(["GrantKeyword", "ApplyStatus", "AuraBuff", "ScaleAttack"]),
-  targets: new Set(["AdjacentEnemyUnits", "AdjacentFriendlyUnits", "AllEnemyUnits", "AllFriendlyUnits", "AllOtherUnitsOnBoard", "AllUnitsOnBoard", "EnemyHero", "EnemyUnitsInSelfLaneAndAdjacent", "EnemyUnitsNearLane", "EventUnit", "EventUnitAndAdjacent", "FriendlyHero", "OppositeEnemyUnit", "OtherFriendlyUnits", "RandomEnemyUnit", "RandomFriendlyUnit", "Sacrificer", "SelectedTarget", "Self", "SelfLaneEnemyAndAdjacentAny", "TargetAnyUnit", "TargetEnemyUnit", "TargetEnemyUnitOrHero", "TargetFriendlyUnit", "TargetFriendlyUnitOrHero"]),
-  triggers: new Set(["OnAttackDone", "OnDamagedEnemyHero", "OnDamagedEnemyUnit", "OnDeath", "OnEndOfRound", "OnEnemyUnitDied", "OnEnemyUnitGainedStats", "OnEnemyUnitPlayed", "OnEnemyUnitSacrificed", "OnFriendlyActionPlayed", "OnFriendlyCardDrawn", "OnFriendlyCardGained", "OnFriendlyCardPlayed", "OnFriendlyUnitDamaged", "OnFriendlyUnitDied", "OnFriendlyUnitHpOne", "OnFriendlyUnitPlayed", "OnFriendlyUnitSummoned", "OnKill", "OnOpponentCardDrawn", "OnOpponentCardGained", "OnOtherUnitSacrificed", "OnPlayed", "OnPostCombatLine", "OnPreCombatLine", "OnSacrificed", "OnStartOfRound", "OnStatusApplied"]),
+  targets: new Set(["AdjacentEnemyUnits", "AdjacentFriendlyUnits", "AllEnemyUnits", "AllFriendlyUnits", "AllOtherUnitsOnBoard", "AllUnitsOnBoard", "BothHeroes", "EnemyHero", "EnemyUnitLeft", "EnemyUnitRight", "EnemyUnitsEvenLanes", "EnemyUnitsInSelfLaneAndAdjacent", "EnemyUnitsNearLane", "EnemyUnitsOddLanes", "EventUnit", "EventUnitAndAdjacent", "FriendlyHero", "FriendlyUnitLeft", "FriendlyUnitRight", "FriendlyUnitsEvenLanes", "FriendlyUnitsOddLanes", "HighestHpUnit", "OppositeEnemyUnit", "OtherFriendlyUnits", "RandomEnemyUnit", "RandomFriendlyUnit", "Sacrificer", "SelectedTarget", "Self", "SelfLaneEnemyAndAdjacentAny", "StrongestEnemyUnit", "TargetAnyUnit", "TargetEnemyUnit", "TargetEnemyUnitOrHero", "TargetFriendlyUnit", "TargetFriendlyUnitOrHero", "WeakestEnemyUnit"]),
+  triggers: new Set(["OnAttackDone", "OnDamagedEnemyHero", "OnEnemyHeroDamaged", "OnFriendlyHeroDamaged", "OnFriendlyUnitHealed", "OnFriendlyUnitReturned", "OnMoved", "OnDamagedEnemyUnit", "OnDeath", "OnEndOfRound", "OnEnemyUnitDied", "OnEnemyUnitGainedStats", "OnEnemyUnitPlayed", "OnEnemyUnitSacrificed", "OnFriendlyActionPlayed", "OnFriendlyCardDrawn", "OnFriendlyCardGained", "OnFriendlyCardPlayed", "OnFriendlyUnitDamaged", "OnFriendlyUnitDied", "OnFriendlyUnitHpOne", "OnFriendlyUnitPlayed", "OnFriendlyUnitSummoned", "OnKill", "OnOpponentCardDrawn", "OnOpponentCardGained", "OnOtherUnitSacrificed", "OnPlayed", "OnPostCombatLine", "OnPreCombatLine", "OnSacrificed", "OnStartOfRound", "OnStatusApplied"]),
 };
 // A rolled card (Clownboy) can carry ANY chosen-target effect on ANY trigger. When nobody picked a target (bot, simulation, a trigger that cannot ask,
 // no valid choice left) the engine picks one itself instead of letting the whole effect fizzle: the opposite / strongest enemy, a random friend, or a hero.
@@ -1146,6 +1187,41 @@ function tg0(G, a, s, c) {
       const vs = units(me).filter((x) => x !== s && !shield(x, s));
       return vs.length ? [vs[R(vs.length)]] : [];
     }
+    // --- targets added for Clownboy
+    case "FriendlyUnitsEvenLanes":
+      return units(me).filter((x) => (x.lane + 1) % 2 == 0 && aoeOK(x, s));
+    case "FriendlyUnitsOddLanes":
+      return units(me).filter((x) => (x.lane + 1) % 2 == 1 && aoeOK(x, s));
+    case "EnemyUnitsEvenLanes":
+      return units(op).filter((x) => (x.lane + 1) % 2 == 0 && aoeOK(x, s));
+    case "EnemyUnitsOddLanes":
+      return units(op).filter((x) => (x.lane + 1) % 2 == 1 && aoeOK(x, s));
+    case "StrongestEnemyUnit":
+    case "WeakestEnemyUnit": {
+      const vs = units(op).filter((x) => !shield(x, s));
+      if (!vs.length) return [];
+      const sc = (x) => (x.atk * 2 + x.hp) * (a.Target == "StrongestEnemyUnit" ? 1 : -1),
+        top = Math.max(...vs.map(sc)),
+        bs = vs.filter((x) => sc(x) == top);
+      return [bs[R(bs.length)]];
+    }
+    case "HighestHpUnit": {
+      const vs = [...units(me), ...units(op)].filter((x) => x !== s && !shield(x, s));
+      if (!vs.length) return [];
+      const top = Math.max(...vs.map((x) => x.hp)),
+        bs = vs.filter((x) => x.hp == top);
+      return [bs[R(bs.length)]];
+    }
+    case "FriendlyUnitLeft":
+    case "FriendlyUnitRight":
+    case "EnemyUnitLeft":
+    case "EnemyUnitRight": {
+      const l = s.lane + (/Left$/.test(a.Target) ? -1 : 1),
+        w = s.lane >= 0 && l >= 0 && l < 4 ? (/^Friendly/.test(a.Target) ? me : op).ln[l] : null;
+      return w && !w.gone && !shield(w, s) ? [w] : [];
+    }
+    case "BothHeroes":
+      return [H(s.o), H(1 - s.o)];
     case "Self":
       return [s];
     case "FriendlyHero":
@@ -1259,6 +1335,11 @@ function dmg(G, t, n, s, melee) {
       later(G, () =>
         G.p[s.o].ln.slice().forEach((w) => w && fire(G, "OnDamagedEnemyHero", w, { u: s, t: s })),
       );
+    if (n > 0)
+      later(G, () => {
+        fireR(G, "OnFriendlyHeroDamaged", units(G.p[t.p]), { dd: n });
+        fireR(G, "OnEnemyHeroDamaged", units(G.p[1 - t.p]), { dd: n });
+      });
     chk(G);
     return;
   }
@@ -1368,9 +1449,11 @@ function status(G, t, k, s) {
 }
 function act(G, a, s, c) {
   c = c || {};
+  if (c.halt) return; // an earlier action of this effect changed who owns the source unit (SwapWithOpposite): the rest is skipped
   a = ra(G, a, s, c);
   if (a.Condition && !cond(a.Condition, s, {}, G)) return;
   if ((a.OnlyIfSacrificed && !c.sacd) || (a.OnlyIfNoSacrifice && c.sacd)) return;
+  if (a.OnlyIfBottomed && !c.botd) return; // reward for a BottomFromHand "cost" (Clownboy)
   if (a.OnlyIfTargetStatus) {
     const tt = c.t;
     if (!tt || tt.h || !tt.kw || !tt.kw.has(a.OnlyIfTargetStatus)) return;
@@ -1468,13 +1551,20 @@ function act(G, a, s, c) {
       ts.forEach((t) => dmg(G, t, n, s, 2));
       break;
     }
-    case "Heal":
+    case "Heal": {
       if (ts.length) EV(G, { k: "snd", n: "heal" });
+      const healed = [];
       ts.forEach((t) => {
         if (t.h) G.p[t.p].hp = Math.min(G.p[t.p].mhp || 20, G.p[t.p].hp + a.Amount);
-        else t.hp = Math.min(t.mx, t.hp + a.Amount);
+        else {
+          const was = t.hp;
+          t.hp = Math.min(t.mx, t.hp + a.Amount);
+          if (t.hp > was) healed.push(t);
+        }
       });
+      healed.forEach((t) => fireR(G, "OnFriendlyUnitHealed", units(G.p[t.o]).filter((w) => w !== t), { u: t, t }));
       break;
+    }
     case "IncreaseMaxHp":
       ts.forEach((t) => {
         if (!t.h) return;
@@ -1486,7 +1576,11 @@ function act(G, a, s, c) {
       break;
     case "HealToFull":
       if (unitsOnly.length) EV(G, { k: "snd", n: "heal" });
-      unitsOnly.forEach((t) => (t.hp = t.mx));
+      unitsOnly.slice().forEach((t) => {
+        const was = t.hp;
+        t.hp = t.mx;
+        if (t.hp > was) fireR(G, "OnFriendlyUnitHealed", units(G.p[t.o]).filter((w) => w !== t), { u: t, t });
+      });
       break;
     case "DrawCard": {
       if ((a.OnlyIfNoSacrifice && c.sacd) || (a.OnlyIfSacrificed && !c.sacd)) break;
@@ -1674,11 +1768,22 @@ function act(G, a, s, c) {
     case "AddCardToDeck": {
       const p = G.p[s.o];
       if (!p) break;
-      const id = a.ValueParam;
-      if (id == null || !CD[id]) break;
       const n = a.Count || 1;
-      for (let i = 0; i < n; i++) p.deck.push({ uid: UID++, id });
-      L(G, "Added " + CD[id].Name + " to deck");
+      let last = null;
+      for (let i = 0; i < n; i++) {
+        let id = a.ValueParam;
+        if (a.Filter) {
+          // random card from a filter (Clownboy): a fresh pick for every copy
+          const pp = poolOf(a.Filter);
+          if (!pp.length) break;
+          id = pp[R(pp.length)].Id;
+        }
+        if (id == null || !CD[id]) break;
+        p.deck.push({ uid: UID++, id });
+        last = id;
+      }
+      if (last != null) L(G, "Added " + CD[last].Name + " to deck");
+      if (a.Shuffle) shuf(p.deck); // without Shuffle the card goes to the bottom, as before
       break;
     }
     case "ReturnToHand":
@@ -1708,6 +1813,7 @@ function act(G, a, s, c) {
             gained(G, o, "bounce");
           }
           if (t.o != me.i) acn(G, me, "bnc", 1, 3, "revolving");
+          fireR(G, "OnFriendlyUnitReturned", units(o), { u: t });
         });
       break;
     case "SacrificeUnits": {
@@ -1815,7 +1921,8 @@ function act(G, a, s, c) {
     }
     case "BottomFromHand": {
       const n = a.Amount || 1;
-      if (me.hand.length <= n || !askOnE(G, me.i)) {
+      if (me.hand.length) c.botd = 1;
+      if (me.hand.length <= n || a.Auto || !askOnE(G, me.i)) {
         bottomCards(G, me, n, null);
         break;
       }
@@ -1831,6 +1938,118 @@ function act(G, a, s, c) {
           Effects: [{ Trigger: "OnPlayed", Actions: [a] }],
         },
       });
+      break;
+    }
+    // ===== actions added for Clownboy =====
+    case "CopyToDeck": {
+      // Source: Self | LastPlayedFriendly | LastPlayedEnemy | DestroyedFriendly | DestroyedEnemy. To: Own | Enemy. The copy is a plain card, shuffled in.
+      const src = a.Source || "Self";
+      let id = null;
+      if (src == "Self") id = s.id != null ? s.id : s.d ? s.d.Id : null;
+      else if (src.indexOf("LastPlayed") == 0) {
+        const mine = src == "LastPlayedFriendly";
+        for (let i = G.hist.length - 1; i >= 0; i--) {
+          const x = G.hist[i];
+          if (x.tf || x.uid === s.uid || !CD[x.id] || isTok(CD[x.id]) || (x.p == s.o) != mine) continue;
+          id = x.id;
+          break;
+        }
+      } else {
+        const mine = src == "DestroyedFriendly";
+        for (let i = (G.dead || []).length - 1; i >= 0; i--) {
+          const x = G.dead[i];
+          if (x.uid === s.uid || !CD[x.id] || isTok(CD[x.id]) || (x.o == s.o) != mine) continue;
+          id = x.id;
+          break;
+        }
+      }
+      if (id == null || !CD[id]) break;
+      const dest = a.To == "Enemy" ? G.p[1 - s.o] : me;
+      dest.deck.push({ uid: UID++, id });
+      shuf(dest.deck);
+      L(G, "A copy of " + CD[id].Name + " is shuffled into " + (dest.i ? "the Enemy's" : "your") + " deck");
+      break;
+    }
+    case "GiveHandCard": {
+      const op = G.p[1 - s.o];
+      if (!me.hand.length || op.hand.length >= HAND_MAX) break;
+      const card = me.hand.splice(R(me.hand.length), 1)[0];
+      op.hand.push(card);
+      L(G, (me.i ? "Enemy gives" : "You give") + " " + cdc(card).Name + " to the opponent");
+      EV(G, { k: "snd", n: "cardDrawn", o: op.i });
+      aura(G);
+      acHand(G, me);
+      gained(G, op, "gift");
+      break;
+    }
+    case "SwapStats":
+      unitsOnly.forEach((t) => {
+        if (t.gone || t.hp <= 0) return;
+        const aa = t.aurA || 0,
+          oa = t.atk,
+          oh = t.hp,
+          nh = Math.max(1, t.atk - aa);
+        t.atk = Math.max(0, oh) + aa;
+        t.hp = t.mx = nh;
+        if (!G.sim) EV(G, { k: "fx", t: "buff", a: t.atk - oa, hp: nh - oh, u: t.uid });
+      });
+      if (unitsOnly.length) EV(G, { k: "snd", n: "buff" });
+      break;
+    case "SetHpOne":
+      unitsOnly.forEach((t) => {
+        if (t.gone || t.hp <= 1) return;
+        const lost = t.hp - 1;
+        t.hp = 1;
+        EV(G, { k: "dmg", u: t.uid, n: lost });
+        L(G, t.d.Name + " is set to 1 HP");
+      });
+      break;
+    case "TakeControl": {
+      const t = unitsOnly.find((x) => x.o != s.o && !x.gone && x.hp > 0);
+      if (!t || G.over) break;
+      const ow = G.p[t.o],
+        ls = [0, 1, 2, 3].filter((i) => !me.ln[i]);
+      if (!ls.length || ow.ln[t.lane] !== t) break;
+      ls.sort((x, y) => Math.abs(x - t.lane) - Math.abs(y - t.lane));
+      ow.ln[t.lane] = null;
+      place(G, me, t, ls[0]);
+      L(G, (me.i ? "Enemy takes" : "You take") + " control of " + t.d.Name);
+      EV(G, { k: "snd", n: "buff" });
+      aura(G);
+      fireR(G, "OnMoved", [t], { u: t });
+      break;
+    }
+    case "SwapWithOpposite": {
+      // the two units trade sides: ownership changes. Everything the effect still had to do is skipped (c.halt), because "me" is no longer the owner.
+      const op = G.p[1 - s.o],
+        b = s.lane >= 0 ? op.ln[s.lane] : null;
+      if (!b || b.gone || b.hp <= 0 || s.gone || s.hp <= 0 || me.ln[s.lane] !== s || shield(b, s)) break;
+      const l = s.lane;
+      me.ln[l] = null;
+      op.ln[l] = null;
+      place(G, op, s, l);
+      place(G, me, b, l);
+      L(G, s.d.Name + " swaps sides with " + b.d.Name);
+      EV(G, { k: "snd", n: "buff" });
+      aura(G);
+      c.halt = 1;
+      fireR(G, "OnMoved", [s, b], {});
+      break;
+    }
+    case "ShuffleLanes": {
+      const us = units(me).filter((x) => !x.gone);
+      if (!us.length) break;
+      const old = new Map(us.map((x) => [x, x.lane])),
+        slots = shuf([0, 1, 2, 3]);
+      for (let i = 0; i < 4; i++) me.ln[i] = null;
+      us.forEach((x, i) => place(G, me, x, slots[i]));
+      const moved = us.filter((x) => x.lane != old.get(x));
+      if (moved.length) {
+        L(G, (me.i ? "Enemy shuffles" : "You shuffle") + " their units between lanes");
+        EV(G, { k: "snd", n: "buff" });
+        aura(G);
+        fireR(G, "OnMoved", moved, {});
+      }
       break;
     }
     case "ShuffleDeck":
@@ -1961,7 +2180,7 @@ function act(G, a, s, c) {
     }
     case "DrawFromDiscard":
       for (let i = 0; i < (a.Amount || 1) && me.disc.length && me.hand.length < HAND_MAX; i++) {
-        me.hand.push(me.disc.pop());
+        me.hand.push(a.Random ? me.disc.splice(R(me.disc.length), 1)[0] : me.disc.pop());
         gained(G, me, "discard");
       }
       if (a.Later) me.dl = (me.dl || []).concat("Discard");
@@ -2009,6 +2228,7 @@ function act(G, a, s, c) {
       if (i < 4 && !me.ln[i] && me.ln[s.lane] == s) {
         me.ln[s.lane] = null;
         place(G, me, s, i);
+        fireR(G, "OnMoved", [s], { u: s });
         if (a.ThenAttack) {
           const v = G.p[1 - s.o].ln[s.lane];
           if (v && !v.gone && v.hp > 0 && engage(v, s)) strike(G, s);
@@ -2108,6 +2328,7 @@ function act(G, a, s, c) {
           o.ln[t.lane] = null;
           place(G, o, t, dest);
           L(G, t.d.Name + " is pulled into lane " + (dest + 1));
+          fireR(G, "OnMoved", [t], { u: t });
         } else if (a.Else && a.Else.Amount && !(a.Else.OncePerTurn && s.elT === G.turn)) {
           if (a.Else.OncePerTurn) s.elT = G.turn;
           dmg(G, t, a.Else.Amount, s, 2);
@@ -2374,6 +2595,7 @@ function sacrifice(G, u, by) {
   });
   fireHand(G, "OnOtherUnitSacrificed", p, { u });
   fireHand(G, "OnEnemyUnitSacrificed", G.p[1 - u.o], { u });
+  fireR(G, "OnEnemyUnitSacrificed", units(G.p[1 - u.o]), { u });
 }
 function hurtFire(G, t, ctx) {
   G.p[t.o].ln.slice().forEach((w) => {
@@ -2900,6 +3122,7 @@ function play(G, p, ci, ln, pk) {
     t: G.turn,
     id: c.id,
     tg: ctx.t ? (ctx.t.h ? "Hero" : ctx.t.d.Name) : ctx.sac ? ctx.sac.d.Name : "",
+    ...(c.d ? { d: c.d } : {}),   // a rolled card (Clownboy / Party Trick): remember the version that was REALLY played, not the base card
   };
   G.hist.push(he);
   if (!G.sim)
@@ -2922,6 +3145,7 @@ function play(G, p, ci, ln, pk) {
     announce(G, u);
     resolve(G);
     if (!G.over) fireHand(G, "OnFriendlyCardPlayed", p, { pc: d });
+    if (!G.over) fireR(G, "OnFriendlyCardPlayed", units(p).filter((w) => w !== u), { pc: d });
   } else {
     L(G, (p.i ? "Enemy" : "You") + " cast " + d.Name);
     const s = { d, o: p.i, sp: 1, lane: -1, uid: 0 };
@@ -2952,6 +3176,7 @@ function play(G, p, ci, ln, pk) {
     fireHand(G, "OnFriendlyActionPlayed", p, {});
     if (!G.over) resolve(G);
     if (!G.over) fireHand(G, "OnFriendlyCardPlayed", p, { pc: d });
+    if (!G.over) fireR(G, "OnFriendlyCardPlayed", units(p), { pc: d });
   }
   return true;
 }

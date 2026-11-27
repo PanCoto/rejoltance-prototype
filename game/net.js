@@ -45,7 +45,7 @@ function snap(G){
   disc:p.disc.map(cp),ln:p.ln.map(uc)});
  return JSON.parse(JSON.stringify({mir:G.mir,rgb:G.rgb,turn:G.turn,step:G.step,allow:G.allow,act:G.act==null?null:1-G.act,start:1-G.start,
   over:G.over?{win:G.over.draw?-1:1-G.over.win,draw:G.over.draw,sur:G.over.sur,left:G.over.left}:null,
-  log:G.log.slice(-60).map(flipLog),hist:G.hist.slice(-80).map(h=>({p:1-h.p,t:h.t,id:h.id,tg:h.tg,uid:h.uid,tf:h.tf})),
+  log:G.log.slice(-60).map(flipLog),hist:G.hist.slice(-80).map(h=>({p:1-h.p,t:h.t,id:h.id,tg:h.tg,uid:h.uid,tf:h.tf,d:h.d})),
   p:[side(G.p[1],1),side(G.p[0],0)]}))}
 function unsnap(s,ev){s.p.forEach(p=>p.ln.forEach(u=>{if(u){u.kw=new Set(u.kw);u.d=u.d||CD[u.id]}}));s.ev=ev||[];s.q=null;return s}
 function netPush(x){if(!NET||!NET.host||!G)return;

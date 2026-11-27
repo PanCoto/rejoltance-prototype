@@ -2124,6 +2124,16 @@ const CARDS = [
     Effects: [],
   },
 
+  {
+    Id: 132,
+    Name: "Party Trick",
+    Type: "Spell",
+    Subtypes: [],
+    Cost: 2,
+    Description: "While in Hand and Start of Round: █▓▒░ ░▒▓█ ▓▒░█ ▒░▓ ",
+    Effects: [],
+  },
+
   // ==================== ORIGINAL TOKENS (unchanged) ====================
 
   {
