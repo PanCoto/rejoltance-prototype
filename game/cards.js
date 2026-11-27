@@ -4,7 +4,7 @@
    - IDs 1-100: original cards. New cards: 101-120.
    - Tokens (cannot be put in decks): 900-938.
    - [KEYWORD] is not written in descriptions (the engine renders keywords).
-   - "Sacrifice:" in a description = "When Played: You may sacrifice
+   - "Sacrifice:" in a description = "When Played: You may sacrifice 
      a friendly unit; if you do, [Y]". Spells with sacrifice are
      mandatory; Units are optional.
    ============================================================ */
