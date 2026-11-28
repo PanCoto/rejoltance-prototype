@@ -18,7 +18,11 @@ const SP_FAN=3;
 let SPEC=null,SPTK=0,SPM=false;
 const spX=()=>window.RJ_EXP?(window.RJ_MAXC<3?2:1):0;
 const spNode=root=>({root:!!root,kids:[],fan:SP_FAN,tot:0,cnt:1,dead:false});
-const spFwd=(T,m)=>T.kids.forEach(k=>{try{if(k.c.open)k.c.send(m)}catch(e){}});
+// PeerJS' JSON channel drops (and reports as an error) every message >= 16300 bytes; RGB frames are bigger than that, so big messages are cut into pieces (spSend) and glued together again (spRx).
+const SPCH=3000;let SPCID=0;
+const spSend=(c,m)=>{const s=JSON.stringify(m);if(s.length<=SPCH){c.send(m);return}const id=++SPCID,n=Math.ceil(s.length/SPCH);for(let i=0;i<n;i++)c.send({t:'~c',id,i,n,d:s.slice(i*SPCH,(i+1)*SPCH)})};
+const spRx=(c,m)=>{if(!m||m.t!='~c')return m;const r=c._rx&&c._rx.id==m.id?c._rx:(c._rx={id:m.id,n:m.n,p:[],k:0});if(r.p[m.i]===undefined){r.p[m.i]=String(m.d);r.k++}if(r.k<r.n)return null;c._rx=null;try{return JSON.parse(r.p.join(''))}catch(e){return null}};
+const spFwd=(T,m)=>T.kids.forEach(k=>{try{if(k.c.open)spSend(k.c,m)}catch(e){}});
 // which games can be watched: room games, Mirror Match online and friend challenges. Quick Match and Ranked never (fair play).
 const spOK=N=>!!(N&&N.host&&!N.dead);   // EVERY hosted game can be watched: room, Mirror Match, Quick Match, Ranked, friend challenge (spectators only get face-down hands/decks)
 // id a spectator connects to: Quick Match (p2p) drops its signalling link when matched, so it gets a dedicated stream peer; the others use the game peer
@@ -123,7 +127,7 @@ function spAccept(T,c){
   c.on('data',m=>{if(m&&m.t=='sp-up'){k.cnt=Math.max(1,Math.min(1e7,+m.c||1));spCount(T)}});
   const gone=()=>{const i=T.kids.indexOf(k);if(i>=0){T.kids.splice(i,1);spCount(T)}};
   c.on('close',gone);c.on('error',gone);
-  try{c.send(Object.assign({t:'sp-hi',tot:T.tot},spLast(T)||{g:0}))}catch(e){}
+  try{spSend(c,Object.assign({t:'sp-hi',tot:T.tot},spLast(T)||{g:0}))}catch(e){}
   spCount(T);
   if(T.root&&!T.hbI)T.hbI=setInterval(()=>spFwd(T,{t:'sp-hb',n:T.tot}),4000)})}
 
@@ -179,7 +183,7 @@ function spGo(S,id){
  const c=S.peer.connect(id,{reliable:true,serialization:'json',metadata:{spec:1,v:NETV,x:spX(),bad:S.bad.slice(-8),h:S.hop}});
  S.pend=c;clearTimeout(S.ct);
  S.ct=setTimeout(()=>{if(S.pend===c){S.pend=null;try{c.close()}catch(e){}spFail(S)}},12000);
- c.on('data',m=>spData(S,c,m));
+ c.on('data',m=>{m=spRx(c,m);if(m)spData(S,c,m)});
  c.on('close',()=>{if(S.up===c){S.up=null;spLost(S)}else if(S.pend===c){S.pend=null;clearTimeout(S.ct);spFail(S)}});
  c.on('error',()=>{})}
 function spData(S,c,m){

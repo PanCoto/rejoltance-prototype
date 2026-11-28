@@ -1,5 +1,5 @@
 const NETPRE='rejoltance-',ALPH='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const NETV=(()=>{let h=5381;const s=JSON.stringify(CARDS);for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return(window.RJ_EXP?(window.RJ_MAXC<3?'v1x2-':'v1x-'):'v1-')+(h>>>0).toString(36)})();
+const NETV=(()=>{let h=5381;const s=JSON.stringify(CARDS);for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return(window.RJ_EXP?(window.RJ_MAXC<3?'v1x2-':'v1x-'):'v1-')+(h>>>0).toString(36)+'c'})();
 const STUN_ICE=[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:stun.cloudflare.com:3478','stun:global.stun.twilio.com:3478']}];
 // Last resort only: a shared public relay that may be rate-limited or discontinued. See net-config.js.
 const SHARED_TURN=[{urls:['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443','turn:openrelay.metered.ca:443?transport=tcp','turns:openrelay.metered.ca:443?transport=tcp'],username:'openrelayproject',credential:'openrelayproject'}];
@@ -30,7 +30,13 @@ function probeRelay(ice){return new Promise(res=>{let pc,fin=false;const r={rela
  setTimeout(done,7000)})}
 const NORELAY=' No relay server is reachable, so players on mobile data or campus Wi-Fi (eduroam) may fail to connect. See net-config.js.';
 const PeerC=()=>window.Peer||(window.peerjs&&window.peerjs.Peer);
-const netSend=m=>{try{if(NET&&NET.conn&&NET.conn.open)NET.conn.send(m)}catch(e){console.warn('send failed',e)}};
+// PeerJS' JSON channel silently DROPS every message of 16300 bytes or more and reports it as an 'error' on the sender's connection (-> onClose -> "Opponent left" for the sender only,
+// while the other side just sees nothing happen). RGB snapshots (every rolled Clownboy carries its whole card data) hover right around that limit, so big messages are cut into small pieces here
+// and glued back together in wire(). A piece holds at most NCH characters = at most ~3*NCH bytes on the wire, far below the limit.
+const NCH=3000;let NCID=0;
+const netSend=m=>{try{if(!(NET&&NET.conn&&NET.conn.open))return;const c=NET.conn,s=JSON.stringify(m);
+ if(s.length<=NCH){c.send(m);return}
+ const id=++NCID,n=Math.ceil(s.length/NCH);for(let i=0;i<n;i++)c.send({t:'~c',id,i,n,d:s.slice(i*NCH,(i+1)*NCH)})}catch(e){console.warn('send failed',e)}};
 const newCode=()=>{const a=new Uint32Array(5);crypto.getRandomValues(a);return[...a].map(x=>ALPH[x%ALPH.length]).join('')};
 const startAudio=()=>musicStart();
 
@@ -99,7 +105,13 @@ function netLeave(keepLobby){const N=NET;NET=null;NETTK++;
 function guestHello(N){if(NET!==N||N.hi)return;N.hi=1;pkResolve();netSend({t:'hello',v:NETV,x:window.RJ_EXP?(window.RJ_MAXC<3?2:1):0,name:myName(),deck:ALL[$('d0').value].c});lobby('Connected',{status:'Waiting for the host to start the game...',nodeck:1})}
 function wire(N,c){
  c.on('open',()=>{if(NET!==N)return;if(!N.host){clearTimeout(N.to);N.up=1;if(N.mm&&!N.lr)return;guestHello(N)}});
- c.on('data',m=>{if(NET!==N||!m||!m.t)return;N.host?hostMsg(m):guestMsg(m)});
+ c.on('data',m=>{if(NET!==N||!m||!m.t)return;
+  if(m.t=='~c'){const r=N.rx&&N.rx.id==m.id?N.rx:(N.rx={id:m.id,n:m.n,p:[],k:0});   // a piece of a big message (see netSend)
+   if(r.p[m.i]===undefined){r.p[m.i]=String(m.d);r.k++}
+   if(r.k<r.n)return;N.rx=null;
+   try{m=JSON.parse(r.p.join(''))}catch(e){console.warn('bad chunked message',e);return}
+   if(!m||!m.t)return}
+  N.host?hostMsg(m):guestMsg(m)});
  c.on('close',()=>onClose(N));c.on('error',()=>onClose(N))}
 async function hostRoom(mirror,rgb){mirror=!!mirror;rgb=!!rgb;
  if(!PeerC())return lobby('Online play unavailable',{nodeck:1,status:'The networking library did not load. Reload the page and try again.'});
